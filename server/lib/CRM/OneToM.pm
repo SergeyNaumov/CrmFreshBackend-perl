@@ -100,7 +100,6 @@ sub process{
         else{ # Загружаем новый файл и создаём запись (multiload)
               my $values=[];
               my $i=0;
-              use Data::Dumper;
               my $uploads=$s->save_upload(
                   var=>$child_field->{name},
                   to=>$child_field->{filedir},
@@ -241,6 +240,7 @@ sub process{
             push @{$form->{errors}},"обратитесь к разработчику: в запросе отсутствуют значения (values)"
           }
           my $data=get_data($R,$form,$field,$arg{id});
+          
           if(  !scalar(@{$form->{errors}})  ){
             
             if($arg{action} eq 'insert'){
@@ -265,7 +265,7 @@ sub process{
 
             }
             elsif($arg{action} eq 'update'){
-              
+              #print Dumper({one_to_m_id=>arg{one_to_m_id}});
               $data->{$field->{table_id}}=$arg{one_to_m_id};
               CRM::run_event(
                 event=>$field->{before_update_code},
@@ -285,7 +285,10 @@ sub process{
                     values=>[$arg{one_to_m_id}],
                     onerow=>1
                   );
-                  use Data::Dumper; print Dumper($data);
+                  if(!$data){
+                    push @{$form->{errors}},"данной записи уже не существует, возможно, кто-то удалил её";
+                  }
+                  
                   normalize_value_row(form=>$form,field=>$field,row=>$data);
 
                   CRM::run_event(
