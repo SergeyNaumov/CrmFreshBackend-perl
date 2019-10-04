@@ -39,6 +39,7 @@ sub get_startpage{
             copyright=>$s->{config}->{copyright},
             left_menu=>$left_menu,
             errors=>$errors,
+            success=>scalar(@{$errors})?0:1,
             manager=>$manager
         }
     );
