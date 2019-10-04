@@ -1,0 +1,101 @@
+{
+  #description=>'КП',
+  name=>'block_kp',
+  style=>'wow',
+  table=>'user_kp',
+  table_id=>'id',
+  foreign_key=>'user_id',
+  type=>'1_to_m',
+  link_add=>'./edit_form.pl?config=user_kp&action=new&user_id=<%form.id%>',
+  link_edit=>'./edit_form.pl?config=user_kp&action=edit&id=<%id%>',
+  fields=>[
+    {
+      description=>'Email',
+      name=>'email',
+      type=>'text'
+    },
+    {
+      name=>'manager_id',
+      description=>'Менеджер',
+      type=>'select_from_table',
+      table=>'manager',
+      header_field=>'name',
+      value_field=>'id'
+    },
+    {
+      description=>'Вложения',
+      name=>'attach',
+      type=>'code',
+      slide_code=>sub{
+        my $id=$_[1]->{id};
+        my $sth=$form->{dbh}->prepare("SELECT attach,status FROM user_kp_attach WHERE user_kp_id = ?");
+        $sth->execute($id);
+        my $out='';
+        my $files;
+        foreach my $f (@{$sth->fetchall_arrayref({})}){
+          if($f->{attach}=~m/^([^;]+);(.+)$/){
+            #$f={filename=>$2,full_path=>'./user_kp/'.$1,status=>get_status($f->{status})};
+            #my $status=get_status($f->{status});
+            #$out.=qq{$2 | $status<br>};
+            #$out.=qq{<tr><td>$2</td><td>$status</td></tr>};
+            $out.=qq{<tr><td>$2</td></tr>};
+            #push @{$files},$f
+          }
+        }
+        #$out=qq{<table><tr><td><b>Файл</b></td><td><b>Статус</b></td></tr>$out</table>} if($out);
+        $out=qq{<table><tr><td><b>Файл</b></td></tr>$out</table>} if($out);
+        return $out;
+      }
+    },
+    {
+      description=>'Статус',
+      name=>'status',
+      type=>'code',
+      slide_code=>sub{
+        my $id=$_[1]->{id};
+        my $sth=$form->{dbh}->prepare("SELECT t1.header as header FROM user_kp_status t1
+                                       JOIN user_kp_HAS_user_kp_status t2 ON t2.user_kp_status_id = t1.id
+                                       WHERE t2.user_kp_id = ?");
+        $sth->execute($id);
+        my $data = $sth->fetchall_arrayref({});
+        my $out = '';
+        foreach my $f (@{$data}) {
+          $out .= $f->{header} . '<br>';
+        }
+        $out = '-<br>' unless $out;
+        return $out;
+      }
+    },
+    {
+      description=>'Откуда&nbsp;клиент',
+      name=>'from_base',
+      type=>'code',
+      slide_code=>sub{
+        my $i=$_[1]->{from_base};
+        my $out = 'не указано';
+        $out = 'совместная работа' if ($i eq '1');
+        $out = 'своя база' if ($i eq '2');
+        return $out;
+      }
+    }
+  ],
+  before_code=>sub{
+    my $e=shift;
+    #pre([$form->{readonly},$form->{read_only}])
+  },
+  before_delete_code=>sub{
+    # для того, чтобы при удалении КП удалялись аттачи
+    my $e=shift; my $cur_id=param('cur_id');
+    my $sth=$form->{dbh}->prepare("SELECT attach  FROM user_kp_attach WHERE user_kp_id = ?");
+    $sth->execute($cur_id);
+    my $files;
+
+    foreach my $f (@{$sth->fetchall_arrayref({})}){
+      if($f->{attach}=~m/^([^;]+);(.+)$/){
+        unlink('./user_kp/'.$1);
+      }
+    }
+    #exit;
+  },
+  tab=>'kp',
+}

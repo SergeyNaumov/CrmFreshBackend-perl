@@ -1,0 +1,47 @@
+[%doc_link='/tools/load_document.pl?doc_pack_id=' _ b.docpack_id%]
+<div class="bill" id="bill_[%b.id%]">
+  <hr>
+  <span[%IF b.paid%] style="color: green;"[%END%]><b>счёт [%b.number%] от [%b.registered%]</b></span>
+      | <a href="./edit_form.pl?config=bill&action=edit&id=[%b.id%]" target="_blank">к счёту</a>
+    [%UNLESS b.paid%]
+      | <a href="[%b.id%]" onclick="delete_bill([%b.id%]); return false;">удалить счёт</a>
+    [%END%]
+    <p>
+      <b>Сумма:</b> [%b.summ%]<br>
+      <b>Комментарий:</b>
+        <span id="for_edit_bill_comment_[%b.id%]">
+          <a href="" onclick="return edit_bill_comment([%b.id%])">[%
+            IF b.comment.match('^\s*$')%]
+              &lt;нет комментария&gt;
+          [%
+            ELSE;b.comment;END%]</a><br>
+    </p>
+    
+    <a href="[%doc_link%]&bill_id=[%b.id%]&format=doc&type=paid">платёжка (для частного лица)</a><br>
+  с печатями:
+    <a href="[%doc_link%]&bill_id=[%b.id%]&format=doc&type=bill">doc</a> |
+    <a href="[%doc_link%]&bill_id=[%b.id%]&format=pdf&type=bill">pdf</a><br>
+    
+  без печатей:
+    <a href="[%doc_link%]&bill_id=[%b.id%]&format=doc&type=bill&without_print=1">doc</a> |
+    <a href="[%doc_link%]&bill_id=[%b.id%]&format=pdf&type=bill&without_print=1">pdf</a> <br>
+    <br>
+
+
+
+  [%IF !b.paid && (form.manager.login=='admin' || form.manager.permissions.admin_paids) %]
+      <a href="./edit_form.pl?config=user&id=[%form.id%]&bill_id=[%b.id%]&action=paid_bill"><b>оплатить</b></a>
+  [%END%]
+  [%IF !b.paid && (b.manager_id=form.manager.id || (form.manager.login=='admin' || form.manager.permissions.admin_paids))%]
+      | <a href="edit_form.pl?config=user&id=[%form.id%]&action=refresh_bill&bill_id=[%b.id%]">перевыставить</a><br>
+  [%END%]
+  
+  [%IF b.paid%]
+  <span style="color: green;">
+      дата оплаты: [%b.paid_date%]<br>
+      оплачен до: [%b.paid_to%]
+  </span>
+  [%END%]    
+</div>
+
+

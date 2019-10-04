@@ -1,0 +1,49 @@
+{
+  description=>'Уникальный ключ (нужен для тестирования и синхронизации)',
+  type=>'filter_extend_text',
+  name=>'f_KEYFLD',
+  db_name=>'KEYFLD',
+  tablename=>'wt'
+},
+{
+  description=>'Логин пользователя',
+  name=>'f_login',
+  type=>'filter_extend_text',
+  tablename=>'c',
+  db_name=>'username'
+},
+{
+  description=>'Email',
+  name=>'f_email',
+  type=>'filter_extend_text',
+  tablename=>'c',
+  db_name=>'email'
+},
+{
+  description=>'Телефон',
+  name=>'f_phone',
+  type=>'filter_extend_text',
+  tablename=>'c',
+  db_name=>'phone'
+},
+{
+  description=>'Фамилия',
+  name=>'f_last_name',
+  type=>'filter_extend_text',
+  tablename=>'c',
+  db_name=>'last_name'
+},
+{
+  description=>'Имя',
+  name=>'f_first_name',
+  type=>'filter_extend_text',
+  tablename=>'c',
+  db_name=>'first_name'
+},
+{
+  description=>'Отчество',
+  name=>'f_middle_name',
+  type=>'filter_extend_text',
+  tablename=>'c',
+  db_name=>'middle_name'
+}

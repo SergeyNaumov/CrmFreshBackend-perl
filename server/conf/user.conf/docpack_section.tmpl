@@ -1,0 +1,49 @@
+
+<div id="docpack_[%docpack_id%]">
+  <b>договор №[%docpack.d_number%] от [%docpack.d_from%]</b> <a href="#" onclick="toggle_dogovor('[%docpack.id%]'); return false;">+/-</a><br>
+  <div id="dog_full[%docpack.id%]" style="display: none; padding: 5px 50px; border: 1px solid gray;">
+        с печатями:
+          <a href="[%doc_link%]&format=doc&type=dogovor">doc</a> |
+          <a href="[%doc_link%]&format=pdf&type=dogovor">pdf</a><br>
+        без печатей:
+          <a href="[%doc_link%]&format=doc&type=dogovor&without_print=1">doc</a> |
+          <a href="[%doc_link%]&format=pdf&type=dogovor&without_print=1">pdf</a><br>
+          
+      <table style="margin-top: 10px; border: 1px solid #bebebe; ">
+        <tr>
+          <td>сумма:</td>
+          <td >
+            <input type="text" value="[%docpack.tarif_summ%]"
+              style="width: 100%"
+              id="nbs_[%docpack_id%]"
+              data-regexp='^\d+$'
+              data-replfrom='["[^\\d]+","^0+(\\d)"]'
+              data-replto='["","$1"]'
+            >
+          </td>
+        </tr>
+        <tr>
+          <td>комментарий:</td>
+          <td><br><textarea id="nbc_[%docpack_id%]" placeholder="комментарий"></textarea></td>
+        </tr>
+        <tr>
+          <td colspan="2" style="padding: 10px; text-align: center;">
+            <input type="button" onclick="create_new_bill([%docpack_id%],'nbs_[%docpack_id%]')" value="новый счёт">
+          </td>
+        </tr>
+      </table>
+
+      [%FOREACH b IN bill_list%]
+        [%INCLUDE './conf/user.conf/bill_section.tmpl'%]
+      [%END%]
+  </div>
+</div>
+
+
+[%# Templates for edit bill%]
+<template id="buff_bill_comment">
+  <a href="" onclick="return edit_bill_comment([bill_id])">[bill_comment]</a>
+</template>
+<template id="buff_bill_edit">
+  <textarea id="bill_comment_[bill_id]">[bill_comment]</textarea> <button onclick="return save_bill_comment([bill_id])">сохранить</button>
+</template>

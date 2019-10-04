@@ -1,0 +1,41 @@
+      {
+        url=>'^/print-template$',
+        code=>sub{
+          my $s=shift;
+          my $out=$s->template('mail/test.tmpl');
+          $s->print("print <hr>$out<hr>")->end();
+        }
+      },
+      {
+          url=>'^/form1$',
+          #page_type=>'x',
+          code=>sub{
+            my $s=shift;
+            $s->print_header;
+            my $form=Form->new(
+              table=>'test_reg',
+              table_id=>'id',
+              action_field=>'action',
+              action_field_value=>'form_send',
+              connect=>$s->{connects}->{my_protocols},
+              #before_record_code=>sub{
+              #  my $form=shift;
+              #  $form->{engine}->pre($form->{fields});
+              #  $form->{engine}->pre($form->{vls});
+              #},
+              mail_send=>[
+                {from=>'info@trade.su',to=>'sv@trade.su',message=>'test<br>[%fio%]<br>[%email%]'}
+              ],
+              fields=>[
+                {name=>'fio',regexp=>'.'},
+                {name=>'email',regexp=>'^.+@.+\..+$'},
+                {
+                  name=>'attach',type=>'file',filedir=>'attach'
+                }
+              ]
+            );
+            $s->print($form->process())->end();
+
+
+          }
+      }

@@ -1,0 +1,129 @@
+<html>
+  <head>
+    <title>История исправлений [%form.old_values.firm%]</title>
+  </head>
+  <style>
+    body {margin: 20px;}
+    .perpage {max-width: 800px; text-align:center;}
+    table {border-collapse: collapse;}
+    table td {border: 1px solid gray; padding: 5px}
+    td.changed {color: red;}
+  </style>
+  <body>
+    <h1>[%form.old_values.firm%]!!!</h1>
+    [%IF moment_list.size()%]
+    <h2>До изменения [%MOMENT%] ([%current.manager%]):</h2>
+    <div class="perpage">
+    [%FOREACH m IN moment_list%]
+      [%IF m==MOMENT; m ; ELSE%]
+        <a href="?config=[%form.config%]&action=[%form.action%]&id=[%form.id%]&MOMENT=[%m%]">[%m%]</a>
+      [%END%]
+      [%UNLESS loop.last%]&nbsp;|&nbsp;[%END%]
+    [%END%]
+    </div>
+    
+    <table align="center">
+
+      <tr>
+        <td class="h">Организация</td>
+        <td[%IF changed.firm%] class="changed"[%END%]>[%current.body.firm%]</td>
+      </tr>
+      <tr>
+        <td class="h">Не экспортировать</td>
+        <td[%IF changed.not_export%] class="changed"[%END%]>[%IF current.body.not_export; 'да' ; ELSE ; 'нет' ; END %]</td>
+      </tr>
+      <tr>
+        <td class="h">Cайт</td>
+        <td[%IF changed.web%] class="changed"[%END%]>[%current.body.web%]</td>
+      </tr>
+      <tr>
+        <td class="h">Отрасль</td>
+        <td[%IF changed.otr_name%] class="changed"[%END%]>[%current.body.otr_name%]</td>
+      </tr>
+      <tr>
+        <td class="h">Доп. информация</td>
+        <td[%IF changed.more_info%] class="changed"[%END%]>[%current.body.more_info%]</td>
+      </tr>
+      <tr>
+        <td class="h">Адрес</td>
+        <td[%IF changed.address%] class="changed"[%END%]>[%current.body.address%]</td>
+      </tr>
+      <tr>
+        <td class="h">Юр.Адрес</td>
+        <td[%IF changed.ur_address%] class="changed"[%END%]>[%current.body.ur_address%]</td>
+      </tr>
+      <tr>
+        <td class="h">ИНН</td>
+        <td[%IF changed.inn%] class="changed"[%END%]>[%current.body.inn%]</td>
+      </tr>
+      <tr>
+        <td class="h">КПП</td>
+        <td[%IF changed.kpp%] class="changed"[%END%]>[%current.body.kpp%]</td>
+      </tr>
+      <tr>
+        <td class="h">ОГРН</td>
+        <td[%IF changed.ogrn%] class="changed"[%END%]>[%current.body.ogrn%]</td>
+      </tr>
+      <tr>
+        <td class="h">р/с</td>
+        <td[%IF changed.rs%] class="changed"[%END%]>[%current.body.rs%]</td>
+      </tr>
+      <tr>
+        <td class="h">к/с</td>
+        <td[%IF changed.ks%] class="changed"[%END%]>[%current.body.ks%]</td>
+      </tr>
+      <tr>
+        <td class="h">БИК</td>
+        <td[%IF changed.bik%] class="changed"[%END%]>[%current.body.bik%]</td>
+      </tr>
+      <tr>
+        <td class="h">Банк</td>
+        <td[%IF changed.bank%] class="changed"[%END%]>[%current.body.bank%]</td>
+      </tr>
+      <tr>
+        <td class="h">Должность отв. лица</td>
+        <td[%IF changed.position_otv%] class="changed"[%END%]>[%current.body.position_otv%]</td>
+      </tr>
+      <tr>
+        <td class="h">ФИО директора</td>
+        <td[%IF changed.fio_dir%] class="changed"[%END%]>[%current.body.fio_dir%]</td>
+      </tr>
+      <tr>
+        <td class="h">ФИО директора (род.)</td>
+        <td[%IF changed.fio_dir_rod%] class="changed"[%END%]>[%current.body.fio_dir_rod%]</td>
+      </tr>
+      <tr>
+        <td class="h">Статус</td>
+        <td[%IF changed.firm%] class="changed"[%END%]>[%current.body.status__v%]</td>
+      </tr>
+      <tr>
+        <td class="h">Важность</td>
+        <td[%IF changed.vajn%] class="changed"[%END%]>[%current.body.vajn__v%]</td>
+      </tr>
+      <tr>
+        <td class="h">Менеджер</td>
+        <td[%IF changed.manager_id%] class="changed"[%END%]>[%current.body.manager_name%]</td>
+      </tr>
+      <tr>
+        <td class="h">След. контакт</td>
+        <td[%IF changed.next_contact%] class="changed"[%END%]>[%current.body.next_contact%]</td>
+      </tr>
+      <tr>
+        <td class="h">Тип компании</td>
+        <td[%IF changed.company_type%] class="changed"[%END%]>[%current.body.company_type%]</td>
+      </tr>
+      <tr>
+        <td class="h">username</td>
+        <td[%IF changed.username%] class="changed"[%END%]>[%current.body.username%]</td>
+      </tr>
+      <tr>
+        <td class="h">Роль</td>
+        <td[%IF changed.company_role%] class="changed"[%END%]>[%current.body.company_role__v%]</td>
+      </tr>
+
+    </table>
+    [%ELSE%]
+      <p>Для данной организации данные об изменениях отсутствуют</p>
+    [%END%]
+  </body>
+</html>

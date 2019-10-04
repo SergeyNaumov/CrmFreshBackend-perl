@@ -1,0 +1,15 @@
+<table>
+  <tr>
+    <td>тип звонка</td>
+    <td>менеджер</td>
+    <td>начало звонка</td>
+    <td>ссылка на запись</td>
+  </tr>
+[%FOREACH c IN list%]
+  <tr>
+    <td>[%c.type%]</td>
+    <td>[%c.name%]</td>
+    <td>[%c.start%]</td>
+    <td>[%c.record%]</td>
+  </tr>
+[%END%]
