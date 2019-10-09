@@ -35,8 +35,6 @@ sub new{
   my $sth; my $list;
   unless($s->{config}){
       $s->{config}=$s->from_json($s->read_file('config.json'));
-      use Data::Dumper;
-      #return $s;
       foreach my $name (keys(%{$s->{config}->{connects}})){
         
           my $db=$s->{config}->{connects}->{$name}; $db->{name}=$name;

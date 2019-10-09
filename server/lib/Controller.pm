@@ -12,6 +12,7 @@ use CRM::AdminTree;
 use CRM::Multiconnect;
 use CRM::Password;
 use CRM::Wysiwyg;
+use CRM::Events;
 #use CRM::FontAwesome;
 my $redirect='';
 # Документация по CRM
@@ -103,6 +104,7 @@ sub new{
           
         }
       },
+
       {
         url=>'^\/startpage$',
         code=>sub{
@@ -110,8 +112,12 @@ sub new{
           $s->print(CRM::get_startpage('s'=>$s))->end;
         }
       },
-
-
+      {
+        url=>'/get-events',
+        code=>sub{
+          CRM::Events::process(shift);
+        }
+      },
       { # список фильтров для admin_table
         url=>'^\/get-filters\/(.+)$',
         code=>sub{
@@ -277,6 +283,21 @@ sub new{
             child_field_name=>$3,
             id=>$4,
             one_to_m_id=>$5
+          );
+        }
+      },
+      # 1_to_m: sort
+      {
+        url=>'^\/1_to_m\/sort\/([^\/]+)\/([^\/]+)\/(\d+)$',
+        code=>sub{
+          my $s=shift;
+          
+          CRM::process_1_to_m(
+            's'=>$s,
+            config=>$1,action=>'sort',
+            field_name=>$2,
+            script=>'1_to_m',
+            id=>$3
           );
         }
       },

@@ -16,5 +16,9 @@
             "dbname": "crm",
             "engine":"mysql"
         }
-    }
+    },
+    "events":[
+        "quiz"
+    ]
+
 }

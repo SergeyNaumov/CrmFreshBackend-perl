@@ -234,6 +234,63 @@ sub process{
       })->end;
       return;
     }
+    elsif($arg{action} eq 'sort'){
+
+          my $R=$s->request_content(from_json=>1);
+          my $sort_hash={};
+          if(!$field->{sort}){
+            push @{$form->{errors}},'сортировка запрещена'
+          }
+          if(!$R){
+            push @{$form->{errors}},'не передан JSON'
+          }
+          else{
+            if(!$R->{sort_hash}){
+              push @{$form->{errors}},'отсутствует параметр sort_hash'
+            }
+            else{
+              if(ref($R->{sort_hash}) ne 'HASH'){
+                push @{$form->{errors}},'sort_hash должен быть хешем'
+              }
+              $sort_hash=$R->{sort_hash};
+            }
+          }
+
+          my $query;
+          #use Data::Dumper;
+          #print Dumper($form->{errors});
+          unless ( scalar @{$form->{errors}} ){
+             # ошибок нет, сортируем
+             my $sort_field=$field->{sort_field}?$field->{sort_field}:'sort';
+             my $when_list='';
+             foreach my $id ( keys(%{$sort_hash}) ){
+              #print "id: $id=>$sort_hash->{$id}\n";
+                if($id=~m/^\d+$/ && $sort_hash->{$id}=~m/^\d+$/){
+                  $when_list.="WHEN $field->{table_id}=$id THEN '$sort_hash->{$id}'\n"
+                }
+              
+             }
+             $query="
+                UPDATE $field->{table}
+                  SET $sort_field=(
+                    CASE 
+                      $when_list
+                    END
+                  )
+               WHERE $field->{foreign_key}=$form->{id}";
+               $form->{db}->query(
+                  query=>$query,
+                  errors=>$form->{errors},
+                  debug=>1
+               );
+          }
+          
+          $s->print_json({
+            success=>scalar(@{$form->{errors}})?0:1,
+            sort_hash=>$R->{sort_hash},
+            errors=>$form->{errors},
+          })->end;
+    }
     else{ # insert, update
           my $R=$s->request_content(from_json=>1);
           if(!$R || !exists($R->{values}) || !$R->{values} || ref($R->{values}) ne 'HASH' || !scalar( keys %{$R->{values}} ) ){
@@ -304,14 +361,13 @@ sub process{
             }
             
           }
-          
-          my $response={
+
+          $s->print_json({
             success=>( scalar( @{$form->{errors}} ) )?0:1,
             errors=>$form->{errors},
             #id=>$id,
             values=>$data
-          };
-          $s->print_json($response)->end;      
+          })->end;      
     }
 
 }
@@ -385,11 +441,16 @@ sub get_1_to_m_data{
       my $where=$f->{where};
       $where.=' AND ' if($where);
       $where.="$f->{foreign_key}=$form->{id}";
+
       if($where!~m{\s*where\s+}i){
         $where="WHERE $where"
       }
 
       my $order=$f->{order};
+      if($f->{sort}){
+        $order=$f->{sort_field}?$f->{sort_field}:'sort'
+      }
+
       $order="ORDER BY $order" if($order && $order!~m{\s*order\s+by\s+});
 
       my $query="select * from $f->{table} $where $order";
