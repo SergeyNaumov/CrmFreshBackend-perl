@@ -46,6 +46,8 @@ sub processEditForm{
             $form->{read_only}=1;
             #$form->{edit_form_fields}=[]
         }
+
+
         foreach my $f (@{$form->{edit_form_fields}}){
             # убираем то, что пользователю видеть ни к чему
             if($f->{type} eq 'password'){
@@ -97,9 +99,9 @@ sub save_form{
         if(is_wt_field($f) && exists( $form->{new_values}->{$name} ) ){ # значения для work_table
             # проверки, преобразования перед сохранением
             my $v=$form->{new_values}->{$name};
+
             if($f->{type} eq 'date'){
-                
-                unless($v=~m/\d{4}-\d{4}-\d{4}/){
+                unless($v=~m/^\d{4}-\d{2}-\d{2}/){
                     if($form->{engine} eq 'mysql-strong' || $f->{empty_value} eq 'null'){
                         $v='func::NULL'
                     }
@@ -107,12 +109,14 @@ sub save_form{
                         $v='0000-00-00'
                     }
                 }
+
                 
             }
             elsif($f->{type} eq 'time'){
                 unless($v){
                     $v='00:00:00'
                 }
+                print "$f->{name}: $v\n";
             }
             elsif($f->{type} eq 'datetime'){
                 if(!$v || $v=~/^\s*$/){
@@ -124,6 +128,7 @@ sub save_form{
                     }
                 }
             }
+
             $save_hash->{$name}=$v
         }
     }
@@ -179,7 +184,7 @@ sub save_form{
 }
 sub is_wt_field{
     my $f=shift;
-    return ($f->{type}=~m/^(text|textarea|wysiwyg|select_from_table|select_values|date|datetime|yearmon|daymon|hidden|checkbox|switch|font-awesome)$/);
+    return ($f->{type}=~m/^(text|textarea|wysiwyg|select_from_table|select_values|date|time|datetime|yearmon|daymon|hidden|checkbox|switch|font-awesome)$/);
 }
 sub get_values_form{ # получаем старые значения для формы (до редактирования, )
     my %arg=@_;
@@ -201,10 +206,10 @@ sub get_values_form{ # получаем старые значения для ф�
             if($f->{type} eq 'password'){
                 delete $values->{$f->{name}};
             }
+
         }
         
     }
-
     foreach my $f (@{$form->{fields}}){
         next if($f->{type}=~m{^(filter_)});
         my $name=$f->{name};

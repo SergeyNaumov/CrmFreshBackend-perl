@@ -161,7 +161,9 @@ sub set_default_attributes{
       $f->{make_delete}=1 if(!exists($f->{make_delete}));
     }
     elsif($f->{type} eq 'select_values'){
-      
+      foreach my $v (@{$f->{values}}){
+        $v->{v}="$v->{v}";
+      }
     }
 
 

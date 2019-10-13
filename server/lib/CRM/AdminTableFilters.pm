@@ -26,6 +26,7 @@ sub get_filters{
           }
           elsif($f->{type}=~m{^(filter_extend_)?date$}){
             $f->{type}='date';
+
           }
           elsif($f->{type}=~m/^(filter_extend_)?select_from_table$/){
               $f->{type}='select';
@@ -41,10 +42,13 @@ sub get_filters{
             );
           }
 
-          if($f->{type} eq 'date'){ # для фильтра с типом date у нас всё время range по умолчанию
-            if($f->{filter_type} || ($f->{filter_type} eq 'range')){
-              $f->{range}=1
-            }
+          # для фильтра с типом date у нас всё время range по умолчанию
+          if($f->{type}=~m/^(date|time|datetime|daymon|yearmon)$/ && !defined($f->{filter_type})){ 
+            $f->{range}=1
+          }
+
+          if($f->{filter_type} eq 'range'){
+            $f->{range}=1
           }
 
           foreach my $k ( keys %{$f}){
@@ -52,7 +56,7 @@ sub get_filters{
               delete $f->{$k}
             }
           }
-          foreach my $k (qw(tablename db_name regexp tab table where table_id header_field value_field)){
+          foreach my $k (qw(tablename db_name regexp tab table where table_id header_field value_field filter_type empty_value)){
             delete $f->{$k}
           }
           push @{$filters},$f;

@@ -69,7 +69,7 @@ sub read_conf{
         run_event(event=>$f->{permissions},description=>'permissions for field:'.$f->{name},form=>$form);
       }
     }
-    
+
     return $form;
 
 }
