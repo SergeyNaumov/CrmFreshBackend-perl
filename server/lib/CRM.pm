@@ -27,8 +27,7 @@ sub get_startpage{
          errors=>$errors,
          tree_use=>1
     );
-    #{"left_menu":[{"target":null,"icon":"","id":"85","sort":"1","child":[{"url":"","type":"vue","params":"{\"config\":\"manager_menu\"}","header":"Меню CRM","target":null,"icon":"fa fa-address-book","id":"94","child":[{"url":"","header":"zz","params":"","type":"","icon":"","target":null,"path":"/94","child":[],"parent_id":"94","sort":"0","permission_id":null,"id":"106"}],"sort":"0","path":"/85","parent_id":"85","permission_id":null}],"parent_id":null,"path":"","permission_id":null,"url":"","type":"не выбрано","params":"","header":"CRM"},{"child":[{"url":"","header":"Новости","params":"{\"config\":\"news\"}","type":"vue","icon":"fa fa-newspaper","target":null,"permission_id":null,"child":[],"parent_id":"129","sort":"0","path":"/129","id":"130"},{"icon":"","target":null,"parent_id":"129","child":[],"path":"/129","sort":"0","permission_id":null,"id":"131","url":"","header":"Страны","params":"{\"config\":\"country\"}","type":"vue"},{"icon":"","target":null,"child":[],"path":"/129","parent_id":"129","sort":"0","permission_id":null,"id":"132","url":"","header":"Регионы","params":"","type":""}],"parent_id":null,"path":"","sort":"2","permission_id":null,"id":"129","icon":"","target":null,"params":"","header":"Контент","type":"","url":""}],"title":"CRM Digital Strateg","copyright":"copyright 2019 svcomplex","manager":{"id":"1","gone":"0","gone_date":"0000-00-00","current_role":"112","email":"","mobile_phone":"","group_id":"22","photo":"","login_tel":"","re_id":"0","born":"","login":"admin","phone_dob":"","enabled":"1","name":"Admin","phone":""},"errors":[]}
-    # Иконки material-design: https://material.io/resources/icons/?icon=settings_ethernet&style=baseline
+
 
 
     my $manager=$s->{db}->query(query=>'select * from manager where login=?',values=>[$s->{login}],onerow=>1);
