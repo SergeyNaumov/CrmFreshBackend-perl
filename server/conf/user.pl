@@ -12,7 +12,7 @@ $form={
       {
         description=>'Данные о компании',show=>1,filter_list=>
         [
-          'firm','otr_id','region_id','web'
+          'firm','otr_id','region_id','web','registered'
         ]
       },
     {

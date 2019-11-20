@@ -9,7 +9,13 @@ sub run_event{
     my $event=$arg{event};
     my $permissions_name=$arg{description}; 
     return unless($event);
+    if($arg{description} eq 'events->before_search'){
+      #use Data::Dumper;
+      #print Dumper({tables=>$arg{tables},where=>$arg{where}});
+    }
+
     if(ref($event) eq 'CODE'){
+
       my $result;
       if(ref($arg{'arg'}) eq 'ARRAY'){
         eval {$result=&{$event}(@{$arg{'arg'}})};
@@ -30,7 +36,8 @@ sub run_event{
     elsif(ref($event) eq 'ARRAY'){
       my $i=0;
       foreach my $e (@{$event}){
-        run_event(event=>$e,description=>$permissions_name."[".$i."]",form=>$arg{form});
+          run_event(event=>$e,description=>$permissions_name."[".$i."]",form=>$arg{form},arg=>$arg{'arg'});
+        
         $i++;
       }
     }

@@ -52,15 +52,32 @@ sub admin_table_find{ # Поиск результатов
         my $name=$values->[0];
         $form->{query_search}->{on_filters_hash}->{$name}=$values->[1];
     }
+    #use Data::Dumper;
+    #print Dumper($form->{query_search}->{on_filters_hash});
+
     get_search_tables($form,$R->{query});
+
     get_search_where($form,$R->{query});
-    #$s->pre([$R,$form->{query_search}]); 
+    #$s->pre($form->{query_search}); 
     # Формируем запрос
-    run_event($form->{events}->{before_search},'events.before_search');
+    #print "=======\n";
+    run_event(
+        event=>$form->{events}->{before_search},
+        description=>'events->before_search',
+        form=>$form,
+        arg=>[
+            tables=>join(" ",@{$form->{query_search}->{TABLES}}),
+            where=>join(" AND ",@{$form->{query_search}->{WHERE}})
+        ]
+    );
+
     my ($query,$query_count)=gen_query_search($form);
-    #$s->print($query);
-    #print "$query";
+    #print "$query_count\n\n";
     
+
+
+    #$query,$query_count)=gen_query_search($form);
+
     my $total_count=$s->{db}->query(query=>qq{select sum(cnt) from ($query_count) x},onevalue=>1,errors=>$form->{errors});
     $form->{SEARCH_RESULT}->{count_total}=$total_count;
     $form->{SEARCH_RESULT}->{count_pages}=($form->{not_perpage})?1:( ceil($total_count/$form->{perpage}) );
@@ -219,13 +236,16 @@ sub gen_query_search{
 
     my $query_count="SELECT count(*) cnt FROM ".join("\n",@{$qs->{TABLES}}).
         (
-            scalar(@{$qs->{WHERE}})?
-                (" WHERE ".join(' AND ',@{$qs->{WHERE}})):''
+            scalar(@{$qs->{WHERE}})?(" WHERE ".join(' AND ',@{$qs->{WHERE}})):''
         ).
         (
-            scalar(@{$qs->{GROUP}})?
-                (" GROUP BY ".join(', ',@{$qs->{GROUP}})):''
-        );
+            scalar(@{$qs->{GROUP}})?(" GROUP BY ".join(', ',@{$qs->{GROUP}})):''
+        )
+        .(
+            scalar(@{$qs->{HAVING}})?(" HAVING ".join(', ',@{$qs->{HAVING}})):''
+        )
+        ;
+
     return ($query,$query_count);
     
 }
@@ -269,7 +289,7 @@ sub get_search_tables{
         if($need_add_table){
             push @{$TABLES},$t_str ;
             my $desc=$form->{self}->{db}->query(query=>"desc $t->{table}",errors=>$form->{log});
-            #use Data::Dumper;
+            
             #print Dumper($desc);
             if($desc){
                 foreach my $db_field (@{$desc}){
