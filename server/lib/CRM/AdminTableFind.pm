@@ -242,7 +242,7 @@ sub gen_query_search{
             scalar(@{$qs->{GROUP}})?(" GROUP BY ".join(', ',@{$qs->{GROUP}})):''
         )
         .(
-            scalar(@{$qs->{HAVING}})?(" HAVING ".join(', ',@{$qs->{HAVING}})):''
+           $qs->{HAVING} && scalar(@{$qs->{HAVING}})?(" HAVING ".join(', ',@{$qs->{HAVING}})):''
         )
         ;
 

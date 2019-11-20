@@ -244,6 +244,7 @@ sub get_values_form{ # получаем старые значения для ф�
             $f->{after_html}=run_event(event=>$f->{code},description=>'code for '.$name,form=>$form,arg=>$f);
             #print "$f->{after_html}\n\n";
             #$f->{before_html}=&{$f->{code}}($f);
+            #$f->{before_html}=$f->{after_html}='ZZZZ';
         }
 
         #my $field=($f);

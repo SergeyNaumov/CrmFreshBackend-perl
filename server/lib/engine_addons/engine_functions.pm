@@ -81,25 +81,26 @@ sub template{
   my $opt=shift;
 
   #print Dumper($self);
-  unless(ref($opt)){
-    $opt={template=>$opt}
-  }
-  elsif($opt->{dir}){
+  #unless(ref($opt)){
+  #  $opt={template=>$opt}
+  #}
+  #elsif($opt->{dir}){
 
-    $opt->{dir}=$self->{vars}->{TEMPLATE_FOLDER}.$opt->{dir};
-  }
+    #$opt->{dir}='./views/';
+    #$self->{vars}->{TEMPLATE_FOLDER}.$opt->{dir};
+  #}
   unless($opt->{dir}){
     #print "opt: ".Dumper($opt);
     if($opt->{template}=~m/^(.+)\/([^\/]+)$/){
-      #print "1\n";
-      $opt->{dir}=$self->{vars}->{TEMPLATE_FOLDER}.$1;
+      $opt->{template}=~s/^\.?\///;
+      $opt->{dir}='./views/'.$1;
       $opt->{template}=$2;
     }
     else{
       #print "2\n";
       #print Dumper($self->{vars}->{TEMPLATE_FOLDER});
       $self->{vars}->{TEMPLATE_FOLDER}=$self->{vars}->{TEMPLATE_FOLDER} unless($self->{vars}->{TEMPLATE_FOLDER});
-      $opt->{dir}=$self->{vars}->{TEMPLATE_FOLDER};
+      $opt->{dir}='./views';
     }
 
   }
@@ -123,10 +124,10 @@ sub template{
       #EVAL_PERL=>1,
       RELATIVE=>1,
       FILTERS=>#$self->{template_filters}
-      {
-        get_url=>sub{return $_[0];},
+      #{
+        #get_url=>sub{return $_[0];},
         #safe_xss=>\&safe_xss
-      }
+      #}
 
   });
   my $output;
