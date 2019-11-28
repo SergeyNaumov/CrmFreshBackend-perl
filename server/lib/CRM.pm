@@ -56,10 +56,10 @@ sub get_result{
     admin_table_find($R);
 }
 
-sub process_form{
-
-    processEditForm(@_);
-}
+#sub process_form{
+#
+#    processEditForm(@_);
+#}
 sub process_memo{
   my %arg=@_; my $s=$arg{'s'};
   

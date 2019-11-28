@@ -152,7 +152,8 @@ sub new{
               $arg{values}=$R->{values} if($R->{values});
           }
 
-          CRM::process_form(%arg);
+          #CRM::process_form(%arg);
+          CRM::processEditForm(%arg)
         }
       },
       # tree

@@ -11,6 +11,7 @@ sub get_filters{
         return unless($form);
         create_fields_hash($form);
         my $filters=[];
+        my $order=1;
         foreach my $f (@{$form->{fields}}){ # собираем фильтры
           if(ref($f->{before_code}) eq 'CODE'){
             run_event(event=>$f->{before_code},description=>'before_code for '.$f->{name},form=>$form,arg=>$f);
@@ -59,6 +60,9 @@ sub get_filters{
           foreach my $k (qw(tablename db_name regexp tab table where table_id header_field value_field filter_type empty_value)){
             delete $f->{$k}
           }
+          if($f->{filter_on}){
+            $f->{order}=$order; $order++;
+          }
           push @{$filters},$f;
         }
 
@@ -85,7 +89,7 @@ sub get_filters{
           }
           #$filters=[];
         }
-        #print Dumper({filters=>$filters});
+        
         $request={
             success=>1,            
             title=>$form->{title},
@@ -95,6 +99,12 @@ sub get_filters{
             javascript=>exists($form->{javascript}->{admin_table})?$form->{javascript}->{admin_table}:'',
             filters_groups=>exists($form->{filters_groups})?$form->{filters_groups}:[],
             log=>$form->{log},
+            permissions=>{
+              make_create=>(!defined $form->{make_create} || $form->{make_create})?1:0,
+              make_delete=>(!defined $form->{make_create} || $form->{make_create})?1:0,
+              not_edit=>$form->{not_edit}?1:0
+            },
+            search_on_load=>$form->{search_on_load}?1:0,
             errors=>$form->{errors}
         };
     }

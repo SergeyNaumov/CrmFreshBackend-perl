@@ -22,7 +22,7 @@ sub read_conf{
         return undef;
     }
     $form->{errors}=[] unless($form->{errors});
-    create_fields_hash($form);
+    create_fields_hash($form); # Routine
     
     # test_login='admin'
     $form->{action}=$arg{action} if($arg{action});
@@ -51,7 +51,7 @@ sub read_conf{
     $form->{manager}=get_permissions_for(login=>$s->{login});
     $form->{self}=$s;
     
-    set_default_attributes($form);
+    set_default_attributes($form); # Routine
     
     if($form->{script} eq 'edit_form'){
       $form->{new_values}=$arg{values} if($form->{action}=~m/^(update|insert)$/);
