@@ -10,7 +10,13 @@ sub processEditForm{
 
     return unless($form);
     
-    
+    if($form->{action}=~m{^(insert|update)$}){
+        if(defined $form->{make_create} && !$form->{make_create}){
+            push @{$form->{errors}},"Вам запрещено создавать новые записи";
+            $form->{read_only}=1;
+        }
+    }
+
     if($form->{action}=~m/^(update|insert)$/){
         run_event(
             event=>$form->{events}->{permissions},
@@ -44,11 +50,6 @@ sub processEditForm{
     }
     else{
         if($form->{action}=~m{^(new|edit)$}){
-            
-
-            if(defined $form->{make_create} && !$form->{make_create}){
-                push @{$form->{errors}},"Вам запрещено создавать новые записи"
-            }
             if(scalar( @{$form->{errors}} ) ){
                 $form->{read_only}=1;
             }
