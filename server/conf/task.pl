@@ -1,12 +1,13 @@
 #$ENV{REMOTE_USER}='admin' if($ENV{REMOTE_USER} eq 'admin');
-use lib './lib';
-use coresubs;
-use send_mes;
-use tinymce_load_base64;
-use field_operations;
-use core_strateg;
-use lib './conf/task.conf';
-use permissions;
+# use lib './lib';
+# use coresubs;
+# use send_mes;
+# use tinymce_load_base64;
+# use field_operations;
+#use lib './lib/CRM';
+#use CRM::core_functions;
+# use lib './conf/task.conf';
+# use permissions;
 
 $form={
 	title => 'Задачи',
@@ -55,6 +56,7 @@ $form={
         
         # Добавляем в получаетели исполнителя
         my $to_task=param('to_task');
+        my $project;
         if($to_task=~m{^(\d+)$}){
             my $sth=$form->{dbh}->prepare("SELECT email from manager where id=?");
             $sth->execute($to_task);
@@ -72,7 +74,7 @@ $form={
               where p.id=?
             });
             $sth->execute($arg{project_id});
-            my $project=$sth->fetchrow_hashref;
+            $project=$sth->fetchrow_hashref;
             
             if($project->{email}){
               $to{$project->{email}}=1;
@@ -184,7 +186,7 @@ $form={
       sub{ # доступ в карту
 
 
-        tinymce_load_base64::init($form,'./files/task');
+        #tinymce_load_base64::init($form,'./files/task');
         if($form->{id}){
           my $sth=$form->{dbh}->prepare(q{
             SELECT
@@ -255,38 +257,38 @@ $form={
       
     },
     after_update=>sub{
-      
+      my $ns='';
+      my $os='';
       if($form->{new_values}->{status} && $form->{old_values}->{status} ne $form->{new_values}->{status}){
-          my $status_hash=field_operations::select_values_hash(name=>'status',form=>$form);
-          my $ns=$status_hash->{$form->{new_values}->{status}};
-          my $os=$status_hash->{$form->{old_values}->{status}};
+        my $status_hash=field_operations::select_values_hash(name=>'status',form=>$form);
+        $ns=$status_hash->{$form->{new_values}->{status}};
+        $os=$status_hash->{$form->{old_values}->{status}};
 
-          
-          my $link=&{$form->{run}->{get_link}};
-          
-          my $to_str=&{$form->{run}->{get_to_addr}};
-          if($to_str=~m{@}){
-              send_mes({
-                from=>'no-reply@crm.strateg.ru',
-                to=>$to_str,
-                subject=>qq{Задача №$form->{id} $form->{old_values}->{header} Статус: $ns},
-                message=>qq{
-                  Только что $form->{manager}->{name}<br>
-                  изменил статус задачи №$form->{id} <a href="$link">$form->{old_values}->{header}</a>:<br>
-                  $os => $ns
-                }
-              });
-          }
-          
-          if($form->{new_values}->{status}=~m{^(1|7)$}){
-            # если задача была выполнена исполнителем, но её переводят обратно в работу -- сбрасываем дату
-            $form->{dbh}->do("UPDATE task set complete_date2='0000-00-00 00:00:00' where id=$form->{id}");
-          }
-          if($form->{new_values}->{status}==5){
-            # если задача закрывается исполнителем -- проставляем дату закрытия
-            $form->{dbh}->do("UPDATE task set complete_date2=now() where id=$form->{id}");
-          }
-
+        
+        my $link=&{$form->{run}->{get_link}};
+        
+        my $to_str=&{$form->{run}->{get_to_addr}};
+        if($to_str=~m{@}){
+            send_mes({
+              from=>'no-reply@crm.strateg.ru',
+              to=>$to_str,
+              subject=>qq{Задача №$form->{id} $form->{old_values}->{header} Статус: $ns},
+              message=>qq{
+                Только что $form->{manager}->{name}<br>
+                изменил статус задачи №$form->{id} <a href="$link">$form->{old_values}->{header}</a>:<br>
+                $os => $ns
+              }
+            });
+        }
+        
+        if($form->{new_values}->{status}=~m{^(1|7)$}){
+          # если задача была выполнена исполнителем, но её переводят обратно в работу -- сбрасываем дату
+          $form->{dbh}->do("UPDATE task set complete_date2='0000-00-00 00:00:00' where id=$form->{id}");
+        }
+        if($form->{new_values}->{status}==5){
+          # если задача закрывается исполнителем -- проставляем дату закрытия
+          $form->{dbh}->do("UPDATE task set complete_date2=now() where id=$form->{id}");
+        }
       }
 
       my $to_task=$form->{new_values}->{to_task};
@@ -313,8 +315,7 @@ $form={
             изменил исполнителя задачи №$form->{id} <a href="$link">$form->{old_values}->{header}</a>:<br>
             $from_name => $to_name
           }
-        });
-        
+        });        
       }
 
 
@@ -403,7 +404,7 @@ $form={
           if($form->{action}=~m{^(new|insert)$}){
             $e->{value}=$form->{manager}->{id};
           }
-          my $list=core_strateg::select_managers_ids_from_perm($form,'task_customer');
+          my $list=select_managers_ids_from_perm($form,'task_customer');
           push @{$list},$e->{value} if($e->{value});
           $e->{where}='id IN ('.join(',',@{$list}).')';
 
@@ -426,17 +427,18 @@ $form={
 
         before_code=>sub{
           my $e=shift;
-          $e->{filter_value}=$form->{manager}->{id} if($form->{manager}->{permissions}->{task_performer});
+
+          $e->{value}=$form->{manager}->{id} if($form->{manager}->{permissions}->{task_performer});
+          #push @{$form->{log}},$e->{value};
           if($form->{is_admin} || $form->{manager}->{permissions}->{task_change_isp}){
+            #push @{$form->{log}},$e->{value};
             $e->{read_only}=0; $e->{regexp}='^\d+$';
           }
           
           # выводим только исполнителей
-          my $list=core_strateg::select_managers_ids_from_perm($form,'task_performer');
+          my $list=select_managers_ids_from_perm($form,'task_performer');
           push @{$list},$e->{value} if($e->{value});
           $e->{where}='id IN ('.join(',',@{$list}).')';
-          
-          
         },
         read_only=>1,
         filter_on=>1,
@@ -476,7 +478,7 @@ $form={
             #return $e->{value};
             $e->{field}=$e->{value}
           }
-          if(form->{is_owner} || $form->{manager}->{permissions}->{change_all_task}){
+          if($form->{is_owner} || $form->{manager}->{permissions}->{change_all_task}){
             $e->{field}.=qq{<p><a href="?config=$form->{config}&action=edit&id=$form->{id}&need_change_body=1">РЕДАКТИРОВАТЬ</a></p>}
           }
 
@@ -560,7 +562,7 @@ $form={
           $sth->execute($manager_id);
           my $m=$sth->fetchrow_hashref;
           my $to_addr=&{$form->{run}->{get_to_addr}};
-          $link=&{$form->{run}->{get_link}};
+          my $link=&{$form->{run}->{get_link}};
           unless($form->{old_values}->{header}){
             $form->{old_values}->{header}=$form->{new_values}->{header}
           }
@@ -636,12 +638,14 @@ $form={
           if($form->{action}=~m{^new$}){
             $e->{read_only}=>1
           }
+
           if($form->{manager}->{permissions}->{task_performer}){
-            $e->{filter_value}=[1,2,7] ;
+            $e->{value}=[1,2,7] ;
           }
           elsif($form->{manager}->{permissions}->{task_customer}){
-            $e->{filter_value}=[1,2,7,3,5];
+            $e->{value}=[1,2,7,3,5];
           }
+          #$form->{self}->pre($e);
           
         },
         code=>sub{

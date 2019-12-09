@@ -11,12 +11,10 @@ use strict;
 use utf8;
 use Data::Dumper;
 use experimental 'smartmatch';
+use core_functions;
 no warnings 'experimental::smartmatch';
 
 our $s; my $form;
-
-
-
 
 sub get_startpage{
     my $s=$Work::engine;

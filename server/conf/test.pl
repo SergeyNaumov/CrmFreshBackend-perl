@@ -2,8 +2,6 @@ $form={
     title=>'Возможности CRM',
     explain=>1,
     engine=>'mysql-strong', # default mysql
-    search_on_load=>0,
-    make_create=>0,
     default_find_filter=>'header',
     cols=>[
         [
@@ -23,12 +21,14 @@ $form={
             description=>'Wysiwyg',
             type=>'wysiwyg',
             name=>'wysiwyg',
+            
             tab=>'wysiwyg'
         },
         {
             description=>'Текстовое поле',
             type=>'text',
             name=>'header',
+            change_in_search=>1,
             tab=>'plain'
         },
        #  {
@@ -89,10 +89,8 @@ $form={
             description=>'Выбор из списка (select_values)',
             add_description=>'с цветами',
             type=>'select_values',
-            #colored=>1,
+            change_in_search=>1,
             read_only=>1,
-            value=>[4,2,1],
-            filter_on=>1,
             values=>[
                 {v=>'0',d=>'Другое',c=>'#FFFFFF'},
                 {v=>'1',d=>'Ждем материалы от клиента',c=>'#CC99FF'},
