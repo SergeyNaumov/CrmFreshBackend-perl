@@ -107,7 +107,7 @@ sub save_upload{
       my $full_path="$args{to}/$newname";
       if($newname){
         
-        move ($f->{tempname},$full_path)  || die($!);
+        move ($f->{tempname},$full_path)  || die("move $f->{tempname} to $full_path: $!");
         chmod 0644, $full_path;
       }
 

@@ -140,38 +140,38 @@ $form={
     #     tab=>'files',
     #     filedir=>'./files/test/files'
     #   },
-       #  {
-       #      description=>'1_to_m',
-       #      type=>'1_to_m',
-       #      name=>'onetom_test',
-       #      table=>'test_onetomany',
-       #      table_id=>'id',
-       #      foreign_key=>'test_id',
-       #      tab=>'one_to_m',
-       #      fields=>[
-       #          {
-       #              description=>'Телефон',
-       #              type=>'text',
-       #              name=>'phone',
-       #              replace_rules=>[
-       #                  '/^8/'=>'+7',
-       #              ],
-       #              regexp_rules=>[
-       #                  q{/^\+[0-9]+$/},'Номер телефона в формате: +7XXXXXXXXXX, например: +74951234567',
-       #                  #q{/^[0-9]+$/}=>'Допускаются только цифры',
-       #              ]
-       #          },
-       #          {
-       #              description=>'Файл',
-       #              type=>'file',
-       #              name=>'attach',
-       #              keep_orig_filename=>1,
-       #              filedir=>'./files/test',
-       #              read_only=>1,
-       #              preview=>'200x0'
-       #          }
-       #      ]
-       #  },
+        {
+            description=>'1_to_m',
+            type=>'1_to_m',
+            name=>'onetom_test',
+            table=>'test_onetomany',
+            table_id=>'id',
+            foreign_key=>'test_id',
+            tab=>'one_to_m',
+            fields=>[
+                {
+                    description=>'Телефон',
+                    type=>'text',
+                    name=>'phone',
+                    replace_rules=>[
+                        '/^8/'=>'+7',
+                    ],
+                    regexp_rules=>[
+                        q{/^\+[0-9]+$/},'Номер телефона в формате: +7XXXXXXXXXX, например: +74951234567',
+                        #q{/^[0-9]+$/}=>'Допускаются только цифры',
+                    ]
+                },
+                {
+                    description=>'Файл',
+                    type=>'file',
+                    name=>'attach',
+                    keep_orig_filename=>1,
+                    filedir=>'./files/test',
+                    read_only=>1,
+                    preview=>'200x0'
+                }
+            ]
+        },
         # {
         #     description=>'Соцсети',
         #     name=>'soc',

@@ -260,6 +260,15 @@ sub errors{ # возвращает tru если есть $form->{errors}
 }
 
 
-
+sub return_link{ # рутина для блока ссылок
+  # join '<br>', map { return_link($_) } @links;
+  my $e=shift;
+  my $style=''; my $onclick=''; my $id='';
+  $style="style='color: red;'" if($e->{mark});
+  $onclick=qq{onclick='$e->{cl}'} if($e->{cl});
+  $id=qq{id='$e->{id}'}if($e->{id});
+  return $e->{d} unless($e->{l});
+  return qq{<a href="$e->{l}" $style $onclick $id target="_blank">$e->{d}</a>};
+}
 
 return 1;
