@@ -176,7 +176,6 @@ sub get{
       $opt->{limit}=qq{$limit1,$opt->{perpage}};
   }
 
-
   my $query="SELECT $opt->{select_fields} FROM $opt->{table}";
   $query.=qq{ WHERE $opt->{where}} if($opt->{where});
   $query.=qq{ GROUP BY $opt->{group}} if($opt->{group});
@@ -196,17 +195,22 @@ sub get{
   }
   my $result;
   my $sth;
-  
+
   eval(q{
     $sth=$self->{connect}->prepare($query);
-    $sth->execute(@{$opt->{values}}) || die($sth->{error_str});
+    $sth->execute(@{$opt->{values}});
   });
+
   if($@){
-    my $err="Error_query:\n$query\n".Dumper($opt->{values});
+    my $err="Error_query:\n$query\n".Dumper($opt->{values}).";\nerror: $@";
     if($opt->{errors}){
-      push @{$opt->{errors}},
+      push @{$opt->{errors}},$err;
+      return undef;
     }
-    print $err;
+    else{
+      print $err; 
+    }
+    
 
   }
   if($opt->{onevalue}){

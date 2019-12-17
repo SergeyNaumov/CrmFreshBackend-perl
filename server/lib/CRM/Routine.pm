@@ -151,9 +151,11 @@ sub set_default_attributes{
   $form->{errors}=[] if(!$form->{errors} || ref($form->{errors} ne 'ARRAY'));
 
   foreach my $f (@{$form->{fields}}){
+    
     if(!$f->{name}){
       push @{$form->{errors}},qq{Обратитесь к разработчику: для элемента: description: $f->{description}, type: $f->{type} не указано name};
     }
+
     if($exists->{$f->{name}}){
       push @{$form->{errors}},"Обратитесь к разработчику: поле $f->{name} ($f->{description}) встречается повторно";
       return ;

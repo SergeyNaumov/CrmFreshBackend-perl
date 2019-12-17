@@ -52,7 +52,8 @@ sub read_conf{
       login=>get_cur_role(
         login=>$s->{login},
         config=>$config,
-        's'=>$s
+        's'=>$s,
+        errors=>$form->{errors}
       )
     );
     #push @{$form->{errors}},$form->{manager}->{login};
@@ -164,7 +165,8 @@ sub get_cur_role {
       WHERE m.login=?
     },
     values=>[$arg{login}],
-    onevalue=>1
+    onevalue=>1,
+    errors=>$arg{errors}
   );
   return ($r?$r:$arg{login})
 }

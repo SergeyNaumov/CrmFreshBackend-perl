@@ -24,36 +24,47 @@ sub process{
   my $s=$arg{s};
   my $R=$s->request_content(from_json=>1);
 
-  my $form=$arg{form}=CRM::read_conf(config=>$arg{config},script=>$arg{script},action=>$R->{action},id=>$R->{id});
-  
-  
-  
+  my $form=$arg{form}=CRM::read_conf(
+    config=>$arg{config},
+    script=>$arg{script},
+    action=>$R->{action},
+    id=>$R->{id}
+  );
   
 
   my $field=CRM::get_child_field(fields=>$form->{fields},name=>$arg{field_name});
+
   check_defaults(form=>$form,field=>$field);
 
   if($R->{action} eq 'get'){
+
     my $list=[]; my $value=[];
     my $where=$field->{relation_table_where};
     if($field->{tree_use}){
         $where.=' AND ' if($where);
         $where.=' parent_id is null'
     }
+
     my $list=$form->{db}->get(
       select_fields=>"$field->{relation_table_id} id, $field->{relation_save_table_header} header",
       table=>$field->{relation_table},
       where=>$where,
       order=>$field->{relation_tree_order},
       tree_use=>$field->{tree_use},
+      errors=>$form->{errors}
     );
+    use Data::Dumper;
+    print Dumper({list=>$list});
+
     
-
-
+    my $value=get_values(form=>$form,field=>$field);
+    if(scalar(@{$form->{errors}})){
+      $list=[]; $value=[];
+    }
     $s->print_json({
       success=>scalar(@{$form->{errors}})?0:1,
       list=>$list,
-      value=>get_values(form=>$form,field=>$field),
+      value=>$value,
       errors=>$form->{errors}
     })->end;
   }
