@@ -467,11 +467,11 @@ sub save{
         next unless(defined($value));
         if($opt->{update}){
           if($value=~m/^func::(.+)/){
-            push @fields,qq{$desc->{Field}=$1};
+            push @fields,qq{`$desc->{Field}`=$1};
             push @{$dumpdata},{$desc->{Field}=>$1};
           }
           else{
-            push @fields,qq{$desc->{Field}=?};
+            push @fields,qq{`$desc->{Field}`=?};
             push @values_exec,$value;
             push @{$dumpdata},{$desc->{Field}=>$value};
           }

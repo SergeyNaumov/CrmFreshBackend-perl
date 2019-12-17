@@ -21,12 +21,14 @@ $form={
             description=>'Wysiwyg',
             type=>'wysiwyg',
             name=>'wysiwyg',
+            
             tab=>'wysiwyg'
         },
         {
             description=>'Текстовое поле',
             type=>'text',
             name=>'header',
+            change_in_search=>1,
             tab=>'plain'
         },
        #  {
@@ -48,64 +50,65 @@ $form={
        #      name=>'switch',
        #      tab=>'plain'
        #  },
+        # {
+        #     description=>'Дата (date)',
+        #     type=>'date',
+        #     name=>'f_date',
+        #     empty_value=>'null',
+        #     tab=>'timing'
+        # },
+        # {
+        #     description=>'Время (time)',
+        #     type=>'time',
+        #     name=>'f_time',
+        #     tab=>'timing'
+        # },
+        # {
+        #     description=>'Дата и время (datetime)',
+        #     type=>'datetime',
+        #     name=>'f_datetime',
+        #     empty_value=>'null',
+        #     tab=>'timing'
+        # },
+        # {
+        #     description=>'Год и месяц (yearmon)',
+        #     type=>'yearmon',
+        #     name=>'f_yearmon',
+        #     empty_value=>'null',
+        #     tab=>'timing'
+        # },
+        # {
+        #     description=>'День и месяц (daymon)',
+        #     type=>'daymon',
+        #     name=>'f_daymon',
+        #     empty_value=>'null',
+        #     tab=>'timing'
+        # },
         {
-            description=>'Дата (date)',
-            type=>'date',
-            name=>'f_date',
-            empty_value=>'null',
-            tab=>'timing'
+            name=>'status',
+            description=>'Выбор из списка (select_values)',
+            add_description=>'с цветами',
+            type=>'select_values',
+            change_in_search=>1,
+            read_only=>1,
+            values=>[
+                {v=>'0',d=>'Другое',c=>'#FFFFFF'},
+                {v=>'1',d=>'Ждем материалы от клиента',c=>'#CC99FF'},
+                {v=>'2',d=>'Сделать медиаплан',c=>'#FFFF00'},
+                {v=>'3',d=>'Сделать креатив',c=>'#FF0000'},
+                {v=>'4',d=>'Работа с сайтом',c=>'#99CCFF'},
+                {v=>'5',d=>'Мониторить рекламу',c=>'#CCFFCC'},
+                {v=>'6',d=>'Сделать отчет',c=>'#FF6600'},
+                {v=>'7',d=>'Работа закончена',c=>'#DDDDDD'},
+                {v=>'8',d=>'Отправлять напоминание',c=>'#24FF00'},
+                {v=>'9',d=>'Выставлен счёт',c=>'#99CCFF'},
+                {v=>'10',d=>'Переговоры по продлению',c=>'#800080'},
+                {v=>'11',d=>'Сделать конкурентный анализ',c=>'#84193C'},
+                {v=>'12',d=>'Согласование УТП',c=>'#164775'},
+                {v=>'13',d=>'Совместная работа',c=>'#c1f498'},
+            ],
+            tab=>'plain'
         },
-        {
-            description=>'Время (time)',
-            type=>'time',
-            name=>'f_time',
-            tab=>'timing'
-        },
-        {
-            description=>'Дата и время (datetime)',
-            type=>'datetime',
-            name=>'f_datetime',
-            empty_value=>'null',
-            tab=>'timing'
-        },
-        {
-            description=>'Год и месяц (yearmon)',
-            type=>'yearmon',
-            name=>'f_yearmon',
-            empty_value=>'null',
-            tab=>'timing'
-        },
-        {
-            description=>'День и месяц (daymon)',
-            type=>'daymon',
-            name=>'f_daymon',
-            empty_value=>'null',
-            tab=>'timing'
-        },
-       #  {
-       #      name=>'status',
-       #      description=>'Выбор из списка (select_values)',
-       #      add_description=>'с цветами',
-       #      type=>'select_values',
-       #      colored=>1,
-       #      values=>[
-       #          {v=>'0',d=>'Другое',c=>'#FFFFFF'},
-       #          {v=>'1',d=>'Ждем материалы от клиента',c=>'#CC99FF'},
-       #          {v=>'2',d=>'Сделать медиаплан',c=>'#FFFF00'},
-       #          {v=>'3',d=>'Сделать креатив',c=>'#FF0000'},
-       #          {v=>'4',d=>'Работа с сайтом',c=>'#99CCFF'},
-       #          {v=>'5',d=>'Мониторить рекламу',c=>'#CCFFCC'},
-       #          {v=>'6',d=>'Сделать отчет',c=>'#FF6600'},
-       #          {v=>'7',d=>'Работа закончена',c=>'#DDDDDD'},
-       #          {v=>'8',d=>'Отправлять напоминание',c=>'#24FF00'},
-       #          {v=>'9',d=>'Выставлен счёт',c=>'#99CCFF'},
-       #          {v=>'10',d=>'Переговоры по продлению',c=>'#800080'},
-       #          {v=>'11',d=>'Сделать конкурентный анализ',c=>'#84193C'},
-       #          {v=>'12',d=>'Согласование УТП',c=>'#164775'},
-       #          {v=>'13',d=>'Совместная работа',c=>'#c1f498'},
-       #      ],
-       #      tab=>'plain'
-       #  },
        #  { # Memo
        #      # Комментарий 
        #      description=>'Комментарий',
@@ -130,71 +133,71 @@ $form={
        #      make_edit=>1,
        #      tab=>'memo'
        #  },
-      {
-        description=>'Файл',
-        type=>'file',
-        name=>'file',
-        tab=>'files',
-        filedir=>'./files/test/files'
-      },
-       #  {
-       #      description=>'1_to_m',
-       #      type=>'1_to_m',
-       #      name=>'onetom_test',
-       #      table=>'test_onetomany',
-       #      table_id=>'id',
-       #      foreign_key=>'test_id',
-       #      tab=>'one_to_m',
-       #      fields=>[
-       #          {
-       #              description=>'Телефон',
-       #              type=>'text',
-       #              name=>'phone',
-       #              replace_rules=>[
-       #                  '/^8/'=>'+7',
-       #              ],
-       #              regexp_rules=>[
-       #                  q{/^\+[0-9]+$/},'Номер телефона в формате: +7XXXXXXXXXX, например: +74951234567',
-       #                  #q{/^[0-9]+$/}=>'Допускаются только цифры',
-       #              ]
-       #          },
-       #          {
-       #              description=>'Файл',
-       #              type=>'file',
-       #              name=>'attach',
-       #              keep_orig_filename=>1,
-       #              filedir=>'./files/test',
-       #              read_only=>1,
-       #              preview=>'200x0'
-       #          }
-       #      ]
-       #  },
+    #   {
+    #     description=>'Файл',
+    #     type=>'file',
+    #     name=>'file',
+    #     tab=>'files',
+    #     filedir=>'./files/test/files'
+    #   },
         {
-            description=>'Соцсети',
-            name=>'soc',
-            
+            description=>'1_to_m',
             type=>'1_to_m',
-            table=>'test_social',
+            name=>'onetom_test',
+            table=>'test_onetomany',
             table_id=>'id',
             foreign_key=>'test_id',
             tab=>'one_to_m',
             fields=>[
-              {
-                description=>'Соцсеть',
-                type=>'select_values',
-                name=>'social_id',
-                values=>[
-                  {v=>1,d=>'vk'},
-                  {v=>2,d=>'ok'},
-                  {v=>3,d=>'facebook'},
-                ]
-              },
-              {
-                description=>'ссылка на профиль',
-                name=>'profile',
-                type=>'textarea',
-              }
+                {
+                    description=>'Телефон',
+                    type=>'text',
+                    name=>'phone',
+                    replace_rules=>[
+                        '/^8/'=>'+7',
+                    ],
+                    regexp_rules=>[
+                        q{/^\+[0-9]+$/},'Номер телефона в формате: +7XXXXXXXXXX, например: +74951234567',
+                        #q{/^[0-9]+$/}=>'Допускаются только цифры',
+                    ]
+                },
+                {
+                    description=>'Файл',
+                    type=>'file',
+                    name=>'attach',
+                    keep_orig_filename=>1,
+                    filedir=>'./files/test',
+                    read_only=>1,
+                    preview=>'200x0'
+                }
             ]
         },
+        # {
+        #     description=>'Соцсети',
+        #     name=>'soc',
+            
+        #     type=>'1_to_m',
+        #     table=>'test_social',
+        #     table_id=>'id',
+        #     foreign_key=>'test_id',
+        #     tab=>'one_to_m',
+        #     fields=>[
+        #       {
+        #         description=>'Соцсеть',
+        #         type=>'select_values',
+        #         name=>'social_id',
+        #         values=>[
+        #           {v=>1,d=>'vk'},
+        #           {v=>2,d=>'ok'},
+        #           {v=>3,d=>'facebook'},
+        #         ]
+        #       },
+        #       {
+        #         description=>'ссылка на профиль',
+        #         name=>'profile',
+        #         type=>'textarea',
+        #       }
+        #     ]
+        # },
     ]
 };

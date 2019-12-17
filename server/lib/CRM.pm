@@ -11,12 +11,10 @@ use strict;
 use utf8;
 use Data::Dumper;
 use experimental 'smartmatch';
+use core_functions;
 no warnings 'experimental::smartmatch';
 
 our $s; my $form;
-
-
-
 
 sub get_startpage{
     my $s=$Work::engine;
@@ -55,10 +53,10 @@ sub get_result{
     admin_table_find($R);
 }
 
-sub process_form{
-
-    processEditForm(@_);
-}
+#sub process_form{
+#
+#    processEditForm(@_);
+#}
 sub process_memo{
   my %arg=@_; my $s=$arg{'s'};
   

@@ -22,7 +22,7 @@ sub read_conf{
         return undef;
     }
     $form->{errors}=[] unless($form->{errors});
-    create_fields_hash($form);
+    create_fields_hash($form); # Routine
     
     # test_login='admin'
     $form->{action}=$arg{action} if($arg{action});
@@ -48,10 +48,18 @@ sub read_conf{
     $form->{work_table}=$config if(!$form->{work_table});
     $form->{work_table_id}='id' if(!$form->{work_table_id});
     
-    $form->{manager}=get_permissions_for(login=>$s->{login});
+    $form->{manager}=get_permissions_for(
+      login=>get_cur_role(
+        login=>$s->{login},
+        config=>$config,
+        's'=>$s
+      )
+    );
+    #push @{$form->{errors}},$form->{manager}->{login};
+#    print "login: $form->{manager}->{login}\n";
     $form->{self}=$s;
     
-    set_default_attributes($form);
+    set_default_attributes($form); # Routine
     
     if($form->{script} eq 'edit_form'){
       $form->{new_values}=$arg{values} if($form->{action}=~m/^(update|insert)$/);
@@ -86,7 +94,7 @@ sub get_permissions_for{
         manager m
         LEFT JOIN manager_group mg ON (m.group_id = mg.id)
         LEFT JOIN manager ow ON (mg.owner_id = ow.id) 
-      WHERE m.login = ?},values=>[$arg{login}],onerow=>1);
+      WHERE m.login = ?},values=>[$arg{login}],onerow=>1,log=>$arg{form}->{log});
 
     delete $manager->{password};
     # Собираем права менеджера:
@@ -139,5 +147,25 @@ sub get_permissions_for{
     #   $manager->{optimize_permissions}->{$p->{pname}}=$p->{id};
     # }
     return $manager;
+}
+sub get_cur_role {
+  my %arg=@_;
+  if($arg{config} eq 'manager'){ # в инструменте manager роли орининальные
+    return $arg{login};
+  }
+  my $r=$arg{'s'}->{db}->query(
+    query=>q{
+      SELECT
+        m2.login
+      FROM
+        manager m
+        JOIN manager_role mr ON (m.id = mr.manager_id)
+        JOIN manager m2  ON (m2.id = mr.role AND m.current_role = m2.id)
+      WHERE m.login=?
+    },
+    values=>[$arg{login}],
+    onevalue=>1
+  );
+  return ($r?$r:$arg{login})
 }
 return 1;

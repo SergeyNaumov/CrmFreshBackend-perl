@@ -7,9 +7,16 @@ sub processEditForm{
     #$CRM::s=$s;
     
     my $form=CRM::read_conf(%arg);
+
     return unless($form);
     
-    #print "zz! $form->{action}\n";
+    if($form->{action}=~m{^(insert|update)$}){
+        if(defined $form->{make_create} && !$form->{make_create}){
+            push @{$form->{errors}},"Вам запрещено создавать новые записи";
+            $form->{read_only}=1;
+        }
+    }
+
     if($form->{action}=~m/^(update|insert)$/){
         run_event(
             event=>$form->{events}->{permissions},
@@ -42,9 +49,10 @@ sub processEditForm{
         });
     }
     else{
-        if($form->{action}=~m{^(new|edit)$} && scalar( @{$form->{errors}} )) {
-            $form->{read_only}=1;
-            #$form->{edit_form_fields}=[]
+        if($form->{action}=~m{^(new|edit)$}){
+            if(scalar( @{$form->{errors}} ) ){
+                $form->{read_only}=1;
+            }
         }
 
 
