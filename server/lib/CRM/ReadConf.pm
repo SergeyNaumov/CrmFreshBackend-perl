@@ -12,15 +12,19 @@ sub read_conf{
     my %arg=@_;
     my $config=$arg{config}; my $s=$Work::engine;
     my $form;
-    my $data=$s->template({dir=>'./conf',template=>'./conf/'.$config.'.pl'});
-    
-    eval($data);
-    
-    if($@){
-        #$s->print($@.'<hr>');
-        error_eval($@,$data,$s);
-        return undef;
+    if(-f './conf/'.$config.'.pl'){
+      my $data=$s->template({dir=>'./conf',template=>'./conf/'.$config.'.pl'});
+      eval($data);
+      if($@){
+          #$s->print($@.'<hr>');
+          error_eval($@,$data,$s);
+          return undef;
+      }
     }
+    else{
+      push @{$form->{errors}},qq{config $config not found!};
+    }
+
     $form->{errors}=[] unless($form->{errors});
     create_fields_hash($form); # Routine
     

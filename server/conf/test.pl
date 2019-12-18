@@ -125,6 +125,8 @@ $form={
           relation_table_id=>'id',
           relation_save_table_id_worktable=>'test_id',
           relation_save_table_id_relation=>'tag_id',
+          make_add=>1,
+          view_only_selected=>1,
           before_code=>sub{
           },
           tab=>'tags'

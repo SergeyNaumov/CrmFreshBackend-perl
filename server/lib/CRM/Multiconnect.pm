@@ -23,22 +23,113 @@ sub process{
   my %arg=@_;
   my $s=$arg{s};
   my $R=$s->request_content(from_json=>1);
-
+  $R={} if(!$R);
   my $form=$arg{form}=CRM::read_conf(
     config=>$arg{config},
     script=>$arg{script},
     action=>$R->{action},
-    id=>$R->{id}
+    id=>"$R->{id}"
   );
   
 
   my $field=CRM::get_child_field(fields=>$form->{fields},name=>$arg{field_name});
 
   check_defaults(form=>$form,field=>$field);
+    #use Data::Dumper;
+  if($R->{action} eq 'add_tag' && $R->{header}){
+    # добавление нового тэга
+    unless($R->{header}){
+      push @{$form->{errors}},'Новый тэг не указан';
+    }
+    my $tag_id;
+    unless(scalar(@{$form->{errors}})){
+      $tag_id=$form->{db}->get(
+        select_fields=>qq{$field->{relation_table_id}},
+        table=>$field->{relation_table},
+        where=>qq{$field->{relation_table_header}=?},
+        values=>[$R->{header}],
+        onevalue=>1,
+        errors=>$form->{errors},
+      );
+    }
+    #print "1 tag_id: $tag_id $field->{relation_table}.$field->{relation_table_header}=>$R->{header}\n";
 
-  if($R->{action} eq 'get'){
+    if(!$tag_id && !scalar(@{$form->{errors}})){
+      $tag_id=$form->{db}->save(
+        table=>$field->{relation_table},
+        data=>{
+          $field->{relation_table_header}=>$R->{header}
+        },
+        debug=>1,
+        #log=>$form->{log},
+        #errors=>$form->{errors}
+      );
+    }
+    # my $list=[]; my $value=[];
+    # if(!scalar(@{$form->{errors}})){
+    #   get(field=>$field,form=>$form,list=>$list,value=>$value);
+    # }
+    
 
+    #print "2 tag_id: $tag_id\n";
+    $s->print_json({
+      success=>scalar(@{$form->{errors}})?0:1,
+      tag_id=>$tag_id,
+      #list=>$list,
+      #value=>$value,
+      errors=>$form->{errors},
+      log=>$form->{log}
+    })->end;
+
+
+  }
+  elsif($R->{action} eq 'autocomplete'){
+    my $list;
+
+    $list=$form->{db}->get(
+      select_fields=>qq{$field->{relation_table_id} v, $field->{relation_table_header} d},
+      table=>$field->{relation_table},
+      where=>qq{$field->{relation_table_header} like ?},
+      values=>['%'.$R->{header}.'%'],
+      errors=>$form->{errors}
+    );
+    my $exists_tag=$form->{db}->get(
+      select_fields=>qq{count(*) cnt},
+      table=>$field->{relation_table},
+      where=>qq{$field->{relation_table_header}=?},
+      values=>[$R->{header}],
+      onevalue=>1,
+      errors=>$form->{errors},
+    );
+
+    $s->print_json({
+      success=>scalar(@{$form->{errors}})?0:1,
+      list=>$list,
+      exists_tag=>$exists_tag,
+      errors=>$form->{errors}
+    })->end;
+
+  }
+  elsif($R->{action} eq 'get'){
     my $list=[]; my $value=[];
+    ($list,$value)=get(field=>$field,form=>$form,list=>$list,value=>$value);
+    
+    $s->print_json({
+      success=>scalar(@{$form->{errors}})?0:1,
+      list=>$list,
+      value=>$value,
+      errors=>$form->{errors}
+    })->end;
+  }
+
+
+
+}
+
+sub get{
+    my %arg=@_;
+    my $form=$arg{form}; my $field=$arg{field};;
+    
     my $where=$field->{relation_table_where};
     if($field->{tree_use}){
         $where.=' AND ' if($where);
@@ -53,24 +144,15 @@ sub process{
       tree_use=>$field->{tree_use},
       errors=>$form->{errors}
     );
-    use Data::Dumper;
-    print Dumper({list=>$list});
+
+
 
     
     my $value=get_values(form=>$form,field=>$field);
     if(scalar(@{$form->{errors}})){
       $list=[]; $value=[];
     }
-    $s->print_json({
-      success=>scalar(@{$form->{errors}})?0:1,
-      list=>$list,
-      value=>$value,
-      errors=>$form->{errors}
-    })->end;
-  }
-
-
-
+    return $list,$value;
 }
 sub save{ # вызывается из EditForm
     my %arg=@_; my $form=$arg{form}; my $field=$arg{field};

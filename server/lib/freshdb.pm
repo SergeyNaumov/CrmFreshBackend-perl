@@ -547,7 +547,12 @@ sub save{
     }
     
   }
-  $sth->{mysql_insertid} unless($opt->{update} || $opt->{replace}); # changed by fdds, 2017-12-11
+
+  if(!$opt->{update} && !$opt->{replace}){
+    return $sth->{mysql_insertid}
+  }
+  return undef;
+
 }
 
 sub safe_xss{
