@@ -152,10 +152,11 @@ sub new{
               $arg{values}=$R->{values} if($R->{values});
           }
 
-          #CRM::process_form(%arg);
+          print "a: $arg{action}\n";
           CRM::processEditForm(%arg)
         }
       },
+
       # tree
       {
         url=>'^/admin-tree\/(.+)$',
@@ -202,6 +203,7 @@ sub new{
           );
         }
       },
+
       # -------------------
       #    1_TO_M
       # -------------------

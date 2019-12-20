@@ -27,29 +27,11 @@ $form={
 			description => 'Название',
 			type => 'text',
 		},
-		{
-			name => 'anons',
-			description => 'Краткий текст',
-			type => 'wysiwyg',
-		},
-		{
-			name => 'body',
-			description => 'Текст',
-			type => 'wysiwyg',
-		},
-    {
-      description=>'Дата создания',
-      name=>'registered',
-      type=>'date',
-	  empty_value=>'null',
-      before_code=>sub{
-        my $e=shift;
-		#push @{$form->{log}},"action: $form->{action}; id: $form->{id}\n";
-		#if($form->{action}=~m{^(insert|new)$})
-        if($form->{action} eq 'insert'){
-          $e->{read_only}=0
+        {
+            description=>'Фото',
+            name=>'attach',
+            type=>'file',
+            
         }
-      }
-    }
 	]
 };

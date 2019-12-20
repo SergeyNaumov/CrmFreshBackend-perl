@@ -48,6 +48,9 @@ sub processEditForm{
             id=>"$form->{id}"
         });
     }
+    elsif($form->{action} eq 'upload_file'){
+        UploadFile(form=>$form,'s'=>$s);
+    }
     else{
         if($form->{action}=~m{^(new|edit)$}){
             if(scalar( @{$form->{errors}} ) ){
@@ -263,5 +266,50 @@ sub get_values_form{ # получаем старые значения для ф�
     }
     return $values;
 }
+
+sub UploadFile{
+    my %arg=@_;
+    my $s=$arg{'s'}; my $form=$arg{form}; my $R=$s->request_content(from_json=>1);
+    my $name=$R->{name}; my $value=R->{value};
+
+    my @errors=();
+    push @errors, 'не указано name'  unless($name);
+    push @errors, 'не указано value' unless($value);
+    my $field=$form->{fields_hash}->{$name};
+    push @errors, "не найдено поле $name" unless($field);
+
+    if(!errors($form)){
+        
+        
+        $s->print_json({
+                    
+                    success=>scalar(@{$errors})?0:1,
+                    errors=>$errors,
+                    
+        });
+
+        #my $crops=$value->{crops};
+        if($crops){
+            foreach my $r (@{$field->{resize}}){
+                my ($width,$height)=split /x/,$r->{size};
+            }
+        #     foreach my $c (@{$crops}){
+        #         # $c->{data} $c->{width} $c->{height}
+        #         if($c->{width} eq ){
+
+        #         }
+        #     }
+        # }
+        # else{
+
+        }
+
+        
+    }
+
+    #$s->pre($form->{fields_hash}->{$R->{name}});
+    #$s->pre($R);
+}
+
 
 return 1;
