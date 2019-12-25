@@ -1,5 +1,6 @@
 use utf8;
 use strict;
+use CRM::FormFiles;
 sub processEditForm{
     my %arg=@_;
     my $s=$Work::engine;
@@ -48,8 +49,11 @@ sub processEditForm{
             id=>"$form->{id}"
         });
     }
-    elsif($form->{action} eq 'upload_file'){
-        UploadFile(form=>$form,'s'=>$s);
+    elsif($form->{action} eq 'delete_file'){
+        DeleteFile(form=>$form,'s'=>$s);
+    }
+    elsif($form->{action} eq 'load_base64_file'){
+        LoadBase64(form=>$form,'s'=>$s);
     }
     else{
         if($form->{action}=~m{^(new|edit)$}){
@@ -69,6 +73,22 @@ sub processEditForm{
                     }
                 }
 
+            }
+            elsif($f->{type} eq 'file' && $f->{value}){
+                my $v=$f->{value};
+                my ($filename_without_ext,$ext);
+                if($v=~m/^(.+)\.([^\.]+)$/){
+                    ($filename_without_ext,$ext)=($1,$2);
+                }
+                if($f->{resize}){
+                    foreach my $r (@{$f->{resize}}){
+                        my $file=$r->{file};
+                        $file=~s/<%filename_without_ext%>/$filename_without_ext/g;
+                        $file=~s/<%ext%>/$ext/g;
+                        $r->{loaded}=$f->{filedir}.'/'.$file;
+                        $r->{loaded}=~s/^\.\//\//;
+                    }
+                }
             }
             #elsif($f->{type} eq 'select_from_table'){
             #    $f->{values}=get_values_for_select_from_table($f,$form,$s);
@@ -180,14 +200,7 @@ sub save_form{
                     new_values=>$form->{new_values}->{$f->{name}}
                 );
             }
-            
         }
-        elsif($f->{type} eq 'file'){ # Сохраняем файл
-
-        }
-        
-
-
     }
 
 
@@ -195,7 +208,7 @@ sub save_form{
 }
 sub is_wt_field{
     my $f=shift;
-    return ($f->{type}=~m/^(text|textarea|wysiwyg|select_from_table|select_values|date|time|datetime|yearmon|daymon|hidden|checkbox|switch|font-awesome)$/);
+    return ($f->{type}=~m/^(text|textarea|wysiwyg|select_from_table|select_values|date|time|datetime|yearmon|daymon|hidden|checkbox|switch|font-awesome|file)$/);
 }
 sub get_values_form{ # получаем старые значения для формы (до редактирования, )
     my %arg=@_;
@@ -226,8 +239,10 @@ sub get_values_form{ # получаем старые значения для ф�
         my $name=$f->{name};
 
         if(defined($values->{$name}) && is_wt_field($f) ){ # $f->{type}=~m{^(date|datetime|select_from_table|hidden|select_from_table|select_values|text|checkbox|switch|textarea)$}
-            $f->{value}=$values->{$name}
+            $f->{value}=$values->{$name};
+            
         }
+
         
         if($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_from_table'){
             $f->{type_orig}=$f->{type}; $f->{type}='select'; 
@@ -267,49 +282,6 @@ sub get_values_form{ # получаем старые значения для ф�
     return $values;
 }
 
-sub UploadFile{
-    my %arg=@_;
-    my $s=$arg{'s'}; my $form=$arg{form}; my $R=$s->request_content(from_json=>1);
-    my $name=$R->{name}; my $value=R->{value};
-
-    my @errors=();
-    push @errors, 'не указано name'  unless($name);
-    push @errors, 'не указано value' unless($value);
-    my $field=$form->{fields_hash}->{$name};
-    push @errors, "не найдено поле $name" unless($field);
-
-    if(!errors($form)){
-        
-        
-        $s->print_json({
-                    
-                    success=>scalar(@{$errors})?0:1,
-                    errors=>$errors,
-                    
-        });
-
-        #my $crops=$value->{crops};
-        if($crops){
-            foreach my $r (@{$field->{resize}}){
-                my ($width,$height)=split /x/,$r->{size};
-            }
-        #     foreach my $c (@{$crops}){
-        #         # $c->{data} $c->{width} $c->{height}
-        #         if($c->{width} eq ){
-
-        #         }
-        #     }
-        # }
-        # else{
-
-        }
-
-        
-    }
-
-    #$s->pre($form->{fields_hash}->{$R->{name}});
-    #$s->pre($R);
-}
 
 
 return 1;

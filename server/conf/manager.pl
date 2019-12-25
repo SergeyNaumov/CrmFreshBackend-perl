@@ -354,8 +354,9 @@ $form={
               #$e->{read_only}=1 unless($form->{manager}->{permissions}->{make_change_permissions});
       },
       description=>'Права менеджеров',
-      type=>'relation_tree',
-      tree_table=>'permissions',
+      type=>'multiconnect',
+      
+      #tree_table=>'permissions',
       name=>'permissions',
       relation_table=>'permissions',
       relation_save_table=>'manager_permissions',
@@ -365,9 +366,9 @@ $form={
       relation_save_table_id_worktable=>'manager_id',
       relation_save_table_id_relation=>'permissions_id',
       before_code=>sub{
-#        my $e=shift;
-#        pre($e);
+
       },
+      tree_use=>1,
       tab=>'permissions'
     },
     # {

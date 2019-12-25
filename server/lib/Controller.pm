@@ -151,8 +151,7 @@ sub new{
               $arg{action}=$R->{action} if($R->{action});
               $arg{values}=$R->{values} if($R->{values});
           }
-
-          print "a: $arg{action}\n";
+          #print "a: $arg{action}\n";
           CRM::processEditForm(%arg)
         }
       },

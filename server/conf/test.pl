@@ -32,59 +32,60 @@ $form={
             change_in_search=>1,
             tab=>'plain'
         },
-       #  {
-       #      description=>'Textarea',
-       #      type=>'textarea',
-       #      name=>'textarea',
-       #      full_str=>1,
-       #      tab=>'plain'
-       #  },
-       #  {
-       #      description=>'checkbox',
-       #      type=>'checkbox',
-       #      name=>'checkbox',
-       #      tab=>'plain'
-       #  },
-       #  {
-       #      description=>'switch',
-       #      type=>'switch',
-       #      name=>'switch',
-       #      tab=>'plain'
-       #  },
-        # {
-        #     description=>'Дата (date)',
-        #     type=>'date',
-        #     name=>'f_date',
-        #     empty_value=>'null',
-        #     tab=>'timing'
-        # },
-        # {
-        #     description=>'Время (time)',
-        #     type=>'time',
-        #     name=>'f_time',
-        #     tab=>'timing'
-        # },
-        # {
-        #     description=>'Дата и время (datetime)',
-        #     type=>'datetime',
-        #     name=>'f_datetime',
-        #     empty_value=>'null',
-        #     tab=>'timing'
-        # },
-        # {
-        #     description=>'Год и месяц (yearmon)',
-        #     type=>'yearmon',
-        #     name=>'f_yearmon',
-        #     empty_value=>'null',
-        #     tab=>'timing'
-        # },
-        # {
-        #     description=>'День и месяц (daymon)',
-        #     type=>'daymon',
-        #     name=>'f_daymon',
-        #     empty_value=>'null',
-        #     tab=>'timing'
-        # },
+        {
+            description=>'Наименование поля',
+            add_description=>'дополнительное описание',
+            type=>'textarea',
+            name=>'textarea',
+            full_str=>1,
+            tab=>'plain'
+        },
+        {
+            description=>'checkbox',
+            type=>'checkbox',
+            name=>'checkbox',
+            tab=>'plain'
+        },
+        {
+            description=>'switch',
+            type=>'switch',
+            name=>'switch',
+            tab=>'plain'
+        },
+        {
+            description=>'Дата',
+            type=>'date',
+            name=>'f_date',
+            empty_value=>'null',
+            tab=>'timing'
+        },
+        {
+            description=>'Время',
+            type=>'time',
+            name=>'f_time',
+            tab=>'timing'
+        },
+        {
+            description=>'Дата и время',
+            type=>'datetime',
+            name=>'f_datetime',
+            empty_value=>'null',
+            tab=>'timing'
+        },
+        {
+            description=>'Год и месяц (yearmon)',
+            type=>'yearmon',
+            name=>'f_yearmon',
+            empty_value=>'null',
+            tab=>'timing'
+        },
+        {
+            description=>'День и месяц (daymon)',
+            type=>'daymon',
+            name=>'f_daymon',
+            empty_value=>'null',
+            tab=>'timing'
+        },
         {
             name=>'status',
             description=>'Выбор из списка (select_values)',
@@ -136,7 +137,6 @@ $form={
             description=>'Комментарий',
             name=>'memo',
             type=>'memo',
-            #method=>'multitable',
             memo_table=>'test_memo',
             memo_table_id=>'id',
             memo_table_comment=>'body',
@@ -148,7 +148,6 @@ $form={
             auth_id_field=>'id',
             auth_name_field=>'name',
             reverse=>1,
-            #format=>q{<b>[date]</b>  [edit_button] [delete_button] <span class="datetime">[hour]:[min]:[sec]  </span> [remote_name] <span class="message">[message]</span></div>},
             memo_table_alias=>'memo',
             auth_table_alias=>'m_memo',
             make_delete=>1,
