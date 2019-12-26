@@ -86,8 +86,12 @@ sub admin_table_find{ # Поиск результатов
     if($form->{page} > $form->{SEARCH_RESULT}->{count_pages}){
         $form->{page}=1;
     }
-    #print "$query\n";
-    my $result_list=$s->{db}->query(query=>$query,errors=>$form->{log},log=>$form->{log},debug=>$form->{explain}?1:0);
+    my $debug_explain;
+    my $result_list=$s->{db}->query(query=>$query,errors=>$form->{errors},log=>$debug_explain,debug=>$form->{explain}?1:0);
+    if($form->{explain}){
+        print Dumper($debug_explain);
+        #$form->{log}=$debug_explain->{query}
+    }
 
 
     #$s->pre($form->{SEARCH_RESULT});

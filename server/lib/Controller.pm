@@ -288,6 +288,25 @@ sub new{
           );
         }
       },
+      { # обновление поля в 1_to_m
+        # http://dev-crm.test/backend/1_to_m/update_field/user/contacts/username/86338
+        url=>'^\/1_to_m\/update_field\/([^\/]+)\/([^\/]+)\/([^\/]+)\/(\d+)$',
+        code=>sub{
+          my $s=shift;
+          CRM::process_1_to_m(
+            's'=>$s,
+            script=>'1_to_m',
+            action=>'update_field',
+            config=>$1,
+            field_name=>$2,
+            child_field_name=>$3,
+            id=>$4
+            
+            
+          );
+        }
+
+      },
       # 1_to_m: sort
       {
         url=>'^\/1_to_m\/sort\/([^\/]+)\/([^\/]+)\/(\d+)$',

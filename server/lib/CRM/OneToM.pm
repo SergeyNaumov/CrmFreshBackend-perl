@@ -291,6 +291,51 @@ sub process{
             errors=>$form->{errors},
           })->end;
     }
+    elsif($arg{action} eq 'update_field'){
+          my $R=$s->request_content(from_json=>1);
+          #use Data::Dumper;
+          my $field=$form->{fields_hash}->{$arg{field_name}};
+          my $child_field;
+          if($field){
+            if($arg{child_field_name}){
+              $child_field=get_child_field(fields=>$field->{fields},name=>$arg{child_field_name});
+              if(!$child_field){
+                push @{$form->{errors}},"Не найден элемент $arg{child_field_name} в элементе $arg{field_name}"
+              }
+            }
+            else{
+              push @{$form->{errors}},"не указан параметр child_field_name. обратитесь к разработчику"
+            }
+          }
+          else{
+            if(!$arg{field_name}){
+              push @{$form->{errors}},"Не указан параметр field_name. обратитесь к разработчику"
+            }
+            else{
+              push @{$form->{errors}},"Элемент с именем $arg{field_name} не найден"
+            }
+            
+          }
+
+          my $value=$R->{value};
+          my $id=$R->{cur_id};
+          #print Dumper([$field->{table},$field->{foreign_key},$arg{child_field_name},$value,$id]);
+
+
+
+          unless(scalar(@{$form->{errors}})){
+            $form->{db}->query(
+              query=>"UPDATE $field->{table} SET $child_field->{name}=? WHERE $field->{table_id}=?",
+              values=>[$value,$id]
+            );
+          }
+
+          $s->print_json({
+            success=>scalar(@{$form->{errors}})?0:1,
+            
+            errors=>$form->{errors},
+          })->end;
+    }
     else{ # insert, update
           my $R=$s->request_content(from_json=>1);
           if(!$R || !exists($R->{values}) || !$R->{values} || ref($R->{values}) ne 'HASH' || !scalar( keys %{$R->{values}} ) ){
@@ -473,7 +518,7 @@ sub get_1_to_m_data{
       foreach my $c (@{$f->{fields}}){
           
           next if($c->{not_out_in_slide});
-          push @{$headers},{name=>$c->{name},description=>$c->{description},type=>$c->{type}};
+          push @{$headers},{name=>$c->{name},description=>$c->{description},type=>$c->{type},change_in_slide=>$c->{change_in_slide}};
       }
       my $str_num=0;
       $f->{headers}=$headers;

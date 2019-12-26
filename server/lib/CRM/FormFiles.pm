@@ -86,7 +86,7 @@ sub UploadFile{
         else{
             print "base64\n";
             @errors=save_base64(
-                s=>$s,
+                's'=>$s,
                 src=>$value->{src},
                 field=>$field,
                 table=>$form->{work_table},
@@ -110,7 +110,7 @@ sub UploadFile{
                         $filename=~s/<\%filename_without_ext\%>/$filename_without_ext/g;
                         $filename=~s/<\%ext\%>/$ext/g;
                         save_base64(
-                            s=>$s,
+                            's'=>$s,
                             src=>$c->{data},
                             field=>$field,
                             filename=>$filename
