@@ -329,10 +329,12 @@ sub process{
               values=>[$value,$id]
             );
           }
-
+          
+          get_1_to_m_data(form=>$form,s=>$s,field=>$field);
+          
           $s->print_json({
             success=>scalar(@{$form->{errors}})?0:1,
-            
+            values=>$field->{values},
             errors=>$form->{errors},
           })->end;
     }
@@ -406,12 +408,14 @@ sub process{
             }
             
           }
-
+          
+          get_1_to_m_data(form=>$form,s=>$s,field=>$field);
           $s->print_json({
             success=>( scalar( @{$form->{errors}} ) )?0:1,
             errors=>$form->{errors},
             #id=>$id,
-            values=>$data
+            #values=>$data,
+            values=>$field->{values}
           })->end;      
     }
 
@@ -467,6 +471,7 @@ sub delete_file{
 sub check_request{
   my %arg=@_;
 }
+
 sub get_1_to_m_data{
   my %arg=@_;
   my ($form,$s,$f)=($arg{form},$arg{'s'},$arg{field});

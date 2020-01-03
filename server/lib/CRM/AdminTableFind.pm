@@ -87,10 +87,15 @@ sub admin_table_find{ # Поиск результатов
         $form->{page}=1;
     }
     my $debug_explain;
-    my $result_list=$s->{db}->query(query=>$query,errors=>$form->{errors},log=>$debug_explain,debug=>$form->{explain}?1:0);
+    my $log=[];
+    my $result_list=$s->{db}->query(
+        query=>$query,
+        errors=>$form->{errors},
+        #log=>$log,
+        #debug=>$form->{explain}
+    );
     if($form->{explain}){
-        print Dumper($debug_explain);
-        #$form->{log}=$debug_explain->{query}
+        $form->{log}=[$query];#$debug_explain->{query}
     }
 
 

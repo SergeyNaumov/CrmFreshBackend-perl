@@ -1,18 +1,18 @@
 $form={
     title=>'Возможности CRM',
-    explain=>1,
+    #explain=>1,
     engine=>'mysql-strong', # default mysql
     default_find_filter=>'header',
     cols=>[
         [
             {description=>'wysiwyg',name=>'wysiwyg',hide=>1},
             {description=>'Простые типы данных',name=>'plain',hide=>1},
-            {description=>'Тэги',name=>'tags',hide=>0},
+            {description=>'Тэги',name=>'tags',hide=>1},
             {description=>'Комментарии',name=>'memo',hide=>1},
         ],
         [
             {description=>'Файлы',name=>'files'},
-            {description=>'Один ко многим',name=>'one_to_m',hide=>1},
+            {description=>'Один ко многим',name=>'one_to_m',hide=>0},
             {description=>'Дата, время и т.д.',name=>'timing',hide=>1},
             
         ]
@@ -92,7 +92,7 @@ $form={
             add_description=>'с цветами',
             type=>'select_values',
             change_in_search=>1,
-            read_only=>1,
+            #read_only=>1,
             values=>[
                 {v=>'0',d=>'Другое',c=>'#FFFFFF'},
                 {v=>'1',d=>'Ждем материалы от клиента',c=>'#CC99FF'},
@@ -169,19 +169,42 @@ $form={
             table_id=>'id',
             foreign_key=>'test_id',
             tab=>'one_to_m',
+            sort=>1,
+            view_type=>'list',  
             fields=>[
+                {
+                    description=>'select',
+                    name=>'sel',
+                    type=>'select_values',
+                    values=>[
+                        {v=>1,d=>'красный'},
+                        {v=>2,d=>'оранжевый'},
+                        {v=>3,d=>'жёлтый'},
+                        {v=>4,d=>'зелёный'},
+                        {v=>5,d=>'Голубой'},
+                        {v=>6,d=>'Синий'},
+                        {v=>7,d=>'Фиолетовый'},
+                    ]
+                },
+                {
+                    description=>'chk',
+                    name=>'chk',
+                    type=>'checkbox'
+                },
                 {
                     description=>'Телефон',
                     type=>'text',
                     name=>'phone',
+                    change_in_slide=>1,
                     replace_rules=>[
                         '/^8/'=>'+7',
                     ],
                     regexp_rules=>[
-                        q{/^\+[0-9]+$/},'Номер телефона в формате: +7XXXXXXXXXX, например: +74951234567',
+                        #q{/^\+[0-9]+$/},'Номер телефона в формате: +7XXXXXXXXXX, например: +74951234567',
                         #q{/^[0-9]+$/}=>'Допускаются только цифры',
                     ]
                 },
+
                 {
                     description=>'Файл',
                     type=>'file',

@@ -273,4 +273,10 @@ sub return_link{ # рутина для блока ссылок
   return qq{<a href="$e->{l}" $style $onclick $id target="_blank">$e->{d}</a>};
 }
 
+sub format_sql_query{
+  my $query=shift;
+  $query=~s/^\s*SELECT/<b>SELECT<\/b>\n/;
+
+  return $query;
+}
 return 1;

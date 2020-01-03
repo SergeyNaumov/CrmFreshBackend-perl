@@ -184,8 +184,9 @@ sub get{
 
   if($opt->{debug}){
     if($opt->{log}){
-      push @{$opt->{log}},"QUERY:\n$query\n";
-      push @{$opt->{log}},"VALUES:\n$opt->{values}\n";
+      push @{$opt->{log}},$query;
+      print "q: $query\n";
+      #push @{$opt->{log}},$opt->{values};
       #Dumper($opt->{values});
     }
     else{
@@ -301,12 +302,12 @@ sub query{
   my ($self,%arg)=@_;
   my $opt=\%arg;
   if($opt->{debug}){
-    my $d=Dumper($opt);
+    my %d=%{$opt};
     if($opt->{log}){
-      push @{$opt->{log}},$d
+      push @{$opt->{log}},\%d;
     }
     else{
-      print "$d\n";
+      print Dumper(\%d);
     }
     
   }
