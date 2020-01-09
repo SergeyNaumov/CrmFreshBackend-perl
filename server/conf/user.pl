@@ -168,8 +168,8 @@ $form={
         }
       },
       [%INCLUDE './conf/user.conf/tab_comp.pl'%],
-      [%INCLUDE './conf/user.conf/tab_rekvizits.pl'%],
-      [%INCLUDE './conf/user.conf/user_getting_cert.pl'%],
-      [%INCLUDE './conf/user.conf/tab_work.pl'%],
+      [%#INCLUDE './conf/user.conf/tab_rekvizits.pl'%],
+      [%#INCLUDE './conf/user.conf/user_getting_cert.pl'%],
+      [%#INCLUDE './conf/user.conf/tab_work.pl'%],
     ]
 };

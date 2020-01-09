@@ -12,6 +12,7 @@ use CRM::AdminTree;
 use CRM::Multiconnect;
 use CRM::Password;
 use CRM::Wysiwyg;
+use CRM::Autocomplete;
 use CRM::Events;
 #use CRM::FontAwesome;
 my $redirect='';
@@ -369,6 +370,21 @@ sub new{
           );
         }
 
+      },
+      {
+        url=>'^\/autocomplete\/([^\/]+)',
+        code=>sub{
+          my $s=shift;
+          CRM::Autocomplete::process('s'=>$s,script=>'autocomplete',config=>$1);
+          $s->end;
+        }
+      },
+      {
+        url=>'^(.+)$',
+        code=>sub{
+          my $s=shift;
+          $s->print("unknown url: $1")->end;
+        }
       }
       # { # 1_to_m: delete
       #   url=>'^\/1_to_m\/delete\/([^\/]+)\/([^\/]+)\/(\d+)\/(\d+)$',
