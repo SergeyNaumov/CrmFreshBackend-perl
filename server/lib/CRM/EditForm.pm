@@ -52,8 +52,9 @@ sub processEditForm{
     elsif($form->{action} eq 'delete_file'){
         DeleteFile(form=>$form,'s'=>$s);
     }
-    elsif($form->{action} eq 'load_base64_file'){
-        LoadBase64(form=>$form,'s'=>$s);
+    elsif($form->{action} eq 'upload_file'){
+        #LoadBase64(form=>$form,'s'=>$s);
+        UploadFile(form=>$form,'s'=>$s);
     }
     else{
         if($form->{action}=~m{^(new|edit)$}){
@@ -163,7 +164,7 @@ sub save_form{
             $save_hash->{$name}=$v
         }
     }
-
+    #print Dumper($save_hash);
     if(scalar keys(%{$save_hash}) ){
         if($form->{id}){
             $s->{db}->save(

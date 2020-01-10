@@ -68,7 +68,7 @@ sub UploadFile{
         }
     }
     
-
+    my $filename_for_out='';
     if(!scalar(@errors)){
         my $filename_without_ext=filename();
         
@@ -80,11 +80,11 @@ sub UploadFile{
             $filename_without_ext=$1; $ext=$2;
             #$value->{src}=~s/^\///;
             
-            print "src2: $value->{src} ($filename_without_ext ; $ext)\n";
-
+            #print "src2: $value->{src} ($filename_without_ext ; $ext)\n";
         }
         else{
-            print "base64\n";
+            #print "base64\n";
+            $filename_for_out=$filename_without_ext.'.'.$ext;
             @errors=save_base64(
                 's'=>$s,
                 src=>$value->{src},
@@ -153,6 +153,7 @@ sub UploadFile{
     $s->print_json({
         success=>scalar(@errors)?0:1,
         errors=>\@errors,
+        value=>$filename_for_out
     });
 }
 sub resize{

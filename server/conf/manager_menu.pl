@@ -3,6 +3,7 @@ $form={
     header_field=>'header',
     tree_use=>1,
     sort=>1,
+    max_level=>2,
     events=>{
       permissions=>sub{
         if($form->{id}){
@@ -33,7 +34,8 @@ $form={
         },
         values=>[
           {v=>'',d=>'не выбрано'},
-          {v=>'vue',d=>'VUE'}
+          {v=>'vue',d=>'VUE'},
+          {v=>'src',d=>'internal_prog'},
         ],
         tab=>'main'
         #filter_code=>sub{
@@ -48,6 +50,7 @@ $form={
         values=>[
           {v=>'admin-table',d=>'admin-table'},
           {v=>'admin-tree',d=>'admin-tree'},
+          {v=>'const',d=>'const'},
         ],
         tab=>'main'
       },

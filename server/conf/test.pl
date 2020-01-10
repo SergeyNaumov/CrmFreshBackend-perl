@@ -12,12 +12,13 @@ $form={
         ],
         [
             {description=>'Файлы',name=>'files'},
-            {description=>'Один ко многим',name=>'one_to_m',hide=>0},
+            {description=>'Один ко многим',name=>'one_to_m',hide=>1},
             {description=>'Дата, время и т.д.',name=>'timing',hide=>1},
             
         ]
     ],
     fields=>[ 
+
        {
             description=>'Wysiwyg',
             type=>'wysiwyg',
@@ -92,7 +93,9 @@ $form={
             add_description=>'с цветами',
             type=>'select_values',
             change_in_search=>1,
-            #read_only=>1,
+            regexp_rules=>[
+                q{/^[0-9]+$/},'Поле должно быть заполнено'
+            ],
             values=>[
                 {v=>'0',d=>'Другое',c=>'#FFFFFF'},
                 {v=>'1',d=>'Ждем материалы от клиента',c=>'#CC99FF'},
