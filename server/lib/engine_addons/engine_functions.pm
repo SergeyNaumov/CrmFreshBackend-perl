@@ -90,11 +90,12 @@ sub template{
     #$self->{vars}->{TEMPLATE_FOLDER}.$opt->{dir};
   #}
   unless($opt->{dir}){
-    #print "opt: ".Dumper($opt);
+    #print "TEMPLATE: $opt->{template}\n";
     if($opt->{template}=~m/^(.+)\/([^\/]+)$/){
-      $opt->{template}=~s/^\.?\///;
-      $opt->{dir}='./views/'.$1;
+      #$opt->{template}=~s/^\.?\///;
+      $opt->{dir}=$1;
       $opt->{template}=$2;
+      #print "DIR: $opt->{dir}; TEMPLATE: $opt->{template}\n";
     }
     else{
       #print "2\n";
@@ -134,7 +135,9 @@ sub template{
   #print "t: $opt->{template}";
   $template -> process($opt->{template}, $opt->{vars},\$output);
   if($template->error()){
-    print "output::add_template: template error: ".$template->error()."\n";
+    #use Data::Dumper;
+    #print Dumper($opt);
+    print "template: $opt->{template}\noutput::add_template: template error: ".$template->error()."\n";
     die "output::add_template: template error: ".$template->error();
 
   };

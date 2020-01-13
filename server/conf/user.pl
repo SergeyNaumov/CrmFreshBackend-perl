@@ -89,9 +89,10 @@ $form={
       {description=>'Сертификаты',name=>'tab_cert',hide=>1},
     ],
     [
-      {description=>'Работа',name=>'work',hide=>0},
+      {description=>'Пакеты документов',name=>'docpack',hide=>0},
+      {description=>'Работа',name=>'work',hide=>1},
       {description=>'Сопровождение',name=>'sopr',hide=>1},
-      {description=>'Пакеты документов',name=>'docpack',hide=>1},
+      
       {description=>'Коммерческие предложения',name=>'kp',hide=>1},
     ]
   ],
@@ -167,9 +168,10 @@ $form={
           }
         }
       },
-      [%INCLUDE './conf/user.conf/tab_comp.pl'%],
+      [%#INCLUDE './conf/user.conf/tab_comp.pl'%],
       [%#INCLUDE './conf/user.conf/tab_rekvizits.pl'%],
       [%#INCLUDE './conf/user.conf/user_getting_cert.pl'%],
       [%#INCLUDE './conf/user.conf/tab_work.pl'%],
+      [%INCLUDE './conf/user.conf/docpack.pl'%],
     ]
 };
