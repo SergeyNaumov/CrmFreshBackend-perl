@@ -45,11 +45,13 @@ sub process{
       my $child_field=get_child_field(fields=>$field->{fields},name=>$arg{child_field_name});
       my $file_info;
       my $unlink_info;
+      
+      use Data::Dumper;
       if($child_field){
         unless(-f "$child_field->{filedir}"){
           mkdir $child_field->{filedir}
         }
-
+        #print Dumper(\%arg);
         if($arg{one_to_m_id}){
               my $oldfile=$form->{db}->query(
                 query=>
@@ -125,7 +127,7 @@ sub process{
                             $child_field->{name}=>$db_value
                           }
                         );
-
+                        $arg{one_to_m_id}=$id;
                         $value={
                           $field->{table_id}=>$id,
                           $child_field->{name}.'_filename'=>$file_info->{orig_name}
@@ -135,8 +137,9 @@ sub process{
                         }
                         
                         push @{$values},$value;
+                        #print Dumper({values=>$values});
                         $i++;
-                        if($i>10){
+                        if($i>30){
                           print "exit!";
                           exit;
                         }
@@ -154,10 +157,13 @@ sub process{
       else{
         push @{$form->{errors}}, qq{не найдено поле $field->{name}:$child_field->{name} в конфиге $arg{config}}
       }
+      
+      get_1_to_m_data(form=>$form,s=>$s,field=>$field);
 
       $s->print_json({
         success=>( scalar( @{$form->{errors}} ) )?0:1,
         file_info=>$file_info,
+        values=>$field->{values},
         errors=>$form->{errors}
       })->end;
       return ;
@@ -413,7 +419,7 @@ sub process{
           $s->print_json({
             success=>( scalar( @{$form->{errors}} ) )?0:1,
             errors=>$form->{errors},
-            #id=>$id,
+            id=>$data->{$field->{table_id}},
             #values=>$data,
             values=>$field->{values}
           })->end;      
