@@ -325,9 +325,17 @@ sub process{
 
           my $value=$R->{value};
           my $id=$R->{cur_id};
-          #print Dumper([$field->{table},$field->{foreign_key},$arg{child_field_name},$value,$id]);
-
-
+          
+          if(scalar @{$child_field->{regexp_rules}} ){ # проверка
+            my $j=0;
+            while($j < scalar @{$child_field->{regexp_rules}}){
+              my $regexp=$child_field->{regexp_rules}->[$j];
+              if(eval q{ $value!~}.$regexp){
+                push @{$form->{errors}},$child_field->{regexp_rules}->[$j+1]
+              }
+              $j+=2;
+            }
+          }
 
           unless(scalar(@{$form->{errors}})){
             $form->{db}->query(
