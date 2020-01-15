@@ -72,7 +72,6 @@ sub admin_table_find{ # Поиск результатов
     );
 
     my ($query,$query_count)=gen_query_search($form);
-    #print "$query_count\n\n";
     
 
 
@@ -111,7 +110,45 @@ sub admin_table_find{ # Поиск результатов
     #     }
     # }
     $form->{SEARCH_RESULT}->{selects}={};
+    my @id_list=();
+    foreach my $r (@{$result_list}){
+        push @id_list,$r->{wt__id};
+        #print "r: $r->{wt__id}\n";
 
+    }
+
+    my $multiconnect_values;
+    if(scalar (@id_list) ){
+        foreach my $q (@{$R->{query}}){
+            my $name=$q->[0];
+            my $values=$q->[1];
+            my $field=$form->{fields_hash}->{$name};
+            if($field->{type} eq 'multiconnect' && scalar( @{$values} ) ){
+                # multiconnect, получаем список тэгов
+                $multiconnect_values=
+                {
+                    map { $_->{id}=>$_->{header} }
+                    @{$s->{db}->query(
+                        query=>qq{
+                            SELECT
+                                rst.$field->{relation_save_table_id_worktable} id,
+                                group_concat(rt.$field->{relation_table_header} SEPARATOR ',') header
+                            FROM
+                                $field->{relation_save_table} rst
+                                join $field->{relation_table} rt ON (rt.$field->{relation_table_id} =rst.$field->{relation_save_table_id_relation})
+                            WHERE
+                                rst.$field->{relation_save_table_id_worktable} IN (}.join(',',@id_list).qq{)
+                            GROUP BY rst.$field->{relation_save_table_id_worktable}
+                            },
+                            
+                    )}
+                };
+                
+            }
+        }
+    }
+    #my @id_list=grep {$_->{wt__id}} @{$result_list};
+    #print Dumper({id_list=>\@id_list});
     foreach my $r (@{$result_list}){
         my $data=[];
         #print Dumper($r);
@@ -144,6 +181,7 @@ sub admin_table_find{ # Поиск результатов
             }
 
 
+
             if(!$field->{make_change_in_search} && ref($field->{filter_code}) eq 'CODE'){
                 $value=&{$field->{filter_code}}({str=>$r,value=>$value});
             }
@@ -154,6 +192,10 @@ sub admin_table_find{ # Поиск результатов
             my $type='html';
             if($field->{type} eq 'memo'){
                 $type='memo'
+            }
+            elsif($field->{type} eq 'multiconnect'){
+                $type='multiconnect';
+                $value=$multiconnect_values->{$r->{wt__id}};
             }
             elsif($field->{type}=~m{^font}){
                 $type=$field->{type};
@@ -210,6 +252,7 @@ sub admin_table_find{ # Поиск результатов
         }
         push @{$output},{key=>$r->{wt__id},data=>$data};
     }
+    
     $form->{SEARCH_RESULT}->{log}=$form->{log};
     $form->{SEARCH_RESULT}->{output}=$output; 
 
@@ -242,8 +285,22 @@ sub gen_query_search{
     if(!$form->{not_perpage}){
         $query.=" LIMIT ".($form->{page}-1)*$form->{perpage}.', '.($form->{perpage})
     }
+    my $query_count;
 
-    my $query_count="SELECT count(*) cnt FROM ".join("\n",@{$qs->{TABLES}}).
+    if( scalar @{$qs->{GROUP}} ){
+        $query_count=q{
+        SELECT count(*) cnt FROM (
+            select wt.id FROM }.join("\n",@{$qs->{TABLES}}).
+            (
+                scalar(@{$qs->{WHERE}})?(" WHERE ".join(' AND ',@{$qs->{WHERE}})):''
+            ).
+            (
+                scalar(@{$qs->{GROUP}})?(" GROUP BY ".join(', ',@{$qs->{GROUP}})):''
+            ).
+        ') x';
+    }
+    else{
+        $query_count="SELECT count(*) cnt FROM ".join("\n",@{$qs->{TABLES}}).
         (
             scalar(@{$qs->{WHERE}})?(" WHERE ".join(' AND ',@{$qs->{WHERE}})):''
         ).
@@ -254,6 +311,8 @@ sub gen_query_search{
            $qs->{HAVING} && scalar(@{$qs->{HAVING}})?(" HAVING ".join(', ',@{$qs->{HAVING}})):''
         )
         ;
+    }
+    
 
     return ($query,$query_count);
     
@@ -297,22 +356,26 @@ sub get_search_tables{
 
         if($need_add_table){
             push @{$TABLES},$t_str ;
-            my $desc=$form->{self}->{db}->query(query=>"desc $t->{table}",errors=>$form->{log});
-            
-            #print Dumper($desc);
-            if($desc){
-                foreach my $db_field (@{$desc}){
-                    if(!$t->{select_fields}  || ($t->{select_fields} && ref($t->{select_fields}) eq 'HASH' && $t->{select_fields}->{$db_field->{Field}})){
-                        push @{$form->{query_search}->{SELECT_FIELDS}},qq{$t->{alias}.$db_field->{Field} $t->{alias}__$db_field->{Field}};
-                    }
+            if(!$t->{not_add_in_select_fields}){
+                my $desc=$form->{self}->{db}->query(query=>"desc $t->{table}",errors=>$form->{log});
+                if($desc){
+                    foreach my $db_field (@{$desc}){
+                        if(!$t->{select_fields}  || ($t->{select_fields} && ref($t->{select_fields}) eq 'HASH' && $t->{select_fields}->{$db_field->{Field}})){
+                            push @{$form->{query_search}->{SELECT_FIELDS}},qq{$t->{alias}.$db_field->{Field} $t->{alias}__$db_field->{Field}};
+                        }
+                            
+                        #}
+                        #else{
+                        #    print "ignore: $t->{alias}.$db_field->{Field}\n";
+                        #}
                         
-                    #}
-                    #else{
-                    #    print "ignore: $t->{alias}.$db_field->{Field}\n";
-                    #}
-                    
+                    }
                 }
             }
+            
+            
+            #print Dumper($desc);
+
 
 
 
@@ -332,6 +395,7 @@ sub get_search_where{
     my $alias_from_table; my $table_from_alias;
     my $WHERE=[];
     my $headers=[];
+
     unless( scalar(@{$query}) ){
         if($form->{default_find_filter}){
             if(ref($form->{default_find_filter}) ne 'ARRAY'){
@@ -364,11 +428,18 @@ sub get_search_where{
 
         my $db_name=$f->{db_name}?$f->{db_name}:$f->{name};
         my $table=($f->{tablename}?$f->{tablename}:'wt');
-        
-        if($f->{type}!~m(^(1_to_m|multiconnect|memo)$) && !$f->{not_order}){
+        if($f->{type} eq 'multiconnect'){
+                
+                #push @{$form->{query_search}->{SELECT_FIELDS}},"group_concat($f->{tablename}.$f->{relation_table_header} SEPARATOR ', ') $f->{tablename}__$f->{name}" ;
+                
+                #print Dumper($form->{query_search}->{SELECT_FIELDS});
+        }
+        elsif($f->{type}!~m(^(1_to_m|memo)$) && !$f->{not_order}){
             #print "type: $f->{type} ($f->{name})\n";
             my $o; my $operable_fld;
-            
+           # if($f->{type} eq 'multiconnect'){
+                #$o="$f->{tablename}.$f->{relation_table_header}";
+            #}
             if($f->{type}=~m{^(filter_extend_)?(date|ditetime)$}){
                 $operable_fld="$table.$db_name";
                 $o="$operable_fld desc"
@@ -443,6 +514,19 @@ sub get_search_where{
         elsif($f->{type_orig}=~m{^(filter_extend_)?(select_from_table)$}){
             push @{$WHERE}," ($table.$f->{value_field} IN (".join(',',@{$values}).") )";
 
+        }
+        elsif($f->{type} eq 'multiconnect'){
+            #print Dumper({multiconnect=>$values,f=>$f});
+            if(!$f->{tablename}){
+                push @{$form->{errors}},"не указано tablename для $f->{name}";
+            }
+            else{
+                my @values = grep /^\d+$/, @{$values};
+                if( scalar @values ){
+                    push @{$WHERE},"$f->{tablename}.$f->{relation_table_id} in (".join(',',@values).')'
+                }
+            }
+            
         }
         else{ #if($f->{type}=~m/^(filter_extend_)?(select_from_table|select_values)$/){
             push @{$WHERE}," ($table.$db_name IN (".join(',', (

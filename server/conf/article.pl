@@ -7,18 +7,32 @@ $form={
   default_find_filter => 'header',
   #sort_field=>'header',
   #tree_use => '1',
+  explain=>0,
+  GROUP_BY=>'wt.id',
   events=>{
     permissions=>sub{
       if($form->{manager}->{login} eq 'admin' || $form->{manager}->{permissions}->{content}){
         $form->{not_create}=0;
       }
       else{
-        print_header();
-        print "Доступ запрещён!" ; exit;
+        #print_header();
+        #print "Доступ запрещён!" ; exit;
+        push @{$form->{errors}},'Доступ запрещён';
+      }
+    },
+    after_save=>sub{
+      if($form->{new_values}->{top}){
+        $form->{db}->query(query=>'UPDATE article set top=0 where id<>?',values=>[$form->{id}])
       }
     }
   },
-  #explain=>1,
+  QUERY_SEARCH_TABLES=>[
+    {t=>'article',a=>'wt'},
+    {t=>'manager',a=>'m',l=>'wt.manager_id=m.id',left_join=>1,for_fields=>['manager_id']},
+    {t=>'article_rubric',a=>'ar',l=>'ar.id=wt.rubric_id',lj=>1},
+    {t=>'article_tag',a=>'ar_t',l=>'wt.id=ar_t.article_id',lj=>1,for_fields=>['tags'],not_add_in_select_fields=>1},
+    {t=>'tag',a=>'t',l=>'ar_t.tag_id=t.id',lj=>1,for_fields=>['tags'],not_add_in_select_fields=>1},
+  ],
   fields =>
   [
     {
@@ -29,14 +43,39 @@ $form={
       filter_on=>1,
       regexp_rules=>[
         q{/^.+$/},'Заполните заголовок',
-        q{/.{10}/},'Заголовок слишком короткий',
-        q{/^.{10,255}$/},'Заголовок слишком длинный',
+        #q{/^.{1,3}$/},'Заголовок слишком короткий',
+        q{/^.{3,255}$/},'Заголовок слишком длинный',
       ]
+    },
+    {
+      description=>'Автор',
+      table=>'manager',
+      type=>'select_from_table',
+      name=>'manager_id',
+      table=>'manager',
+      header_field=>'name',
+      value_field=>'id',
+      tablename=>'m',
+      make_change_in_search=>1
+    },
+    {
+      description=>'Рубрика статьи',
+      type=>'select_from_table',
+      table=>'article_rubric',
+      name=>'rubric_id',
+      tablename=>'ar',
+      #header_field=>'header',
+      #value_field\
     },
     {
       description=>'Отображать на сайте',
       type=>'switch',
       name=>'enabled'
+    },
+    {
+      description=>'Главная новость',
+      type=>'switch',
+      name=>'top'
     },
     {
       name=>'anons',
@@ -56,22 +95,28 @@ $form={
       crops=>1,
       resize=>[
         {
-          file=>'<%filename_without_ext%>_mini1.<%ext%>',
-          size=>'100x200',
-          grayscale=>1,
-          quality=>'80'
-        },
-        {
-          
+          description=>'Горизонтальное фото',
           file=>'<%filename_without_ext%>_mini2.<%ext%>',
-          size=>'200x100',
-          grayscale=>1,
-          composite_file=>'./files/logo.png',
+          size=>'502x245',
+          quality=>'70'
         },
         {
-          
+          description=>'Вертикальное фото',
+          file=>'<%filename_without_ext%>_mini1.<%ext%>',
+          size=>'244x504',
+          quality=>'70'
+        },
+        {
+          description=>'Квадратное фото',
           file=>'<%filename_without_ext%>_mini3.<%ext%>',
-          size=>'200x200'
+          size=>'245x245',
+          quality=>'70'
+        },
+        {
+          description=>'Фото для страницы статьи',
+          file=>'<%filename_without_ext%>_mini4.<%ext%>',
+          size=>'1165x672',
+          quality=>'70'
         },
       ]
     },
@@ -85,15 +130,17 @@ $form={
       description=>'Тэги',
       type=>'multiconnect',
       name=>'tags',
+      tablename=>'t',
       relation_table=>'tag',
-      relation_save_table=>'test_tag',
+      relation_save_table=>'article_tag',
       relation_table_header=>'header',
       relation_table_id=>'id',
-      relation_save_table_id_worktable=>'test_id',
+      relation_save_table_id_worktable=>'article_id',
       relation_save_table_id_relation=>'tag_id',
       make_add=>1,
       view_only_selected=>1,
       cols=>3,
+      not_order=>1,
       tab=>'tags'
     },
     {

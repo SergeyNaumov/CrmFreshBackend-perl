@@ -35,6 +35,7 @@ $form={
         table=>'banner_banner_place',
         foreign_key=>'banner_id',
         table_id=>'id',
+        #view_type=>'list',
         fields=>[
           {
             description=>'Площадка',
@@ -50,9 +51,19 @@ $form={
             filedir=>'./files/partner'
           },
           {
+            description=>'Вес',
+            name=>'weight',
+            type=>'text',
+            style=>{
+              'width'=>'50px'
+            },
+            change_in_slide=>1,
+          },
+          {
             description=>'Вкл',
             type=>'switch',
             name=>'enabled',
+            change_in_slide=>1,
           }
         ]
       },

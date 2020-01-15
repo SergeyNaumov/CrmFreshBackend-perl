@@ -5,7 +5,7 @@ $form={
     work_table_id=>'id',
     make_delete=>0,
     tree_use=>0,
-    sort=>0,
+    sort=>1,
     events=>{
       permissions=>sub{
         if($form->{id}){
