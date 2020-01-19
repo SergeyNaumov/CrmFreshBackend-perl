@@ -7,7 +7,7 @@ $form={
   default_find_filter => 'header',
   #sort_field=>'header',
   #tree_use => '1',
-  explain=>0,
+  #explain=>1,
   GROUP_BY=>'wt.id',
   events=>{
     permissions=>sub{
@@ -33,6 +33,13 @@ $form={
     {t=>'article_tag',a=>'ar_t',l=>'wt.id=ar_t.article_id',lj=>1,for_fields=>['tags'],not_add_in_select_fields=>1},
     {t=>'tag',a=>'t',l=>'ar_t.tag_id=t.id',lj=>1,for_fields=>['tags'],not_add_in_select_fields=>1},
   ],
+  on_filters=>[
+    {name=>'header',value=>'CRM'},
+    {name=>'anons'},
+    {name=>'tags'},
+    {name=>'enabled',value=>[1]},
+  ],
+  search_on_load=>1,
   fields =>
   [
     {
@@ -70,6 +77,13 @@ $form={
     {
       description=>'Отображать на сайте',
       type=>'switch',
+      before_code=>sub{
+        my $f=shift;
+        if($form->{script} eq 'admin_table'){
+          $f->{value}=[0,1];
+          $f->{filter_on}=1;
+        }
+      },
       name=>'enabled'
     },
     {

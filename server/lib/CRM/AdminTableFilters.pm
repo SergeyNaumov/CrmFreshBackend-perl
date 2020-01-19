@@ -104,6 +104,7 @@ sub get_filters{
               make_delete=>(!defined $form->{make_create} || $form->{make_create})?1:0,
               not_edit=>$form->{not_edit}?1:0
             },
+            on_filters=>$form->{on_filters},
             search_on_load=>$form->{search_on_load}?1:0,
             errors=>$form->{errors}
         };

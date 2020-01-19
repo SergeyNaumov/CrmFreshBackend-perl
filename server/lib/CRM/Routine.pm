@@ -124,7 +124,7 @@ sub set_default_attributes{
   $form->{make_delete}=1 if(!defined($form->{make_delete}));
   $form->{not_create}=0 if( !defined($form->{not_create}) );
   $form->{read_only}=0 if( !defined($form->{read_only}) );
-
+  $form->{on_filters}=[] if(!$form->{on_filters} || ref($form->{on_filters}) ne 'ARRAY' );
 
   foreach my $e (qw(permissions before_search after_search before_insert after_insert before_update after_update before_save after_save)){
     $form->{events}->{$e}=[] if(!exists($form->{events}->{$e}));

@@ -121,9 +121,9 @@ sub admin_table_find{ # Поиск результатов
     if(scalar (@id_list) ){
         foreach my $q (@{$R->{query}}){
             my $name=$q->[0];
-            my $values=$q->[1];
+            my $values=$q->[1]; 
             my $field=$form->{fields_hash}->{$name};
-            if($field->{type} eq 'multiconnect' && scalar( @{$values} ) ){
+            if($field->{type} eq 'multiconnect' && scalar( @id_list ) ){
                 # multiconnect, получаем список тэгов
                 $multiconnect_values=
                 {
@@ -140,10 +140,10 @@ sub admin_table_find{ # Поиск результатов
                                 rst.$field->{relation_save_table_id_worktable} IN (}.join(',',@id_list).qq{)
                             GROUP BY rst.$field->{relation_save_table_id_worktable}
                             },
-                            
+                        
                     )}
                 };
-                
+
             }
         }
     }
@@ -190,24 +190,29 @@ sub admin_table_find{ # Поиск результатов
                 #push @{$data},{name=>$name,type=>'memo',value=>$value}
             #}
             my $type='html';
+            #print "$field->{name} => $field->{type}\n";
             if($field->{type} eq 'memo'){
                 $type='memo'
             }
             elsif($field->{type} eq 'multiconnect'){
                 $type='multiconnect';
                 $value=$multiconnect_values->{$r->{wt__id}};
+                $value='' unless($value);
             }
             elsif($field->{type}=~m{^font}){
                 $type=$field->{type};
             }
-            elsif($field->{type} eq 'checkbox'){
+            elsif($field->{type}=~m/^(checkbox|switch)$/){
                 if($field->{make_change_in_search}){
-                    $type='checkbox'
+                    $type=$field->{type}
                 }
                 else{
                     $value=$value?'да':'нет'
                 }
                 
+            }
+            elsif($field->{type}=~m/^filter_extend_(checkbox|switch)$/){
+                $value=$value?'да':'нет'
             }
             elsif($field->{type_orig}=~m{^(filter_extend_)?select_from_table}){
                 if($field->{make_change_in_search}){
