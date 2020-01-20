@@ -9,6 +9,57 @@ $form={
   #tree_use => '1',
   #explain=>1,
   GROUP_BY=>'wt.id',
+  AJAX=>{
+    in_ext_url=>sub{
+      my $s=shift; my $values=shift;
+      my $url='';
+
+      sub check_exists_url{
+        my $s=shift; my $url=shift; my $postfix=shift;
+        return if(!$url);
+        if($postfix){
+          $url.='-'.$postfix
+        }
+        print "url: $url\n";
+        return $s->{db}->query(
+          query=>'select count(*) from in_ext_url where ext_url=?',
+          values=>$url,
+          onevalue=>1
+        );
+      }
+      if($values->{rubric_id}){
+        my $rub_header=$s->{db}->query(
+          query=>'SELECT header from article_rubric where id=?',values=>[$values->{rubric_id}],
+          onevalue=>1
+        );
+        if($rub_header){
+          $url.='/'.to_translit($rub_header)
+        }
+        
+      }
+      if($values->{header}){
+        $values->{header}=~s/\//-/g;
+        $url.=to_translit('/'.$values->{header})
+      }
+      $url=~s/[^a-zA-Z0-9\-\/]+/-/g;
+      $url=~s/\/-/\//; $url=~s/-$//;
+      $url=~s/--+/-/g; $url=~s/-$//;
+      $url=lc($url);
+      if(check_exists_url($s,$url)){
+        my $postfix=2;
+        while(check_exists_url($s,$url,$postfix)){
+          $postfix++
+        }
+        $url=$url.='-'.$postfix;
+      }
+
+      return [
+        in_ext_url=>{
+          value=>$url
+        }
+      ]
+    }
+  },
   events=>{
     permissions=>sub{
       if($form->{manager}->{login} eq 'admin' || $form->{manager}->{permissions}->{content}){
@@ -44,10 +95,10 @@ $form={
   [
     {
       description=>'url',
-      name=>'url',
-      type=>'text',
-      #not_process=>1
+      name=>'in_ext_url',
+      type=>'in_ext_url',
     },
+
     {
       name => 'header', # наименование поля
       description => 'Название',
@@ -58,7 +109,14 @@ $form={
         q{/^.+$/},'Заполните заголовок',
         #q{/^.{1,3}$/},'Заголовок слишком короткий',
         q{/^.{3,255}$/},'Заголовок слишком длинный',
-      ]
+      ],
+      frontend=>{
+          #fields_dependence=>q{[%#INCLUDE './conf/article.conf/dep_url.js'%]}, # изменяем поведение других полей
+          #tabs_dependence=>q{} # изменяем поведение табов
+          ajax=>{
+            name=>'in_ext_url'
+          }
+      },
     },
     {
       description=>'Автор',
@@ -77,8 +135,14 @@ $form={
       table=>'article_rubric',
       name=>'rubric_id',
       tablename=>'ar',
-      #header_field=>'header',
-      #value_field\
+      frontend=>{
+          ajax=>{
+            name=>'in_ext_url'
+          }
+      },
+      regexp_rules=>[
+        '/^\d+$/','поле обязательно'
+      ]
     },
     {
       description=>'Отображать на сайте',

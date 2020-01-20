@@ -211,77 +211,7 @@ sub is_wt_field{
     my $f=shift;
     return ($f->{type}=~m/^(text|textarea|wysiwyg|select_from_table|select_values|date|time|datetime|yearmon|daymon|hidden|checkbox|switch|font-awesome|file)$/);
 }
-sub get_values_form{ # получаем старые значения для формы (до редактирования, )
-    my %arg=@_;
-    my $form=$arg{form}; my $s=$arg{'s'};
-    my $values={};
-    if($form->{id}){
-        $values=$s->{db}->query(
-            query=>qq{SELECT * from $form->{work_table} where $form->{work_table_id}=?},
-            values=>[$form->{id}],
-            onerow=>1,
-        );
 
-        if(!$values){
-            push @{$form->{errors}},qq{В инструменте $form->{title} запись с id: $form->{id} не найдена. Редактирование невозможно};
-            return ;
-        }
-        # удаляем из хеша значения полей типа password
-        foreach my $f (@{$form->{fields}}){
-            if($f->{type} eq 'password'){
-                delete $values->{$f->{name}};
-            }
-
-        }
-        
-    }
-    foreach my $f (@{$form->{fields}}){
-        next if($f->{type}=~m{^(filter_)});
-        my $name=$f->{name};
-
-        if(defined($values->{$name}) && is_wt_field($f) ){ # $f->{type}=~m{^(date|datetime|select_from_table|hidden|select_from_table|select_values|text|checkbox|switch|textarea)$}
-            $f->{value}=$values->{$name};
-            
-        }
-
-        
-        if($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_from_table'){
-            $f->{type_orig}=$f->{type}; $f->{type}='select'; 
-            $f->{values}=get_values_for_select_from_table($f,$form);
-            foreach my $v (@{ $f->{values} }){
-                if($v->{v}==$f->{value}){
-                    #$f->{vuetify_value}=$v
-                }
-            }
-        }
-        elsif($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_values'){
-            $f->{type_orig}=$f->{type}; $f->{type}='select';
-        }
-        elsif($f->{type} eq '1_to_m'){
-          OneToM::get_1_to_m_data(form=>$form,'s'=>$s,field=>$f);
-
-          
-        }
-        if(exists($f->{before_code}) && ref($f->{before_code}) eq 'CODE'){
-            #&{$f->{before_code}}($f);
-            run_event(event=>$f->{before_code},description=>'before code for '.$name,form=>$form,arg=>$f);
-        }
-        if(ref($f->{code}) eq 'CODE'){
-          #print "code: $name\n";
-            $f->{after_html}=run_event(event=>$f->{code},description=>'code for '.$name,form=>$form,arg=>$f);
-            #print "$f->{after_html}\n\n";
-            #$f->{before_html}=&{$f->{code}}($f);
-            #$f->{before_html}=$f->{after_html}='ZZZZ';
-        }
-
-        #my $field=($f);
-        if($f->{value}=~m/^\d+$/){ # в json-е должны быть только строки
-            $f->{value}="$f->{value}"
-        }
-        push @{$form->{edit_form_fields}},$f;
-    }
-    return $values;
-}
 
 
 

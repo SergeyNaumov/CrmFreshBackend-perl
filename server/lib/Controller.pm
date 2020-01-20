@@ -13,6 +13,7 @@ use CRM::Multiconnect;
 use CRM::Password;
 use CRM::Wysiwyg;
 use CRM::Autocomplete;
+use CRM::Ajax;
 use CRM::Events;
 #use CRM::FontAwesome;
 my $redirect='';
@@ -376,6 +377,14 @@ sub new{
         code=>sub{
           my $s=shift;
           CRM::Autocomplete::process('s'=>$s,script=>'autocomplete',config=>$1);
+          $s->end;
+        }
+      },
+      {
+        url=>'^\/ajax\/([^\/]+)\/(.+)$',
+        code=>sub{
+          my $s=shift;
+          CRM::Ajax::process('s'=>$s,script=>'ajax',config=>$1,name=>$2);
           $s->end;
         }
       },
