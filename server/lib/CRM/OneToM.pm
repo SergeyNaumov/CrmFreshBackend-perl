@@ -158,7 +158,7 @@ sub process{
         push @{$form->{errors}}, qq{не найдено поле $field->{name}:$child_field->{name} в конфиге $arg{config}}
       }
       
-      get_1_to_m_data(form=>$form,s=>$s,field=>$field);
+      get_1_to_m_data(form=>$form,'s'=>$s,field=>$field);
 
       $s->print_json({
         success=>( scalar( @{$form->{errors}} ) )?0:1,
@@ -344,7 +344,7 @@ sub process{
             );
           }
           
-          get_1_to_m_data(form=>$form,s=>$s,field=>$field);
+          get_1_to_m_data(form=>$form,'s'=>$s,field=>$field);
           
           $s->print_json({
             success=>scalar(@{$form->{errors}})?0:1,
@@ -423,7 +423,7 @@ sub process{
             
           }
           
-          get_1_to_m_data(form=>$form,s=>$s,field=>$field);
+          get_1_to_m_data(form=>$form,'s'=>$s,field=>$field);
           $s->print_json({
             success=>( scalar( @{$form->{errors}} ) )?0:1,
             errors=>$form->{errors},
@@ -500,6 +500,14 @@ sub get_1_to_m_data{
       }
     }
   }
+
+  my $headers=[];
+  foreach my $c (@{$f->{fields}}){
+      
+      next if($c->{not_out_in_slide});
+      push @{$headers},{name=>$c->{name},description=>$c->{description},type=>$c->{type},change_in_slide=>$c->{change_in_slide}};
+  }
+  $f->{headers}=$headers;
   
   if($form->{id}){
       my $where=$f->{where};
@@ -533,14 +541,7 @@ sub get_1_to_m_data{
       $f->{values}=$values;
       #$f->{data}=[];
       
-      my $headers=[];
-      foreach my $c (@{$f->{fields}}){
-          
-          next if($c->{not_out_in_slide});
-          push @{$headers},{name=>$c->{name},description=>$c->{description},type=>$c->{type},change_in_slide=>$c->{change_in_slide}};
-      }
-      my $str_num=0;
-      $f->{headers}=$headers;
+
 
   }
   else{

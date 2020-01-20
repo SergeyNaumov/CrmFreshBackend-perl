@@ -27,10 +27,9 @@ $form={
         description=>'Тип элемента',
         type=>'select_values',
         name=>'type',
-        permissions=>sub{
+        before_code=>sub{
           my $e=shift;
-          $e->{value}='vue' if($form->{action} eq 'new');
-          #print "action: $form->{action}\n";
+          $e->{value}='vue' if(!$e->{value} && $form->{action}=~m/^(new|edit)$/); 
         },
         values=>[
           {v=>'',d=>'не выбрано'},
@@ -47,6 +46,7 @@ $form={
         description=>'Значение',
         type=>'select_values',
         name=>'value',
+
         values=>[
           {v=>'admin-table',d=>'admin-table'},
           {v=>'admin-tree',d=>'admin-tree'},

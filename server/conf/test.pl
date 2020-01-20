@@ -11,8 +11,8 @@ $form={
             {description=>'Комментарии',name=>'memo',hide=>1},
         ],
         [
-            {description=>'Файлы',name=>'files'},
-            {description=>'Один ко многим',name=>'one_to_m',hide=>1},
+            {description=>'Файлы',name=>'files',hide=>1},
+            {description=>'Один ко многим',name=>'one_to_m',hide=>0},
             {description=>'Дата, время и т.д.',name=>'timing',hide=>1},
             
         ]
@@ -33,14 +33,14 @@ $form={
             change_in_search=>1,
             tab=>'plain'
         },
-        {
-            description=>'Наименование поля',
-            add_description=>'дополнительное описание',
-            type=>'textarea',
-            name=>'textarea',
-            full_str=>1,
-            tab=>'plain'
-        },
+        # {
+        #     description=>'Наименование поля',
+        #     add_description=>'дополнительное описание',
+        #     type=>'textarea',
+        #     name=>'textarea',
+        #     full_str=>1,
+        #     tab=>'plain'
+        # },
         {
             description=>'checkbox',
             type=>'checkbox',
@@ -60,12 +60,12 @@ $form={
             empty_value=>'null',
             tab=>'timing'
         },
-        {
-            description=>'Время',
-            type=>'time',
-            name=>'f_time',
-            tab=>'timing'
-        },
+        # {
+        #     description=>'Время',
+        #     type=>'time',
+        #     name=>'f_time',
+        #     tab=>'timing'
+        # },
         {
             description=>'Дата и время',
             type=>'datetime',
@@ -73,29 +73,29 @@ $form={
             empty_value=>'null',
             tab=>'timing'
         },
-        {
-            description=>'Год и месяц (yearmon)',
-            type=>'yearmon',
-            name=>'f_yearmon',
-            empty_value=>'null',
-            tab=>'timing'
-        },
-        {
-            description=>'День и месяц (daymon)',
-            type=>'daymon',
-            name=>'f_daymon',
-            empty_value=>'null',
-            tab=>'timing'
-        },
+        # {
+        #     description=>'Год и месяц (yearmon)',
+        #     type=>'yearmon',
+        #     name=>'f_yearmon',
+        #     empty_value=>'null',
+        #     tab=>'timing'
+        # },
+        # {
+        #     description=>'День и месяц (daymon)',
+        #     type=>'daymon',
+        #     name=>'f_daymon',
+        #     empty_value=>'null',
+        #     tab=>'timing'
+        # },
         {
             name=>'status',
             description=>'Выбор из списка (select_values)',
             add_description=>'с цветами',
             type=>'select_values',
             change_in_search=>1,
-            regexp_rules=>[
-                q{/^[0-9]+$/},'Поле должно быть заполнено'
-            ],
+            # regexp_rules=>[
+            #     q{/^[0-9]+$/},'Поле должно быть заполнено'
+            # ],
             values=>[
                 {v=>'0',d=>'Другое',c=>'#FFFFFF'},
                 {v=>'1',d=>'Ждем материалы от клиента',c=>'#CC99FF'},

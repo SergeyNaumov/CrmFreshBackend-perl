@@ -10,7 +10,7 @@ sub processEditForm{
     my $form=CRM::read_conf(%arg);
 
     return unless($form);
-    
+
     if($form->{action}=~m{^(insert|update)$}){
         if(defined $form->{make_create} && !$form->{make_create}){
             push @{$form->{errors}},"Вам запрещено создавать новые записи";

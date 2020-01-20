@@ -33,15 +33,21 @@ $form={
     {t=>'article_tag',a=>'ar_t',l=>'wt.id=ar_t.article_id',lj=>1,for_fields=>['tags'],not_add_in_select_fields=>1},
     {t=>'tag',a=>'t',l=>'ar_t.tag_id=t.id',lj=>1,for_fields=>['tags'],not_add_in_select_fields=>1},
   ],
-  on_filters=>[
-    {name=>'header',value=>'CRM'},
-    {name=>'anons'},
-    {name=>'tags'},
-    {name=>'enabled',value=>[1]},
-  ],
-  search_on_load=>1,
+  # on_filters=>[
+  #   {name=>'header',value=>''},
+  #   {name=>'anons'},
+  #   {name=>'tags'},
+  #   {name=>'enabled',value=>[]},
+  # ],
+  search_on_load=>0,
   fields =>
   [
+    {
+      description=>'url',
+      name=>'url',
+      type=>'text',
+      #not_process=>1
+    },
     {
       name => 'header', # наименование поля
       description => 'Название',

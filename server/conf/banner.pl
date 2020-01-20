@@ -52,19 +52,8 @@ $form={
           },
           {
             description=>'Вес',
-
             name=>'weight',
             type=>'text',
-            style=>{
-              'width'=>'50px'
-            },
-            regexp_rules=>[
-              '/^\d+$/','должно быть число'
-            ],
-            before_code=>sub{
-              my $f=shift;
-              $f->{after_html}="$form->{sctipt};$form->{action}";
-            },
             change_in_slide=>1,
           },
           {
