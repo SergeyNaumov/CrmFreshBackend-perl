@@ -20,7 +20,7 @@ $form={
         if($postfix){
           $url.='-'.$postfix
         }
-        print "url: $url\n";
+        #print "url: $url\n";
         return $s->{db}->query(
           query=>'select count(*) from in_ext_url where ext_url=?',
           values=>$url,
@@ -35,7 +35,6 @@ $form={
         if($rub_header){
           $url.='/'.to_translit($rub_header)
         }
-        
       }
       if($values->{header}){
         $values->{header}=~s/\//-/g;
@@ -52,10 +51,10 @@ $form={
         }
         $url=$url.='-'.$postfix;
       }
-
       return [
         in_ext_url=>{
-          value=>$url
+          #value=>$url
+          instead_of_empty=>$url
         }
       ]
     }
@@ -97,6 +96,9 @@ $form={
       description=>'url',
       name=>'in_ext_url',
       type=>'in_ext_url',
+      in_url=>'/article/<%id%>',
+      # foreign_key=>'project_id',
+      # foreign_key_value=>12,
     },
 
     {
@@ -110,9 +112,13 @@ $form={
         #q{/^.{1,3}$/},'Заголовок слишком короткий',
         q{/^.{3,255}$/},'Заголовок слишком длинный',
       ],
+      before_code=>sub{
+        my $e=shift;
+        if($form->{values}->{in_ext_url}){
+          $e->{frontend}->{ajax}=undef;
+        }
+      },
       frontend=>{
-          #fields_dependence=>q{[%#INCLUDE './conf/article.conf/dep_url.js'%]}, # изменяем поведение других полей
-          #tabs_dependence=>q{} # изменяем поведение табов
           ajax=>{
             name=>'in_ext_url'
           }
@@ -127,6 +133,23 @@ $form={
       header_field=>'name',
       value_field=>'id',
       tablename=>'m',
+      before_code=>sub{
+        my $e=shift;
+        
+        if($form->{action} eq 'new'){
+          $e->{value}=$form->{manager}->{id}
+        }
+
+        if($form->{manager}->{login} ne 'admin'){
+          if($form->{action} eq 'insert'){
+            $e->{value}=$form->{manager}->{id}
+          }
+          if($form->{action} ne 'insert'){$e->{read_only}=1}
+        }
+        #$e->{after_html}=qq{<div style="border: 1px solid black;">$form->{manager}->{login}</div>}
+
+      },
+
       make_change_in_search=>1
     },
     {
@@ -135,6 +158,12 @@ $form={
       table=>'article_rubric',
       name=>'rubric_id',
       tablename=>'ar',
+      before_code=>sub{
+        my $e=shift;
+        if($form->{values}->{in_ext_url}){
+          $e->{frontend}->{ajax}=undef;
+        }
+      },
       frontend=>{
           ajax=>{
             name=>'in_ext_url'

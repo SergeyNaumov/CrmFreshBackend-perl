@@ -72,7 +72,7 @@ sub read_conf{
     }
     
     #if($form->{id}){
-      $form->{values}=get_values_form(form=>$form,'s'=>$s);
+      get_values_form(form=>$form,'s'=>$s);
     #}
     
     

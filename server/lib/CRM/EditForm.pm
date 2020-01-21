@@ -1,6 +1,7 @@
 use utf8;
 use strict;
 use CRM::FormFiles;
+use CRM::in_ext_url;
 sub processEditForm{
     my %arg=@_;
     my $s=$Work::engine;
@@ -126,11 +127,13 @@ sub save_form{
             next
         }
         my $name=$f->{name};
+        next if(!exists( $form->{new_values}->{$name}) );
         
-        
-        if(is_wt_field($f) && exists( $form->{new_values}->{$name} ) ){ # значения для work_table
+        my $v=$form->{new_values}->{$name};
+
+        if(is_wt_field($f)   ){ # значения для work_table
             # проверки, преобразования перед сохранением
-            my $v=$form->{new_values}->{$name};
+            
 
             if($f->{type} eq 'date'){
                 unless($v=~m/^\d{4}-\d{2}-\d{2}/){
@@ -163,6 +166,7 @@ sub save_form{
 
             $save_hash->{$name}=$v
         }
+
     }
     #print Dumper($save_hash);
     if(scalar keys(%{$save_hash}) ){
@@ -188,11 +192,14 @@ sub save_form{
     }
     # Сохранили основную форму, получили ID, теперь сохраняем остальное:
     foreach my $f (@{$form->{fields}}){
-        next if($f->{read_only});
+        
         last if(errors($form));
+        
+        next if($f->{read_only} || !exists($form->{new_values}->{$f->{name}}) );
+        my $value=$form->{new_values}->{$f->{name}};
         # Сохраняем Multiconnect
         if($f->{type} eq 'multiconnect'){ 
-            my $value=$form->{new_values}->{$f->{name}};
+            
             if(defined($value) && ref($value) eq 'ARRAY'){
                 CRM::Multiconnect::save(
                     form=>$form,
@@ -201,6 +208,15 @@ sub save_form{
                     new_values=>$form->{new_values}->{$f->{name}}
                 );
             }
+        }
+        elsif($f->{type} eq 'in_ext_url'){
+            save_in_ext_url( # in_ext_url.pm
+                's'=>$s,
+                form=>$form,
+                value=>$value,
+                field=>$f
+            );
+            
         }
     }
 

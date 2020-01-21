@@ -249,6 +249,9 @@ sub admin_table_find{ # Поиск результатов
             elsif($field->{type} eq 'password'){
                 $value='[пароль нельзя увидеть]'
             }
+            elsif($field->{type} eq 'in_ext_url'){
+                $value=$r->{in_ext_url__ext_url}
+            }
 
             
             push @{$data},{name=>$name,type=>$type,value=>$value}
@@ -326,9 +329,41 @@ sub get_search_tables{
     my $form=shift; my $query=shift;
     my $TABLES=[];
 
+    # in_ext_url -- добавление таблицы
+    if( scalar(@{$form->{QUERY_SEARCH_TABLES}}) ){
+        foreach my $f (@{$form->{fields}}){
+            if($f->{type} eq 'in_ext_url'){
+                my $in_ext_url=$f->{in_url};
+                if($in_ext_url=~m/^(.*)<%id%>(.*)$/){
+                    my ($x1,$x2)=($1,$2);
+                    my @for_concat_val=();
+                    if($x1){
+                        push @for_concat_val,qq{'$x1'}
+                    }
+                    push @for_concat_val,'wt.id';
+                    if($x2){
+                        push @for_concat_val,qq{'$x2'}
+                    }
+                    my $concat='concat('.join(', ',@for_concat_val).')';
+                    #print Dumper(\@for_concat_val);
+                    #print Dumper();
+                    if($f->{foreign_key} && $f->{foreign_key_value}=~m/^\d+$/){
+                        push @{$form->{QUERY_SEARCH_TABLES}},{t=>'in_ext_url',a=>'in_ext_url',l=>"in_ext_url.in_url=$concat and in_ext_url.$f->{foreign_key}=$f->{foreign_key_value}",lj=>1,for_fields=>[$f->{name}]}
+                    }
+                    else{
+                        push @{$form->{QUERY_SEARCH_TABLES}},{t=>'in_ext_url',a=>'in_ext_url',l=>"in_ext_url.in_url=$concat",lj=>1,for_fields=>[$f->{name}]}
+                    }
+                }
+                else{
+                    push @{$form->{errors}},"в элементе $f->{name} ($f->{description} не корректное значение in_url";
+                }
 
+                
+            }
+        }
+    }
 
-    #print Dumper({wt=>$form->{work_table}, QUERY_SEARCH_TABLES=>$form->{QUERY_SEARCH_TABLES}});
+    #print Dumper($form->{QUERY_SEARCH_TABLES});
     my $aliases_on={wt=>1};
     #$form->{self}->pre($form->{query_search}->{on_filters_hash});
     $form->{errors}=[] unless $form->{errors};
@@ -454,6 +489,10 @@ sub get_search_where{
                 $o="$operable_fld";
                 
             }
+            elsif($f->{type} eq 'in_ext_url'){
+                $operable_fld="in_ext_url.ext_url";
+                $o=$operable_fld;
+            }
             else{
                 $operable_fld="$table.$db_name";
                 $o=$operable_fld;
@@ -532,6 +571,9 @@ sub get_search_where{
                 }
             }
             
+        }
+        elsif($f->{type} eq 'in_ext_url'){
+           # print Dumper({name=>$f->{name},values=>$values});
         }
         else{ #if($f->{type}=~m/^(filter_extend_)?(select_from_table|select_values)$/){
             push @{$WHERE}," ($table.$db_name IN (".join(',', (

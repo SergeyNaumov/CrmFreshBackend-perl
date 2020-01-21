@@ -303,11 +303,8 @@ sub new{
             field_name=>$2,
             child_field_name=>$3,
             id=>$4
-            
-            
           );
         }
-
       },
       # 1_to_m: sort
       {
