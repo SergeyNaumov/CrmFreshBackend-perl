@@ -51,6 +51,7 @@ $form={
           {v=>'admin-table',d=>'admin-table'},
           {v=>'admin-tree',d=>'admin-tree'},
           {v=>'const',d=>'const'},
+          {v=>'parser-excel',d=>'parser-excel'},
         ],
         tab=>'main'
       },

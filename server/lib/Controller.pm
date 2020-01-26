@@ -13,8 +13,9 @@ use CRM::Multiconnect;
 use CRM::Password;
 use CRM::Wysiwyg;
 use CRM::Autocomplete;
-use CRM::Ajax;
 use CRM::Events;
+use CRM::Const;
+
 #use CRM::FontAwesome;
 my $redirect='';
 # Документация по CRM
@@ -35,6 +36,7 @@ sub new{
           my $s=shift;
           $s->{login}=undef;
           #push @{$s->{APP}->{HEADERS}},['Access-Control-Allow-Origin','*'];
+          $s->{db_r}=$s->{connects}->{crm_read};
           $s->{db}=$s->{connects}->{crm_write};
         }
       },
@@ -303,8 +305,11 @@ sub new{
             field_name=>$2,
             child_field_name=>$3,
             id=>$4
+            
+            
           );
         }
+
       },
       # 1_to_m: sort
       {
@@ -377,17 +382,41 @@ sub new{
           $s->end;
         }
       },
+      # Константы
       {
-        url=>'^\/ajax\/([^\/]+)\/(.+)$',
-        code=>sub{
+        url=>'^\/const\/get$',
+        code=>sub{ # список констант системы
           my $s=shift;
-          CRM::Ajax::process('s'=>$s,script=>'ajax',config=>$1,name=>$2);
-          $s->end;
+          CRM::Const::get(
+            's'=>$s,script=>'const',
+          );
         }
       },
       {
+        url=>'^\/const\/save_value$',
+        code=>sub{ # список констант системы
+          my $s=shift;
+          CRM::Const::save_value(
+            's'=>$s,script=>'const',
+          );
+        }
+      },
+      # / константы
+
+      # parser excel
+      {
+        url=>'^\/parser-excel\/([^\/]+)$',
+        code=>sub{
+          my $s=shift;
+          require CRM::ParserExcel;
+          CRM::ParserExcel::process('s'=>$s,config=>$1);
+        }
+      },
+      # /parser excel
+      {
         url=>'^(.+)$',
         code=>sub{
+
           my $s=shift;
           $s->print("unknown url: $1")->end;
         }

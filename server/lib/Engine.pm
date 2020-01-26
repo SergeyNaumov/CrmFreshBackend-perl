@@ -50,26 +50,34 @@ sub new{
           }
       }
   }
-
-  # foreach $db (@{$args{connects}}){
-  #   if($db->{connect_ref}){
-  #     $s->{connects}->{$db->{name}}=$db->{connect_ref};
-  #   }
-  #   if(!$db->{connect}){
-
-  #     $db->{connect}=$s->{connects}->{$db->{name}}=freshdb->new($db,$s);
-  #   }
-  #   else{
-
-  #     $s->{connects}->{$db->{name}}->repair;
-  #   }
-
-  # }
-  #$s->{connects};
-  #$s->pre($s);
+  # константы системы
+  get_const($s); 
   return $s;
 }
+sub get_const{
+  my $s=shift;
+  my $db=$s->{connects}->{crm_read};
+  if(!$s->{const}){
+    $s->{const}={__last_update=>0};
+  }
 
+  if(time()-$s->{const}->{__last_update}>50){ # константы обновляем раз в 50 секунд
+    %{$s->{const}}=
+    map {
+      $_->{name}=>$_->{value}
+    }
+    @{
+      $db->query(
+      query=>q{
+        SELECT 
+          c.name,cv.value
+        FROM
+          const c LEFT JOIN const_values cv ON cv.const_id=c.id
+      })
+    };
+    $s->{const}->{__last_update}=time();
+  }
+}
 sub out{
   my $self=shift;
   $self->{APP}->{STATUS}=200 unless $self->{APP}->{STATUS};
@@ -93,7 +101,7 @@ sub out{
       $self->print_template({dir=>$1,template=>$2});
     }
     else{
-      print Dumper({layout=>$self->{layout}});
+      
       $self->print_template($self->{APP});
     }
   }

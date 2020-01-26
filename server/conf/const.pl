@@ -1,7 +1,6 @@
 $form={
     title=>'Константы',
     header_field=>'header',
-    tree_use=>1,
     sort=>1,
     max_level=>2,
     events=>{
@@ -9,6 +8,9 @@ $form={
         if($form->{id}){
           $form->{title}='Редактирование пункта меню'
         }
+      },
+      before_insert=>sub{
+        $form->{values}->{name}='empty_'.rand();
       }
     },
     default_find_filter=>'header',
@@ -19,6 +21,12 @@ $form={
           type=>'text',
           name=>'header',
           tab=>'main'
+      },
+      {
+        description=>'Имя Константы',
+        add_description=>'для разработчика',
+        type=>'text',
+        name=>'name'
       },
       {
         description=>'Тип элемента',
