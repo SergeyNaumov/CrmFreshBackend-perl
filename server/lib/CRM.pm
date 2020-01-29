@@ -26,8 +26,8 @@ sub get_startpage{
          tree_use=>1
     );
 
-
-
+    my $cur_year=cur_year();
+    $s->{config}->{copyright}=~s/\{cur_year\}/$cur_year/g;
     my $manager=$s->{db}->query(query=>'select * from manager where login=?',values=>[$s->{login}],onerow=>1);
     delete $manager->{password};
     return $s->to_json(

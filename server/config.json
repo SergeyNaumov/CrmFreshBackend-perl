@@ -1,6 +1,6 @@
 {
-    "title":"CRM Digital",
-    "copyright":"copyright 2005 - {{cur_year}}",
+    "title":"ChezaSite CRM, Powered by digitalstrateg",
+    "copyright":"copyright 2005 - {cur_year} digitalstrateg",
     "encrypt_method":"mysql_encrypt", 
     "system_email":"noreply@digitalstrateg.ru",
     "connects":{

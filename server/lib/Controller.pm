@@ -13,6 +13,7 @@ use CRM::Multiconnect;
 use CRM::Password;
 use CRM::Wysiwyg;
 use CRM::Autocomplete;
+use CRM::Ajax;
 use CRM::Events;
 use CRM::Const;
 
@@ -114,6 +115,7 @@ sub new{
         code=>sub{
           my $s=shift;
           $s->print(CRM::get_startpage('s'=>$s))->end;
+          #print Dumper()
         }
       },
       {
@@ -402,7 +404,13 @@ sub new{
         }
       },
       # / константы
-
+      {
+        url=>'^\/ajax\/([^\/]+)\/([^\/]+)$',
+        code=>sub{
+          my $s=shift;
+          CRM::Ajax::process('s'=>$s,config=>$1,name=>$2)
+        }
+      },
       # parser excel
       {
         url=>'^\/parser-excel\/([^\/]+)$',

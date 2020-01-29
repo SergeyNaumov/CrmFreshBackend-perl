@@ -1,6 +1,8 @@
 use utf8;
 use strict;
 use Data::Dumper;
+use Date::Parse qw/ str2time /;
+
 sub select_managers_ids_from_perm{
   my $form=shift; my $perm=shift; my $s=$Work::engine;
   #my $sth=$s->{db}->prepare( select_from_table_perm($perm) );
@@ -84,4 +86,26 @@ sub to_translit{
     return $_;
 }
 
+sub cur_year{
+  return (localtime(time))[5]+1900
+}
+sub next_date{
+  my $d=shift;
+  my ($mday,$mon,$year)=(localtime(str2time($d)+86400))[3,4,5];
+  return sprintf("%04d-%02d-%02d",$year+1900,$mon+1,$mday);
+}
+
+sub cur_date{
+  my $delta=shift;
+  $delta=0 unless($delta);
+  my ($mday,$mon,$year)=(localtime(time+86400*$delta))[3,4,5];
+  return sprintf("%04d-%02d-%02d",$year+1900,$mon+1,$mday);
+}
+
+sub cur_time{
+  my $delta_sec=shift;
+  $delta_sec=0 unless($delta_sec);
+  my ($sec,$min,$hour,$mday,$mon,$year)=(localtime(time()+$delta_sec))[0,1,2,3,4,5];
+  return sprintf("%04d-%02d-%02d %02d:%02d:%02d",$year+1900,$mon+1,$mday,$hour,$min,$sec);
+}
 return 1;

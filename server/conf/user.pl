@@ -8,20 +8,20 @@ $form={
     tree_use => 0,
     explain=>1,
     GROUP_BY=>'wt.id',
-    filters_groups=>[
-      {
-        description=>'Данные о компании',show=>1,filter_list=>
-        [
-          'firm','otr_id','region_id','web','registered'
-        ]
-      },
-    {
-      description=>'Данные о продажах',show=>1,filter_list=>
-      [
-        'memo','is_consult','not_export','status','vajn','state','manager_id'
-      ]
-    },
-  ],
+  #   filters_groups=>[
+  #     {
+  #       description=>'Данные о компании',show=>1,filter_list=>
+  #       [
+  #         'firm','otr_id','region_id','web','registered'
+  #       ]
+  #     },
+  #   {
+  #     description=>'Данные о продажах',show=>1,filter_list=>
+  #     [
+  #       'memo','is_consult','not_export','status','vajn','state','manager_id'
+  #     ]
+  #   },
+  # ],
   before_filters_html=>q{
     <p>это html, который добавили в $form->{before_filters_html} <p><a href="#" onclick="zzz(); return false;"> test</a></p></p>
   },
@@ -168,7 +168,7 @@ $form={
           }
         }
       },
-      [%#INCLUDE './conf/user.conf/tab_comp.pl'%],
+      [%INCLUDE './conf/user.conf/tab_comp.pl'%],
       [%#INCLUDE './conf/user.conf/tab_rekvizits.pl'%],
       [%#INCLUDE './conf/user.conf/user_getting_cert.pl'%],
       [%#INCLUDE './conf/user.conf/tab_work.pl'%],
