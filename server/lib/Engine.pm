@@ -115,17 +115,19 @@ sub out{
   $self->print_header($opt) unless($self->{vars}->{print_header}=1);
 
   $self->{APP}->{DATA}='' if(!length($self->{APP}->{DATA}));
-  if(1 || $self->{APP}->{protocol} eq 'psgi'){
-    Encode::_utf8_off($self->{APP}->{DATA});
-    foreach my $h (@{$self->{APP}->{HEADERS}}){
+  
+
+  Encode::_utf8_off($self->{APP}->{DATA});
+  foreach my $h (@{$self->{APP}->{HEADERS}}){
       Encode::_utf8_off($h);
-    }
-    return [
+  }
+
+  return [
       $self->{APP}->{STATUS},
       $self->{APP}->{HEADERS},
       [$self->{APP}->{DATA}]
-    ];
-  }
+  ];
+  
 }
 sub end{
   my $self=shift;
@@ -213,5 +215,6 @@ sub process{ # check and run controllers
   $self->{layout}=$self->{controller}->{layout} unless($self->{layout});
   return $self;
 }
+# для stream-а
 
 1;

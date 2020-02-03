@@ -9,7 +9,7 @@ sub processEditForm{
     #$CRM::s=$s;
     
     my $form=CRM::read_conf(%arg);
-
+    #print Dumper($form->{fields}->[0]);
     return unless($form);
 
     if($form->{action}=~m{^(insert|update)$}){
@@ -225,7 +225,7 @@ sub save_form{
 }
 sub is_wt_field{
     my $f=shift;
-    return ($f->{type}=~m/^(text|textarea|wysiwyg|select_from_table|select_values|date|time|datetime|yearmon|daymon|hidden|checkbox|switch|font-awesome|file)$/);
+    return ($f->{type}=~m/^(text|textarea|hidden|wysiwyg|select_from_table|select_values|date|time|datetime|yearmon|daymon|hidden|checkbox|switch|font-awesome|file)$/);
 }
 
 

@@ -2,6 +2,19 @@ use utf8;
 use strict;
 use Data::Dumper;
 use Date::Parse qw/ str2time /;
+# для работы с полями
+sub remove_form_field{
+    my %arg=@_;
+
+  my $newlist;
+  
+  foreach my $f (@{$arg{form}->{fields}}){
+    #print "555";
+    push @{$newlist},$f if($f->{name} ne $arg{name});
+  }
+
+  $arg{form}->{fields}=$newlist;
+}
 
 sub select_managers_ids_from_perm{
   my $form=shift; my $perm=shift; my $s=$Work::engine;
@@ -44,6 +57,7 @@ sub select_from_table_perm{
             'join permissions p ON (p.id=mgp.permissions_id) '.
           q{WHERE pname='}.$perm.q{'}
 }
+
 sub to_translit{
     ($_)=@_;
     Encode::_utf8_on($_);

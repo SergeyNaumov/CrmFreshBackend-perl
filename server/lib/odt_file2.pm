@@ -82,15 +82,16 @@ sub odt_process {
   $|=1;
 
   { use utf8;
-    print "normalyze_start\n";
+    #print "normalyze_start\n";
     Encode::_utf8_on($content);
 
     $content=~s{(\[\%.+?\%\])}{\n$1\n}gs;
-    open F,'>./log1.txt';print F $content; close F;
+    #open F,'>./log1.txt';print F $content; close F;
     #$content=~s{\[\%#.+?\%\]}{}gs;
     while($content=~m{(\[\%.+?\%\])}gs){
       my $command_first=$1; my $command=$1;
       print "$command_first\n";
+      # !!!!!!!!!!!!!!!1 сделать фикс тэгов
       my @tags=($command=~m{(<.+?>)}gs);
       $command=~s/<.+?>//gs; $command=join('',@tags).$command;
       if($command ne $command_first){
@@ -118,9 +119,9 @@ sub odt_process {
       }
     }
 =cut
-    print "normalyze_end\n";
+    #print "normalyze_end\n";
     Encode::_utf8_off($content);
-    open F,'>./log2.txt';print F $content; close F;
+    #open F,'>./log2.txt';print F $content; close F;
   }
   #print "\n===============================================\nCONTENT2:\n$content\n\n";
   ROWLOOP(\$content);
@@ -131,20 +132,21 @@ sub odt_process {
   my $TTcontent;
   #print Dumper($par); exit;
 
-  print "\n\n$content\n\ntt process start\n";
+  #print "\n\n$content\n\ntt process start\n";
   $template -> process( \$content, $par->{vars}->{data}, \$TTcontent ) || do {
-    print $template->error()."\n";
+    $par->{s}->print($template->error());
     die(Dumper($template->error()));
     #error( "output::add_template:template error: ". $template->error()."\n",$par->{tmp_file});
   };
-  print "ttcontent ok!\n";
+  #print "ttcontent ok!\n";
   #print "\n\n$TTcontent\n\n"; # !!!!
 
 
   #########################################
-
+  #print "zip_start\n";
+  Encode::_utf8_off($TTcontent);
   $zip->contents('content.xml',$TTcontent);
-
+  #print "zip_end\n";
   ### add manifest ######################
   my $manifest = $zip->contents('META-INF/manifest.xml');
   my @images = grep {$manifest !~ m|$_|is } grep /^Pictures\//, $zip->memberNames();
@@ -167,18 +169,18 @@ sub odt_process {
 
   $zip = undef;
 ########################################################################
-  #print "!!!";
+  
   if($par->{format} && $par->{format} !~ /od[ts]$/i){
-    print "unoconv -p8100 -f $par->{format} $par->{tmp_file}\n"; # !!!
+    #print "unoconv -p8100 -f $par->{format} $par->{tmp_file}\n"; # !!!
 
     `unoconv -p8100 -f $par->{format} $par->{tmp_file}`;
 
-    #unlink $par->{tmp_file};
+    
 
     $par->{tmp_file} =~ s/\.\w+$//;
     $par->{tmp_file} = $par->{tmp_file} . '.' . $par->{format};
 
-  } elsif($par->{format} ~~ /od[ts]$/i || !$par->{format}){
+  } elsif($par->{format} =~m/od[ts]$/i || !$par->{format}){
     my $tmp_file = $par->{tmp_dir} . get_fname() . '.' .$ext;
     `${bin_dir}unoconv --stdout -p8100   -f $ext $par->{tmp_file} > $tmp_file`;
     unlink $par->{tmp_file};
@@ -202,27 +204,18 @@ sub odt_process {
     if (!$par->{upload_file_name}){
       ($par->{upload_file_name}) = $par->{tmp_file} =~/^.*\/(.+)$/;
     }
-    $|=1;
+    
+    if($par->{s}){
+      my $s=$par->{s};
+      $s->{vars}->{print_header}=1;
+      $s->{APP}->{STATUS}=100;
+      push @{$s->{APP}->{HEADERS}},q{Content-Type: application/x-force-download};
+      push @{$s->{APP}->{HEADERS}},qq{Content-Disposition:attachment; filename=\"dogovor.doc\"};
+      $s->{stream_file}=$par->{tmp_file};
+      $s->{stream_file_need_unlink}=1;
 
-    if($par->{fresh_object}){
-      $par->{fresh_object}->{vars}->{print_header}=1;
-      $par->{fresh_object}->{APP}->{STATUS}=100;
-
-      push @{$par->{fresh_object}->{APP}->{HEADERS}},q{Content-Type: application/x-force-download};
-      push @{$par->{fresh_object}->{APP}->{HEADERS}},qq{Content-Disposition:attachment; filename=\"dogovor.doc\"};
-
-      open F,$par->{tmp_file};
-      binmode F;
-      while(<F>){$par->{fresh_object}->print($_);}
-      close F;
-      unlink $par->{tmp_file};
     }
-    else{
-      print "Content-Type: application/x-force-download\n";
-      print "Content-Disposition:attachment; filename=\"$par->{upload_file_name}\"\n\n";
-      copy($par->{tmp_file},\*STDOUT);
-      unlink $par->{tmp_file};
-    }
+
 
   }
 }
@@ -248,7 +241,7 @@ sub image {
         }else{
           my $inf = image_info($data->{$im}{file});
           my $res;
-          if( ref($inf->{resolution}) ~~ 'ARRAY'){
+          if( ref($inf->{resolution}) eq 'ARRAY'){
             $res = $inf->{resolution}[0] * 1;
           }
           $res = $res ? $res : 96;

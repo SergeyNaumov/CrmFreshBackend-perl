@@ -151,8 +151,8 @@ gen_bill=>sub{ # создание счёта
       $sth->execute($bill_id);
       my $b=$sth->fetchrow_hashref;
 
-      
-        $form->{self}->template({
+      print
+        template({
           template=>'./conf/user.conf/bill_section.tmpl',
           vars=>{
             b=>$b,
@@ -238,16 +238,15 @@ out_docpack_info=>sub{
       my $sth=$form->{dbh}->prepare("SELECT * from bill where docpack_id=? order by paid_date desc, id desc");
       $sth->execute($docpack_id);
       my $bill_list=$sth->fetchall_arrayref({});
-      #return 'ZZZ';
       return
-        $form->{self}->template({
+        template({
           template=>'./conf/user.conf/docpack_section.tmpl',
           vars=>{
             bill_list=>$bill_list,
             docpack=>$docpack,
             doc_link=>$doc_link,
             docpack_id=>$docpack_id,
-            #form=>$form
+            form=>$form
           }
         });
     }

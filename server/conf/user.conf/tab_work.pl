@@ -297,6 +297,7 @@
   table_id=>'uid',
   foreign_key=>'user_id',
   full_str=>1,
+
   fields=>[
       {
         description=>'Тип звонка',
@@ -343,7 +344,7 @@
         },
         slide_code=>sub{
           my $e=shift; my $v=shift;
-          #use Data::Dumper; print Dumper({v=>$v});
+          #$e->{type}='html';
           return '' unless($v->{record});
           return qq{<a href="$v->{record}" target="_blank">слушать</a>}
         }

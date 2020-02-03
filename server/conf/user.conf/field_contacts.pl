@@ -12,14 +12,12 @@
         {
           description=>'Логин пользователя',
           name=>'username',
-          type=>'text',
-          change_in_slide=>1
+          type=>'text'
         },
         {
           description=>'Фамилия',
           name=>'last_name',
-          type=>'text',
-          change_in_slide=>1
+          type=>'text'
         },
         {
           description=>'Имя',
@@ -37,8 +35,7 @@
           name=>'phone',
           type=>'text',
           # раньше было несколько телефонов из-за ограничений Агоры сделали возможность только одного (либо пустое поле)
-          #regexp=>'^(\+\d{6}\d*)$',
-          
+          regexp=>'^(\+\d{6}\d*)$',
           replace=>[
             ['(^\(|,\s*\()','+7'],
             ['[^\+\s\d,]',''],
@@ -51,29 +48,28 @@
             ['(,\s*),','$1'],
             ['(\d)\+7','$1, +7']
           ],
-          change_in_slide=>1,
-          # slide_code=>sub{
-          #   my $e=shift; return unless $e->{value};
+          slide_code=>sub{
+            my $e=shift; return unless $e->{value};
             
-          #   my @out=();
+            my @out=();
             
-          #   foreach my $p ((split/,\s*/,$e->{value})){
+            foreach my $p ((split/,\s*/,$e->{value})){
               
-          #     if($p=~m{(^\+\d)(\d{3})(\d{3})(\d+)}){
-          #       push @out,qq{$1&nbsp;($2)&nbsp;$3&nbsp;$4};
-          #     }
-          #   }
-          #   unless(scalar(@out)){
-          #     return qq{$e->{value} <span style="color: red; font-weight: bold; font-size: 8pt;">Неправильный формат</span>};
-          #   }
-          #   foreach my $p (@out){
-          #     my $phone_for_call=$p; $phone_for_call=~s{^\+7}{8};
-          #     $phone_for_call=~s{[^\d]}{}g;
-          #     $p=qq{<a href="/tools/call_tel.pl?phone=$phone_for_call" target="forcall">$p</a>}
-          #   }
-          #   return join(',<br>', @out);
+              if($p=~m{(^\+\d)(\d{3})(\d{3})(\d+)}){
+                push @out,qq{$1&nbsp;($2)&nbsp;$3&nbsp;$4};
+              }
+            }
+            unless(scalar(@out)){
+              return qq{$e->{value} <span style="color: red; font-weight: bold; font-size: 8pt;">Неправильный формат</span>};
+            }
+            foreach my $p (@out){
+              my $phone_for_call=$p; $phone_for_call=~s{^\+7}{8};
+              $phone_for_call=~s{[^\d]}{}g;
+              $p=qq{<a href="/tools/call_tel.pl?phone=$phone_for_call" target="forcall">$p</a>}
+            }
+            return join(',<br>', @out);
             
-          # },
+          },
           code=>sub{
             my $e=shift;
             if($form->{script} eq 'load_1_to_m.pl' && $form->{action}=~m{^(add_form|edit)$}){

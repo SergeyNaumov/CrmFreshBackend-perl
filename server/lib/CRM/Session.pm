@@ -93,7 +93,10 @@ sub create{ # создание сессии
 
     
     if($auth_id){ # залогинились
-        
+        $s->{manager}={
+            id=>$auth_id,
+            login=>$arg{login}
+        };
         # 3. Генерируем ключ сессии
         # my $a='123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
         # my $key='';
@@ -152,8 +155,13 @@ sub start{
             errors=>$errors
     );
     if($ok){
-        my $login=$arg{connect}->query(query=>'select login from manager where id=?',values=>[$user_id],onevalue=>1,errors=>$errors);
-        return {login=>$login?$login:'',errors=>$errors};
+        my $manager=$arg{connect}->query(query=>'select * from manager where id=?',values=>[$user_id],onerow=>1,errors=>$errors);
+        delete($manager->{password});
+        $s->{manager}=$manager;
+        unless($manager){
+            $manager={login=>''}
+        }
+        return {login=>$manager->{login},errors=>$errors};
     }
     return {login=>'',errors=>$errors};
 

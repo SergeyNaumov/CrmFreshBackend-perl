@@ -11,9 +11,10 @@ sub read_conf{
 
     my %arg=@_;
     my $config=$arg{config}; my $s=$Work::engine;
-    my $form;
+    my $form={};
+    my $errors=[];
     if(-f './conf/'.$config.'.pl'){
-      my $data=$s->template({dir=>'./conf',template=>'./conf/'.$config.'.pl'});
+      my $data=$s->template({dir=>'./conf',template=>'./conf/'.$config.'.pl',errors=>$errors});
       eval($data);
       if($@){
           #$s->print($@.'<hr>');
@@ -22,10 +23,11 @@ sub read_conf{
       }
     }
     else{
-      push @{$form->{errors}},qq{config $config not found!};
+      push @{$errors},qq{config $config not found!};
     }
 
-    $form->{errors}=[] unless($form->{errors});
+
+    $form->{errors}=$errors;
     create_fields_hash($form); # Routine
     
     # test_login='admin'

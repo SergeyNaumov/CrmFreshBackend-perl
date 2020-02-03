@@ -1,6 +1,7 @@
 use utf8;
 use strict;
 use POSIX;
+
 sub admin_table_find{ # Поиск результатов
     my $s=$Work::engine; my $R=shift;
     
@@ -52,6 +53,7 @@ sub admin_table_find{ # Поиск результатов
         my $name=$values->[0];
         $form->{query_search}->{on_filters_hash}->{$name}=$values->[1];
     }
+
     #use Data::Dumper;
     #print Dumper($form->{query_search}->{on_filters_hash});
 
@@ -70,7 +72,7 @@ sub admin_table_find{ # Поиск результатов
             where=>join(" AND ",@{$form->{query_search}->{WHERE}})
         ]
     );
-
+    
     my ($query,$query_count)=gen_query_search($form);
     
 
@@ -85,6 +87,7 @@ sub admin_table_find{ # Поиск результатов
     if($form->{page} > $form->{SEARCH_RESULT}->{count_pages}){
         $form->{page}=1;
     }
+
     my $debug_explain;
     my $log=[];
     my $result_list=$s->{db}->query(
@@ -116,7 +119,7 @@ sub admin_table_find{ # Поиск результатов
         #print "r: $r->{wt__id}\n";
 
     }
-
+    
     my $multiconnect_values;
     if(scalar (@id_list) ){
         foreach my $q (@{$R->{query}}){
@@ -147,8 +150,8 @@ sub admin_table_find{ # Поиск результатов
             }
         }
     }
-    #my @id_list=grep {$_->{wt__id}} @{$result_list};
-    #print Dumper({id_list=>\@id_list});
+
+    
     foreach my $r (@{$result_list}){
         my $data=[];
         #print Dumper($r);
@@ -264,11 +267,14 @@ sub admin_table_find{ # Поиск результатов
     $form->{SEARCH_RESULT}->{log}=$form->{log};
     $form->{SEARCH_RESULT}->{output}=$output; 
 
-    $s->print_json({
-      success=>errors($form)?0:1,
-      results=>$form->{SEARCH_RESULT},
-      errors=>$form->{errors}
-    })->end;
+    $s->print_json(
+        get_clean_json({
+            success=>errors($form)?0:1,
+            results=>$form->{SEARCH_RESULT},
+            errors=>$form->{errors}
+        })
+    )->end;
+    
 }
 
 sub gen_query_search{
@@ -435,7 +441,7 @@ sub get_search_where{
     my $alias_from_table; my $table_from_alias;
     my $WHERE=[];
     my $headers=[];
-
+    $form->{SEARCH_RESULT}->{query_fields}=[];
     unless( scalar(@{$query}) ){
         if($form->{default_find_filter}){
             if(ref($form->{default_find_filter}) ne 'ARRAY'){
@@ -443,7 +449,7 @@ sub get_search_where{
             }
             foreach my $name (@{$form->{default_find_filter}}){
                 if(my $f=$form->{fields_hash}->{$name}){
-
+                    push @{$form->{SEARCH_RESULT}->{query_fields}},$f;
                     #my $header={h=>$f->{description},n=>$name,make_sort=>(!$form->{not_order} && !$f->{not_order})};
                     #if($form->{priority_sort} && $form->{priority_sort}->[0] eq $name){
                     #    $header->{sorted}=$form->{priority_sort}->[1]
@@ -457,7 +463,7 @@ sub get_search_where{
         my $name=$q->[0]; my $values=$q->[1];
         my $f=$form->{fields_hash}->{$name};
         # собираем сразу заголовки будущей таблицы
-        
+        push @{$form->{SEARCH_RESULT}->{query_fields}},$f;
         my $header={h=>$f->{description},n=>$name,make_sort=>(!$form->{not_order} && !$f->{not_order})};
         if($form->{priority_sort} && $form->{priority_sort}->[0] eq $name){
             $header->{sorted}=$form->{priority_sort}->[1]
@@ -600,6 +606,16 @@ sub get_search_where{
     $form->{query_search}->{WHERE}=$WHERE;
 
 
+}
+sub get_result{
+    my $s=$Work::engine;
+    $s->print_header({'content-type'=>'text/html'});
+    my $R=$s->request_content();
+    if($R){
+        $R=$s->from_json($R);
+    }
+
+    admin_table_find($R);
 }
 sub get_while_for_field_query{ # формирования условия поиска для запроса
     my ($form,$field,$values)=@_;

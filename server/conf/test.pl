@@ -6,7 +6,7 @@ $form={
     cols=>[
         [
             {description=>'wysiwyg',name=>'wysiwyg',hide=>1},
-            {description=>'Простые типы данных',name=>'plain',hide=>1},
+            {description=>'Простые типы данных',name=>'plain'},
             {description=>'Тэги',name=>'tags',hide=>1},
             {description=>'Комментарии',name=>'memo',hide=>1},
         ],

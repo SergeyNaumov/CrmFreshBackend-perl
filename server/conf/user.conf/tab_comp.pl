@@ -42,7 +42,6 @@
   table=>'otr',
   header_field=>'header',
   value_field=>'id',
-  autocomplete=>1,
   tab=>'comp',
   #filter_code=>sub{
     #my $e=shift; 

@@ -175,10 +175,15 @@ sub request_content{
     $s->{req}=Plack::Request->new($s->{vars}->{env});
   }
   my $R=$s->{req}->content;
-  Encode::_utf8_on($R);
-  if($arg{from_json}){
-    if($R){
-      $R=$s->from_json($R);
+  if(!$R  ) {
+    $R={}
+  }
+  else{
+    Encode::_utf8_on($R);
+    if($arg{from_json}){
+      if($R){
+        $R=$s->from_json($R);
+      }
     }
   }
   return $R;

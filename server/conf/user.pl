@@ -5,25 +5,24 @@ $form={
     default_find_filter => 'firm,next_contact',
     read_only => 0,
     make_delete=>0,
-    tree_use => 0,
-    explain=>1,
+    tree_use => '0',
     GROUP_BY=>'wt.id',
-  #   filters_groups=>[
-  #     {
-  #       description=>'Данные о компании',show=>1,filter_list=>
-  #       [
-  #         'firm','otr_id','region_id','web','registered'
-  #       ]
-  #     },
-  #   {
-  #     description=>'Данные о продажах',show=>1,filter_list=>
-  #     [
-  #       'memo','is_consult','not_export','status','vajn','state','manager_id'
-  #     ]
-  #   },
-  # ],
+    filters_groups=>[
+      {
+        description=>'Данные о компании',show=>1,filter_list=>
+        [
+          'login','firm','otr_id','region_id','web', 'company_type', 'company_role'
+        ]
+      },
+    {
+      description=>'Данные о продажах',show=>1,filter_list=>
+      [
+        'memo','is_consult','not_export','status','vajn','state','manager_id'
+      ]
+    },
+  ],
   before_filters_html=>q{
-    <p>это html, который добавили в $form->{before_filters_html} <p><a href="#" onclick="zzz(); return false;"> test</a></p></p>
+    
   },
   javascript=>{
     admin_table=>q{
@@ -89,89 +88,88 @@ $form={
       {description=>'Сертификаты',name=>'tab_cert',hide=>1},
     ],
     [
-      {description=>'Пакеты документов',name=>'docpack',hide=>0},
-      {description=>'Работа',name=>'work',hide=>1},
+      {description=>'Работа',name=>'work',hide=>0},
       {description=>'Сопровождение',name=>'sopr',hide=>1},
-      
+      {description=>'Пакеты документов',name=>'docpack',hide=>1},
       {description=>'Коммерческие предложения',name=>'kp',hide=>1},
     ]
   ],
-    events=>{
-          before_save=>sub{
-            my $next_contact=&{$form->{run}->{date_to_int}}(param('next_contact'));
-            my $cur_date=&{$form->{run}->{date_to_int}}(&{$form->{run}->{cur_date}}());
-          },
-          before_insert=>sub{
-            $form->{old_values}->{company_role}=$form->{new_values}->{company_role};
-            if($form->{new_values}->{company_role}==1){
-              $form->{KEYFLD}='supplier_2_'
-            }
-            elsif($form->{new_values}->{company_role}==2){
-              $form->{KEYFLD}='contractor_2_'
-            }
-            else{
-              push @{$form->{errors}},q{Не выбран тип клиента!}
-            }
-          },
-          after_save=>sub{
-            if($form->{action} eq 'insert'){
-              #$form->{old_values}->{company_role}=$form->{new_values}->{company_role}; 
-              $form->{old_values}->{KEYFLD}=$form->{KEYFLD}.$form->{id};
-              #my $sth=$form->{dbh}->prepare("UPDATE $form->{work_table} set registered = now(), KEYFLD=?, last_update=now() where id = ?");
-              #$sth->execute($form->{old_values}->{KEYFLD},$form->{id});
-              
-            }
-            else{
-              #$form->{dbh}->do("UPDATE user set last_update=now() where id=$form->{id}")
-            }
-          },
-          before_update=>sub{
-              my $sth=$form->{dbh}->prepare("SELECT * from user where id=?");
-              $sth->execute($form->{id});
-              my $values=$sth->fetchall_arrayref({});
-              
-            
-              my $values_json=$form->{self}->to_json($values);
-              $sth=$form->{dbh}->prepare("SELECT body from user_history where id=? order by moment desc limit 1");
-              $sth->execute($form->{id});
-              my $body=$sth->fetchrow();
-              if($body ne $values_json){
-                
-                $sth=$form->{dbh}->prepare("INSERT INTO user_history(id,moment,body,manager_id) values(?,now(),?,?)");
-                $sth->execute($form->{id},$values_json,$form->{manager}->{id});
-              }
-          },
-          before_search=>sub{
-            if(param('to_doc') eq 'yes'){
-              $form->{perpage}=1000;
-            }
-          },
-          after_search=>sub{
-            if(param('to_doc') eq 'yes'){
-                my $result_list=shift;
-                pre($result_list);
-                exit;
-            }
-
-          }
-    },
-    fields=>[
-      [%INCLUDE './conf/user.conf/tab_links.pl'%],
-      {
-        name=>'KEYFLD',
-        type=>'hidden',
-        
+  events=>{
+        before_save=>sub{
+          my $next_contact=&{$form->{run}->{date_to_int}}(param('next_contact'));
+          my $cur_date=&{$form->{run}->{date_to_int}}(&{$form->{run}->{cur_date}}());
+        },
         before_insert=>sub{
-          my $e=shift;
-          unless($e->{value}){
-            $e->{value}='tmp_'.gen_pas();
+          $form->{old_values}->{company_role}=$form->{new_values}->{company_role};
+          if($form->{new_values}->{company_role}==1){
+            $form->{KEYFLD}='supplier_2_'
           }
+          elsif($form->{new_values}->{company_role}==2){
+            $form->{KEYFLD}='contractor_2_'
+          }
+          else{
+            push @{$form->{errors}},q{Не выбран тип клиента!}
+          }
+        },
+        after_save=>sub{
+          if($form->{action} eq 'insert'){
+            #$form->{old_values}->{company_role}=$form->{new_values}->{company_role}; 
+            $form->{old_values}->{KEYFLD}=$form->{KEYFLD}.$form->{id};
+            #my $sth=$form->{dbh}->prepare("UPDATE $form->{work_table} set registered = now(), KEYFLD=?, last_update=now() where id = ?");
+            #$sth->execute($form->{old_values}->{KEYFLD},$form->{id});
+            
+          }
+          else{
+            #$form->{dbh}->do("UPDATE user set last_update=now() where id=$form->{id}")
+          }
+        },
+        before_update=>sub{
+            my $sth=$form->{dbh}->prepare("SELECT * from user where id=?");
+            $sth->execute($form->{id});
+            my $values=$sth->fetchall_arrayref({});
+            
+          
+            my $values_json=$form->{self}->to_json($values);
+            $sth=$form->{dbh}->prepare("SELECT body from user_history where id=? order by moment desc limit 1");
+            $sth->execute($form->{id});
+            my $body=$sth->fetchrow();
+            if($body ne $values_json){
+              
+              $sth=$form->{dbh}->prepare("INSERT INTO user_history(id,moment,body,manager_id) values(?,now(),?,?)");
+              $sth->execute($form->{id},$values_json,$form->{manager}->{id});
+            }
+        },
+        before_search=>sub{
+          if(param('to_doc') eq 'yes'){
+            $form->{perpage}=1000;
+          }
+        },
+        after_search=>sub{
+          if(param('to_doc') eq 'yes'){
+              my $result_list=shift;
+              pre($result_list);
+              exit;
+          }
+
         }
-      },
-      [%INCLUDE './conf/user.conf/tab_comp.pl'%],
-      [%#INCLUDE './conf/user.conf/tab_rekvizits.pl'%],
-      [%#INCLUDE './conf/user.conf/user_getting_cert.pl'%],
-      [%#INCLUDE './conf/user.conf/tab_work.pl'%],
-      [%INCLUDE './conf/user.conf/docpack.pl'%],
-    ]
+  },
+  fields=>[
+    [%INCLUDE './conf/user.conf/tab_links.pl'%],
+    {
+      name=>'KEYFLD',
+      type=>'hidden',
+      
+      before_insert=>sub{
+        my $e=shift;
+        unless($e->{value}){
+          $e->{value}='tmp_'.gen_pas();
+        }
+      }
+    },
+    [%INCLUDE './conf/user.conf/tab_comp.pl'%],
+    [%INCLUDE './conf/user.conf/tab_rekvizits.pl'%],
+    [%INCLUDE './conf/user.conf/user_getting_cert.pl'%],
+    [%INCLUDE './conf/user.conf/tab_work.pl'%],
+    [%INCLUDE './conf/user.conf/docpack.pl'%],
+  ]
 };

@@ -1,0 +1,14 @@
+<table class="mainout" style="margin:0">
+    [%FOREACH a IN act_list%]
+    <tr>
+        <td>АКТ: №[%a.number%] </td>
+        <td>[%a.registered%]</td>
+    </tr>
+    [%END%]
+    [%IF av_fact%]
+    <tr>
+        <td>Авансовая счёт-фактура: №[%av_fact.number%] </td>
+        <td>[%av_fact.paid_date%]</td>
+    </tr>
+    [%END%]
+</table>

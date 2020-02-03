@@ -17,6 +17,7 @@ use CRM::Ajax;
 use CRM::Events;
 use CRM::Const;
 
+
 #use CRM::FontAwesome;
 my $redirect='';
 # Документация по CRM
@@ -360,11 +361,7 @@ sub new{
         # 
         url=>'^\/wysiwyg\/([^\/]+)\/([^\/]+)(\/(\d+))?(\/([^\/]+))?',
         code=>sub{
-
           my $s=shift;
-
-
-          
           CRM::Wysiwyg::process(
             's'=>$s,
             config=>$1,
@@ -374,7 +371,6 @@ sub new{
             script=>'wysiwyg',
           );
         }
-
       },
       {
         url=>'^\/autocomplete\/([^\/]+)',
@@ -404,11 +400,32 @@ sub new{
         }
       },
       # / константы
+
+      # ajax
       {
         url=>'^\/ajax\/([^\/]+)\/([^\/]+)$',
         code=>sub{
           my $s=shift;
-          CRM::Ajax::process('s'=>$s,config=>$1,name=>$2)
+          require CRM::Ajax;
+          CRM::Ajax::process('s'=>$s,script=>'ajax',config=>$1,name=>$2)
+        }
+      },
+      {
+        url=>'^\/docpack\/([^\/]+)\/([^\/]+)$',
+        code=>sub{
+          my $s=shift;
+          require CRM::Docpack;
+          if(my $R=$s->request_content(from_json=>1)){
+            my %arg=('s'=>$s,script=>'docpack',config=>$1,name=>$2,R=>$R, action=>$R->{action},id=>$R->{id});
+            
+            
+            CRM::Docpack::process(%arg);
+          }
+          else{
+            $s->print_json({success=>0,errors=>['параметры json отсутствуют']})
+          }
+          $s->end;
+
         }
       },
       # parser excel
@@ -420,7 +437,16 @@ sub new{
           CRM::ParserExcel::process('s'=>$s,config=>$1);
         }
       },
-      # /parser excel
+      # load_document (для документооборота)
+      {
+        url=>'^\/load_document(\/(.+))?$',
+        code=>sub{
+          my $s=shift;
+          require CRM::LoadDocument;
+          CRM::LoadDocument::process($s,$1);
+          $s->end;
+        }
+      },
       {
         url=>'^(.+)$',
         code=>sub{

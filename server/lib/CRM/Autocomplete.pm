@@ -11,12 +11,19 @@ sub process{
 
     my $list=[];
     my $R=$s->request_content(from_json=>1);
+
     my ($term,$name)=($R->{term},$R->{field_name});
     # проверить параметры, вывести ошибки
     my $sub_name;
 
     my $field;
-    if($term){
+    if($R->{action} eq 'get_begin_value'){ # первичное значениие для select_from_table (в будущем можно доработать под другие поля)
+        get_begin_value(
+            's'=>$s,
+            field=>$field
+        );
+    }
+    elsif($term){
         if($name=~m/^(.+)\.(.+)$/){
           ($name,$sub_name)=($1,$2);
         }
@@ -65,6 +72,8 @@ sub process{
         })
     )->end;
 }
+
+
 sub get_list{
     my %arg=@_;
     my $db=$arg{db};  my $form=$arg{form};

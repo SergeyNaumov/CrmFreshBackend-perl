@@ -42,16 +42,7 @@ sub get_startpage{
     );
 }
 
-sub get_result{
-    my $s=$Work::engine;
-    $s->print_header({'content-type'=>'text/html'});
-    my $R=$s->request_content();
-    if($R){
-        $R=$s->from_json($R);
-    }
 
-    admin_table_find($R);
-}
 
 #sub process_form{
 #

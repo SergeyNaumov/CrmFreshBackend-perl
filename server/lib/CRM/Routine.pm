@@ -184,8 +184,13 @@ sub set_default_attributes{
 
 sub get_values_for_select_from_table{ # получаем список значений для select_from_table
   my $f=shift; my $form=shift; my $s=$Work::engine;
+
+  
+
   $f->{value_field}='id' unless($f->{value_field});
   $f->{header_field}='header' unless($f->{header_field});
+  
+
   my $select_fields;
   if( $f->{tree_use}){
     $select_fields="$f->{value_field} v, $f->{header_field} d, parent_id";
@@ -195,6 +200,21 @@ sub get_values_for_select_from_table{ # получаем список значе
   }
 
   my $query=qq{select $select_fields from $f->{table} };
+  
+  # Когда нет необходимости считывать всю таблицу
+  if($f->{autocomplete}){ 
+    if($f->{value}){
+      if($f->{where}){
+        $f->{where}.=' AND '
+      }
+      $f->{where}.=qq{($f->{value_field}=$f->{value})}
+    }
+    else{
+      #print "$f->{read_only}  $form->{read_only} $f->{name} empty\n";
+      return []
+    }
+  }
+  
   if($f->{where}){
     if($f->{where}!~m{^\s*where\s}i){
       $query.=" WHERE ";
@@ -312,15 +332,20 @@ sub get_values_form{ # получаем старые значения для ф�
             
         }
 
-        
+        if(exists($f->{before_code}) && ref($f->{before_code}) eq 'CODE'){
+            #&{$f->{before_code}}($f);
+            run_event(event=>$f->{before_code},description=>'before code for '.$name,form=>$form,arg=>$f);
+        }
+
         if($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_from_table'){
             $f->{type_orig}=$f->{type}; $f->{type}='select'; 
             $f->{values}=get_values_for_select_from_table($f,$form);
-            foreach my $v (@{ $f->{values} }){
-                if($v->{v}==$f->{value}){
-                    #$f->{vuetify_value}=$v
-                }
-            }
+
+            # foreach my $v (@{ $f->{values} }){
+            #     if($v->{v}==$f->{value}){
+            #         #$f->{vuetify_value}=$v
+            #     }
+            # }
         }
         elsif($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_values'){
             $f->{type_orig}=$f->{type}; $f->{type}='select';
@@ -345,10 +370,7 @@ sub get_values_form{ # получаем старые значения для ф�
     foreach my $f (@{$form->{fields}}){
         my $name=$f->{name};
 
-        if(exists($f->{before_code}) && ref($f->{before_code}) eq 'CODE'){
-            #&{$f->{before_code}}($f);
-            run_event(event=>$f->{before_code},description=>'before code for '.$name,form=>$form,arg=>$f);
-        }
+
         if(ref($f->{code}) eq 'CODE'){
           #print "code: $name\n";
             $f->{after_html}=run_event(event=>$f->{code},description=>'code for '.$name,form=>$form,arg=>$f);

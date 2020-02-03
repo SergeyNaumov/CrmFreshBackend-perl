@@ -135,10 +135,14 @@ sub template{
   #print "t: $opt->{template}";
   $template -> process($opt->{template}, $opt->{vars},\$output);
   if($template->error()){
-    #use Data::Dumper;
-    #print Dumper($opt);
-    print "template: $opt->{template}\noutput::add_template: template error: ".$template->error()."\n";
-    die "output::add_template: template error: ".$template->error();
+    if($opt->{errors}){
+      push @{$opt->{errors}},"template: $opt->{template}\noutput::add_template: template error: ".$template->error()."\n" 
+    }
+    else{
+      print "template: $opt->{template}\noutput::add_template: template error: ".$template->error()."\n";
+    }
+    
+    #die "output::add_template: template error: ".$template->error();
 
   };
 

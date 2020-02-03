@@ -7,11 +7,11 @@ sub save_file{
   close $descript;
 }
 sub print_file{
-  my $s=shift; my $filename=shift;
-  #open (my $fh,'<:encoding(UTF-8)',$filename) or print "error read $filename\n$!\n";
+  my $s=shift; my $filename=shift; my $binmode=shift;
+  
   open (my $fh,'<',$filename) or print "error read $filename\n$!\n";
+  binmode $fh if($binmode);
   while(my $row = <$fh>){
-    #chomp $row;
     $s->print("$row");
   }
   close $fh;
