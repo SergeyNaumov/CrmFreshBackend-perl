@@ -3,6 +3,11 @@ use strict;
 use Data::Dumper;
 use Date::Parse qw/ str2time /;
 # для работы с полями
+sub pre{
+
+  my $s=$Work::engine;
+  push @{$s->{form}->{log}},$_[0];
+}
 sub remove_form_field{
     my %arg=@_;
 

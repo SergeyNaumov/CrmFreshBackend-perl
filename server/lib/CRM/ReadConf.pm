@@ -25,7 +25,7 @@ sub read_conf{
     else{
       push @{$errors},qq{config $config not found!};
     }
-
+    $s->{form}=$form;
 
     $form->{errors}=$errors;
     create_fields_hash($form); # Routine

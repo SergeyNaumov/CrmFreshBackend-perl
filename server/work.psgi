@@ -20,9 +20,10 @@ my $app=sub{
 
   $s->process();
   
+  $s->{form}=undef;
   #print Dumper($env);
   if($s->{stream_out}){
-    use Data::Dumper;
+    
     return sub{
       my $respond=shift;
       print Dumper({respond=>$respond,headers=>$s->{APP}->{HEADERS}});

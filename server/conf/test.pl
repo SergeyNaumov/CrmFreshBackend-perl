@@ -1,8 +1,14 @@
 $form={
     title=>'Возможности CRM',
     #explain=>1,
+    #log=>[undef],
     engine=>'mysql-strong', # default mysql
     default_find_filter=>'header',
+    events=>{
+        permissions=>sub{
+            pre('777');
+        }
+    },
     cols=>[
         [
             {description=>'wysiwyg',name=>'wysiwyg',hide=>1},
