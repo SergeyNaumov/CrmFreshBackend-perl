@@ -4,9 +4,10 @@ $form={
     #log=>[undef],
     engine=>'mysql-strong', # default mysql
     default_find_filter=>'header',
+    explain=>1,
     events=>{
         permissions=>sub{
-            pre('777');
+            #pre($form);
         }
     },
     cols=>[

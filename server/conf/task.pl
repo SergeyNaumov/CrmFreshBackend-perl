@@ -84,11 +84,14 @@ $form={
             }
         }
         # собираем наблюдателей
-        my $sth=$form->{dbh}->prepare("SELECT m.email from task_observe o join manager m ON m.id=o.manager_id where o.task_id=?");
-        $sth->execute($form->{id});
-        while(my $item=$sth->fetchrow_hashref){
+        foreach my $item (
+          @{
+            $form->{db}->query("SELECT m.email from task_observe o join manager m ON m.id=o.manager_id where o.task_id=?",values=>[$form->{id}])
+          }
+        ){
           $to{$item->{email}}=1
         }
+        
         
 
         if(scalar(keys %to)){
@@ -451,7 +454,6 @@ $form={
         type=>'wysiwyg',
         name=>'body',
         tab=>'main',
-        read_only=>1,
         before_code=>sub{
           my $e=shift;
           if($form->{action}=~m{^(insert|new)$}){
@@ -469,24 +471,6 @@ $form={
           }
 
         },
-        
-        style=>'height: 800px;',
-        full_str=>1,
-        code=>sub{
-          my $e=shift;
-          if($e->{read_only}){
-            #return $e->{value};
-            $e->{field}=$e->{value}
-          }
-          if($form->{is_owner} || $form->{manager}->{permissions}->{change_all_task}){
-            $e->{field}.=qq{<p><a href="?config=$form->{config}&action=edit&id=$form->{id}&need_change_body=1">РЕДАКТИРОВАТЬ</a></p>}
-          }
-
-          if(param('need_change_body')){
-            $e->{field}.=qq{<input type="hidden" name="need_change_body" value="1">}
-          }
-          return $e->{field};
-        }
       },
 
       {
@@ -672,7 +656,7 @@ $form={
           elsif($status==7){
             $color='green'
           }
-          return $out=qq{<span style="font-weight: bold; color: $color;">$out</span>};
+          return $out=qq{<span style="color: $color;">$out</span>};
 
         }
       },
