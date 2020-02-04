@@ -100,7 +100,7 @@ sub processEditForm{
                     title=>$form->{title},
                     success=>scalar(@{$form->{errors}})?0:1,
                     errors=>$form->{errors},
-                    fields=>CRM::get_clean_json($form->{edit_form_fields}),
+                    fields=>$s->clean_json($form->{edit_form_fields}),
                     id=>$form->{id},
                     log=>$form->{log},
                     read_only=>$form->{read_only},

@@ -57,9 +57,9 @@ sub admin_table_find{ # Поиск результатов
     #use Data::Dumper;
     #print Dumper($form->{query_search}->{on_filters_hash});
 
-    get_search_tables($form,$R->{query});
+    get_search_tables($s,$form,$R->{query});
 
-    get_search_where($form,$R->{query});
+    get_search_where($s,$form,$R->{query});
     #$s->pre($form->{query_search}); 
     # Формируем запрос
     #print "=======\n";
@@ -73,11 +73,11 @@ sub admin_table_find{ # Поиск результатов
         ]
     );
     
-    my ($query,$query_count)=gen_query_search($form);
+    my ($query,$query_count)=gen_query_search($s,$form);
     
 
 
-    #$query,$query_count)=gen_query_search($form);
+    
 
     my $total_count=$s->{db}->query(query=>qq{select sum(cnt) from ($query_count) x},onevalue=>1,errors=>$form->{errors});
     $form->{SEARCH_RESULT}->{count_total}=$total_count;
@@ -97,7 +97,7 @@ sub admin_table_find{ # Поиск результатов
         #debug=>$form->{explain}
     );
     if($form->{explain}){
-        $form->{log}=[$query];#$debug_explain->{query}
+        $form->{explain_query}=$query;#$debug_explain->{query}
     }
 
 
@@ -266,12 +266,13 @@ sub admin_table_find{ # Поиск результатов
     
     $form->{SEARCH_RESULT}->{log}=$form->{log};
     $form->{SEARCH_RESULT}->{output}=$output; 
-
+    $form->{explain_query}='' unless($form->{explain_query});
     $s->print_json(
-        get_clean_json({
+        $s->clean_json({
             success=>errors($form)?0:1,
             results=>$form->{SEARCH_RESULT},
-            errors=>$form->{errors}
+            errors=>$form->{errors},
+            explain_query=>$form->{explain_query}
         })
     )->end;
     
@@ -279,7 +280,7 @@ sub admin_table_find{ # Поиск результатов
 
 sub gen_query_search{
     # получаем поисковый запрос на основе $form->{query_search}
-    my $form=shift;
+    my $s=shift; my $form=shift;
     my $qs=$form->{query_search};
     my $query="SELECT ".join(',',@{$qs->{SELECT_FIELDS}}).
         " FROM ".
@@ -332,7 +333,7 @@ sub gen_query_search{
     
 }
 sub get_search_tables{
-    my $form=shift; my $query=shift;
+    my $s=shift; my $form=shift; my $query=shift;
     my $TABLES=[];
 
     # in_ext_url -- добавление таблицы
@@ -371,7 +372,7 @@ sub get_search_tables{
 
     #print Dumper($form->{QUERY_SEARCH_TABLES});
     my $aliases_on={wt=>1};
-    #$form->{self}->pre($form->{query_search}->{on_filters_hash});
+
     $form->{errors}=[] unless $form->{errors};
     foreach my $t (@{$form->{QUERY_SEARCH_TABLES}}){
         $t->{table}=$t->{t} if(!$t->{table});
@@ -403,7 +404,8 @@ sub get_search_tables{
         if($need_add_table){
             push @{$TABLES},$t_str ;
             if(!$t->{not_add_in_select_fields}){
-                my $desc=$form->{self}->{db}->query(query=>"desc $t->{table}",errors=>$form->{log});
+                
+                my $desc=$s->{db}->query(query=>"desc $t->{table}",errors=>$form->{log});
                 if($desc){
                     foreach my $db_field (@{$desc}){
                         if(!$t->{select_fields}  || ($t->{select_fields} && ref($t->{select_fields}) eq 'HASH' && $t->{select_fields}->{$db_field->{Field}})){
@@ -437,7 +439,7 @@ sub get_search_where{
     1. собирает заголовки таблицы результатов ($form->{SEARCH_RESULT}->{HEADERS})
     2. собирает входные данные для формирования запроса (select_fields, tables, where, order)
 =cut
-    my $form=shift; my $query=shift;
+    my $s=shift; my $form=shift; my $query=shift;
     my $alias_from_table; my $table_from_alias;
     my $WHERE=[];
     my $headers=[];
@@ -526,7 +528,7 @@ sub get_search_where{
 
         if($f->{type}=~m/^(filter_extend_)?(text|textarea|email)$/){
             if(my $v=$values->[0]){
-                $v=$form->{self}->{db}->{connect}->quote($v);
+                $v=$s->{db}->{connect}->quote($v);
                 $v=~s/^'/%/; $v=~s/'$/%/;
                 push @{$WHERE},qq{ ($table.$db_name like "$v") };
             }
@@ -552,7 +554,7 @@ sub get_search_where{
                 push @{$WHERE}, qq{$f->{memo_table_alias}.$f->{memo_table_registered}<='$v->{registered_low}' }
             }
             if(my $m=$v->{message}){
-                $m=$form->{self}->{db}->{connect}->quote($m);
+                $m=$form->{db}->{connect}->quote($m);
                 $m=~s/^'/%/; $m=~s/'$/%/;
                 push @{$WHERE},qq{ ($f->{memo_table_alias}.$f->{memo_table_comment} like "$m") };
             }

@@ -1,12 +1,15 @@
 use utf8;
 use strict;
-use Data::Dumper;
 use Date::Parse qw/ str2time /;
+#use Storable qw/dclone/; 
 # для работы с полями
 sub pre{
-
+  my $v=shift;
   my $s=$Work::engine;
-  push @{$s->{form}->{log}},$_[0];
+  #$Storable::Deparse=1;
+  #$Storable::Eval=1;
+  #my $to_log=dclone($v);
+  push @{$s->{form}->{log}},Dumper($v);
 }
 sub remove_form_field{
     my %arg=@_;

@@ -92,7 +92,7 @@ sub repair{ # восстанавливает соединение
 }
 
 sub get{
-  my ($self,%args)=@_;
+  my ($self,%args)=@_; my $s=$Work::engine;
   my $opt=\%args;
 
   #$opt->{connect}=$self->{connect} unless($opt->{connect});
@@ -204,6 +204,14 @@ sub get{
 
   if($@){
     my $err="Error_query:\n$query\n".Dumper($opt->{values}).";\nerror: $@";
+    if($s->{form} && !$opt->{errors}){
+      if(!$s->{form}->{errors}){
+        $s->{form}->{errors}=[]
+      }
+      $opt->{errors}=$s->{form}->{errors}
+    }
+
+
     if($opt->{errors}){
       push @{$opt->{errors}},$err;
       return undef;
@@ -300,6 +308,9 @@ sub get{
 sub query{
 
   my ($self,%arg)=@_;
+  
+  my $s=$Work::engine;
+
   my $opt=\%arg;
   if($opt->{debug}){
     my %d=%{$opt};
@@ -326,7 +337,17 @@ sub query{
     };
 
     if($DBI::errstr){ # если запрос отработал криво 
+
+      #print "err: $self->{form}\n";
       if($reply_cnt>3){ # более 3-х раз -- выходим
+
+        if($s->{form} && !$opt->{errors}){
+          if(!$s->{form}->{errors}){
+            $s->{form}->{errors}=[]
+          }
+          $opt->{errors}=$s->{form}->{errors}
+        }
+
         if($opt->{errors}){
           push @{$opt->{errors}},'Error query:'.Dumper({query=>$opt->{query},values=>$opt->{values}}) ;
           push @{$opt->{errors}},qq{Error query: $DBI::errstr};

@@ -14,6 +14,18 @@ use experimental 'smartmatch';
 use core_functions;
 no warnings 'experimental::smartmatch';
 
+# хак для Data::Dumper + utf8
+$Data::Dumper::Useqq = 1;
+$Data::Dumper::Useperl = 1;
+{ no warnings 'redefine';
+    sub Data::Dumper::qquote {
+        my $s = shift;
+        return "'$s'";
+    }
+}
+$Data::Dumper::Terse=1;
+# хак для Data::Dumper + utf8
+
 our $s; my $form;
 
 sub get_startpage{

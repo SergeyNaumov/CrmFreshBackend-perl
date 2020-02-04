@@ -63,7 +63,7 @@ sub get_memo{
 
 
   $s->print_json({
-    field=>get_clean_json($field),
+    field=>$s->clean_json($field),
     data=>$data,
     errors=>$form->{errors}
   })->end;

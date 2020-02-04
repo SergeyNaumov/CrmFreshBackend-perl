@@ -74,27 +74,7 @@ sub param{
   my $name=shift; return $Work::engine->param($name);
 }
 
-sub get_clean_json{ # создаёт "чистый" json (без кодовых вставок)
-  my $data=shift;
-  my $s=$Work::engine;
-  if(ref($data) eq 'ARRAY'){
-      my $i=0;
-      foreach my $d (@{$data}){
-          $data->[$i]=get_clean_json($data->[$i]);
-          $i++;
-      }
-  }
-  elsif(ref($data) eq 'HASH'){
-      foreach my $k (keys %{$data}){
-        $data->{$k}=get_clean_json($data->{$k});
-        delete $data->{$k} if(!defined($data->{$k}));
-      }
-  }
-  elsif(ref($data) eq 'CODE'){
-      $data='';
-  }
-  return $data
-}
+
 
 
 sub create_fields_hash{
@@ -237,7 +217,7 @@ sub get_values_for_select_from_table{ # получаем список значе
       $query.=' ORDER BY '.($f->{tree_use}?'parent_id':$f->{header_field});
   }
   #print "q: $query\n";
-  my $list=$s->{db}->query(query=>$query,errors=>$form->{log});
+  my $list=$s->{db}->query(query=>$query,errors=>$form->{errors});
   if($f->{tree_use}){
     my $tree_list=[];
     my $hash={};

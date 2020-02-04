@@ -64,7 +64,7 @@ sub read_conf{
     );
     #push @{$form->{errors}},$form->{manager}->{login};
 #    print "login: $form->{manager}->{login}\n";
-    $form->{self}=$s;
+    $form->{self}=sub{return $s};
     
     set_default_attributes($form); # Routine
     

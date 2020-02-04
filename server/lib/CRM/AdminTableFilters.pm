@@ -93,7 +93,7 @@ sub get_filters{
         $request={
             success=>1,            
             title=>$form->{title},
-            filters=>get_clean_json($filters),
+            filters=>$s->clean_json($filters),
             search_links=>exists($form->{search_links})?$form->{search_links}:[],
             before_filters_html=>exists($form->{before_filters_html})?$form->{before_filters_html}:[],
             javascript=>exists($form->{javascript}->{admin_table})?$form->{javascript}->{admin_table}:'',

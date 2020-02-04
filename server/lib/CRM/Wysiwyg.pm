@@ -32,30 +32,23 @@ sub process{
   check_path($path,$errors);
   unless(scalar(@{$errors})){
           if($action eq 'file_list'){
-            
             $file_list=get_file_list('s'=>$s, path=>$path,errors=>$errors,form=>$form);
-
             $s->print_json({
                 success=>scalar(@{$errors})?0:1,
                 errors=>$errors,
                 file_list=>$file_list,
                 files_dir_web=>$form->{manager}->{files_dir_web}
             })->end;
-
           }
           elsif($action eq 'upload'){
             my $uploads=[];
-
-
             unless(scalar(@{$errors})){
-
                 $uploads=$s->save_upload(
                     var=>'file',
                     to=>$form->{manager}->{files_dir}.$path,
                     multi=>1,
                     original=>1
                 );
-
             }
 
             # загрузка файлов в wysiwyg-редакторе
@@ -79,9 +72,7 @@ sub process{
             else{
                 push @{$errors},qq{параметр name не корректный: $name};
             }
-
             $file_list=get_file_list('s'=>$s, path=>$path,errors=>$errors,form=>$form);
-
             $s->print_json({
                 success=>scalar(@{$errors})?0:1,
                 errors=>$errors,
@@ -114,7 +105,6 @@ sub get_file_list{
 
     my $path=$arg{path};  my $form=$arg{form};
     if($path =~m{^\/} && $path=~m{^(\/[^\/]*)*\/$}){
-        #print "read: $form->{manager}->{files_dir}$path\n";
         return $arg{s}->readdir($form->{manager}->{files_dir}.$path);    
     }
     else{

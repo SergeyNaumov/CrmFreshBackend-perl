@@ -19,7 +19,6 @@ sub init{ # отдаём информацию о дереве
     CRM::set_default_attributes($form);
     $form->{id}=$id;
 
-    #$form=CRM::get_clean_json($form);
     
     
 
