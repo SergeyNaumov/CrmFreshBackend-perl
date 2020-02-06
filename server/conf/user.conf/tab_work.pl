@@ -34,6 +34,7 @@
   tab=>'work',
   before_code=>sub{
     my $e=shift;
+    #$form->{self}->pre($form->{old_values});
     $e->{value}=1 if($form->{action} eq 'new');
     if($form->{manager}->{permissions}->{op_not_export} || $form->{manager}->{login} eq 'admin'){
       $e->{read_only}=0
@@ -273,16 +274,16 @@
     ],
     tab=>'work'
 },
-{
-  description=>'Баллы (руководитель)',
-  type=>'code',
-  name=>'ball',
-  code=>sub{
-    my $e=shift;
-    return qq{<a href="" class="ball_dec">-</a> <span id="ball">$form->{old_values}->{BALL}</span> <a href="" class="ball_inc">+</a>}
-  },
-  tab=>'work'
-},
+# {
+#   description=>'Баллы (руководитель)',
+#   type=>'code',
+#   name=>'ball',
+#   code=>sub{
+#     my $e=shift;
+#     return qq{<a href="" class="ball_dec">-</a> <span id="ball">$form->{old_values}->{BALL}</span> <a href="" class="ball_inc">+</a>}
+#   },
+#   tab=>'work'
+# },
 # {
 #   description=>'Следующий контакт (руководитель)',
 #   type=>'datetime',
@@ -297,7 +298,6 @@
   table_id=>'uid',
   foreign_key=>'user_id',
   full_str=>1,
-
   fields=>[
       {
         description=>'Тип звонка',
@@ -344,7 +344,7 @@
         },
         slide_code=>sub{
           my $e=shift; my $v=shift;
-          #$e->{type}='html';
+          #use Data::Dumper; print Dumper({v=>$v});
           return '' unless($v->{record});
           return qq{<a href="$v->{record}" target="_blank">слушать</a>}
         }

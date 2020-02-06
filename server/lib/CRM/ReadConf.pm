@@ -12,6 +12,7 @@ sub read_conf{
     my %arg=@_;
     my $config=$arg{config}; my $s=$Work::engine;
     my $form={};
+
     my $errors=[];
     if(-f './conf/'.$config.'.pl'){
       my $data=$s->template({dir=>'./conf',template=>'./conf/'.$config.'.pl',errors=>$errors});
@@ -21,6 +22,9 @@ sub read_conf{
           error_eval($@,$data,$s);
           return undef;
       }
+      else{
+        $form->{R}=$s->request_content(from_json=>1);
+      }
     }
     else{
       push @{$errors},qq{config $config not found!};
@@ -29,7 +33,7 @@ sub read_conf{
 
     $form->{errors}=$errors;
     create_fields_hash($form); # Routine
-    
+
     # test_login='admin'
     $form->{action}=$arg{action} if($arg{action});
     $form->{script}=$arg{script};
@@ -62,6 +66,7 @@ sub read_conf{
         errors=>$form->{errors}
       )
     );
+
     #push @{$form->{errors}},$form->{manager}->{login};
 #    print "login: $form->{manager}->{login}\n";
     $form->{self}=sub{return $s};
@@ -74,7 +79,9 @@ sub read_conf{
     }
     
     #if($form->{id}){
-      get_values_form(form=>$form,'s'=>$s);
+      get_values_form(form=>$form,'s'=>$s)
+
+      ;
     #}
     
     
@@ -85,6 +92,15 @@ sub read_conf{
       }
     }
 
+    foreach my $f (@{$form->{fields}}){
+        if(exists($f->{before_code}) && ref($f->{before_code}) eq 'CODE'){
+            run_event(event=>$f->{before_code},description=>'before code for '.$f->{name},form=>$form,arg=>$f);
+        }
+        if(exists($f->{code}) && ref($f->{code}) eq 'CODE'){
+            $f->{after_html}=  run_event(event=>$f->{code},description=>'code for '.$f->{name},form=>$form,arg=>$f);
+        }
+
+    }
     return $form;
 
 }

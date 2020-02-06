@@ -15,7 +15,8 @@ $form={
     default_find_filter => 'header',
     tree_use => '0',
     perpage=>50,
-    #explain=>1,
+    explain=>1,
+
     events=>{
         permissions=>sub{
             if($form->{id}){
@@ -26,12 +27,14 @@ $form={
                         ul.with_nds,
                         ul.without_nds_dat, dp.ur_lico_id, ul.firm ur_lico,
                         m.id m_id, m.email m_email, m.group_id m_group_id, mg.path m_group_path,mg.owner_id mg_owner_id, u.company_role,
+                        d.number d_number,
                         af.number avance_fact_number
                     FROM 
                         bill wt 
                         left join manager m ON (m.id=wt.manager_id)
                         left join manager_group mg ON (m.group_id=mg.id)
                         join docpack dp ON (wt.docpack_id=dp.id)
+                        join dogovor d on d.docpack_id=dp.id
                         LEFT JOIN ur_lico ul ON (dp.ur_lico_id=ul.id)
                         LEFT JOIN tarif t ON (dp.tarif_id=t.id)
                         JOIN user u ON (u.id=dp.user_id)
@@ -41,7 +44,9 @@ $form={
                 });
                 $sth->execute($form->{id});
                 $form->{old_values}=$sth->fetchrow_hashref;
+                #pre($form->{old_values});
             }
+            #pre({script=>$form->{script}});
             if(param('f_user_id')){
               my $user_id=param('f_user_id');
               if($user_id=~m{^\d+$}){
@@ -95,17 +100,18 @@ $form={
                 WHERE id=$form->{old_values}->{user_id}
 
               });
-              print "Location: //edit_form.pl?config=$form->{config}&action=edit&id=$form->{id}\n\n";
-              exit;
+              #print "Location: //edit_form.pl?config=$form->{config}&action=edit&id=$form->{id}\n\n";
+              #exit;
             }
             # 
 
         },
     before_search=>sub{
       my %arg=@_;
-      
-        #pre(\%arg);
+        my $filter=$form->{query_search}->{on_filters_hash};
         my $where=($arg{where}?"WHERE $arg{where}":'');
+        $where=~s/(bcr.inn like ("\%[^%]+\%"))/$1 OR bcr.firm like $2/g; #Отвечает за корректный поиск по Суммам платежей
+        #pre($where);
         my $query=qq{
             SELECT
               sum(s)
@@ -117,25 +123,54 @@ $form={
                 $where GROUP BY wt.id
             ) x
         };
+        #pre($query);
         my $sth=$form->{dbh}->prepare($query);
         $sth->execute();
         my $s=$sth->fetchrow();
         push @{$form->{out_before_search}},qq{Сумма: $s};
-        if(param('order_sum')){
-          $form->{select_fields}.=', wt.summ-sum(bp.sum) residue';
-          my ($low,$hi)=(param('sum_low'),param('sum_hi'));
+
+        if(my $req_sum=$filter->{bp__residue}){
+          # Добавляем поля в основной поисковый запрос
+          #pre($form->{query_search}->{SELECT_FIELDS});
+          push @{$form->{query_search}->{SELECT_FIELDS}},'(wt.summ-sum(bp.sum)) bp__residue';
+          #my ($low,$hi)=(param('sum_low'),param('sum_hi'));
+          
+          my ($low,$hi)=($req_sum->[0],$req_sum->[1]);
+
           my @h=();
           
-          push @h,"residue>=$low" if($low=~m{^\d+$});
-          push @h,"residue<=$hi" if($hi=~m{^\d+$});
+          # push @h,"residue>=$low" if($low=~m{^\d+(\.\d+)?$});
+          # push @h,"residue<=$hi" if($hi=~m{^\d+(\.\d+)?$});
+          $low=~s/,/./;
+          $hi=~s/,/./;
+
+          if($low=~m{^\d+(\.\d+)?$}){
+            push @h,"bp__residue".($low?">=$low":'>0');
+          }
+          push @h,"bp__residue<=$hi" if($hi=~m{^\d+(\.\d+)?$});
 
           if(scalar(@h)){
-            $form->{HAVING}=join(' AND ',@h)
+            push @{$form->{query_search}->{HAVING}},join(' AND ',@h);
           }
-          
-        }
-        
+          my $i=0;
+          foreach my $w (@{$form->{query_search}->{WHERE}}){
+            $form->{query_search}->{WHERE}->[$i]=~s/(bcr.inn like ("\%[^%]+\%"))/$1 OR bcr.firm like $2/g;
+            $i++;
+          }
+          #pre($form->{R});
+          $form->{query_search}->{ORDER}=['bp__residue'];
+          #f($form->{R}->{params}->{priority_sort}[0] eq 'sum'){
+            #$form->{R}->{params}->{priority_sort}[0]='bp__residue';
+          #}
+          #pre($form->{query_search});
+          #pre($form->{query_search}->{HAVING});
+          $form->{explain}=1;
 
+          #push @{$form->{query_search}->{WHERE}}=~s/(bcr.inn like ("\%[^%]+\%"))/$1 OR bcr.firm like $2/g; #Отвечает за основной корректный поиск
+        }
+
+        
+        
       
     },
     before_update=>sub{
@@ -219,8 +254,9 @@ $form={
       {table=>'dogovor',alias=>'d',link=>'dp.id=d.docpack_id',for_fields=>['d_number']}, # for_fields=>['blankument_doc_for_bill']
       {table=>'ur_lico',alias=>'ul',link=>'ul.id=dp.ur_lico_id',left_join=>1,for_fields=>['ur_lico_id']},
       {table=>'user',alias=>'u',link=>'dp.user_id=u.id'},
-      {table=>'buhgalter_card_requisits',alias=>'bcr',link=>'bcr.id=wt.requisits_id',left_join=>1,for_fields=>['requisits_id']},
-      {table=>'bill_part', alias=>'bp', link=>'bp.bill_id=wt.id', left_join=>1,not_add_in_select_fields=>1}
+      {table=>'buhgalter_card_requisits',alias=>'bcr',link=>'bcr.id=wt.requisits_id',left_join=>1,for_fields=>['requis','firm','inn','requisits_id']},
+      {table=>'bill_part', alias=>'bp', link=>'bp.bill_id=wt.id', left_join=>1,not_add_in_select_fields=>1},
+      {table=>'bill_part_comment',alias=>'bpc', link=>'bpc.id=bp.comment_id',left_join=>1},
   ],
   #explain=>1,
   plugins => [
@@ -231,37 +267,54 @@ $form={
 
     {
         description=>'Остаток в детализации',
-        name=>'sum',
-        type=>'filter_extend_select_from_table',
+        name=>'bp__residue',
+        type=>'filter_extend_text',
         table=>'bill_part',
         tablename=>'bp',
-        header_field=>'sum',
-        filter_type=>'range',
+        filter_on=>1,
         not_process=>1,
+        db_name=>'residue',
         filter_code=>sub{
-            my $s=$_[0]->{str};
-            return $s->{residue}
-        }
-        # before_search=>sub{
-            # $form->{HAVING}='residue>1';
-        # }
+          my $str=$_[0]->{str};
+          #pre($str);
+          return $str->{bp__residue}
+        },
+        filter_type=>'range'
+
+    },
+    {
+          description=>'Реквизиты(ИНН или название)',
+          name=>'requis',
+          db_name=>'inn',
+          type=>'filter_extend_text',
+          tablename=>'bcr',
+          #filter_on=>1,
+          filter_code=>sub{
+            my $str=$_[0]->{str};
+            #pre($s);
+            my $out='Не выбрано';
+            #pre($str);
+            if($str->{bcr__inn}){
+              #pre(qq{$str->{bcr__inn} : $str->{bcr__firm}});
+              $out=qq{$str->{bcr__inn} : $str->{bcr__firm}};
+            }
+            return $out;
+          }
     },
     {
         description=>'Реквизиты',
-        add_description=>'(ИНН,&nbsp;Наименование)',
+        add_description=>'<small>ИНН, Наименование</small>',
         type=>'select_from_table',
         table=>'buhgalter_card_requisits',
         name=>'requisits_id',
         header_field=>q{firm}, # 
         value_field=>'id',
+        not_filter=>1,
         #regexp=>'^\d+$',
-        filter_on=>1,
         regexp=>'^\d+$',
         autocomplete=>1,
         before_code=>sub{
             my $e=shift;
-
-            
             if($form->{script}=~m{auto_complete}){
                 $e->{out_header}=q{concat(inn,': ',firm)},
             }
@@ -270,15 +323,6 @@ $form={
                 $e->{sql}.=' WHERE user_id='.$form->{old_values}->{user_id};
             }
             #pre($form);
-        },
-        filter_code=>sub{
-            my $s=$_[0]->{str};
-            my $out='';
-            if($s->{bcr__inn}){
-                $out=qq{$s->{bcr__inn}:}
-            }
-            $out.=' '.$s->{bcr__firm};
-            return $out;
         },
         code=>sub{
             my $e=shift;
@@ -302,10 +346,10 @@ $form={
       name=>'firm',
       type=>'filter_extend_text',
       tablename=>'u',
-      filter_on=>1,
+      #filter_on=>1,
       filter_code=>sub{
         my $s=$_[0]->{str};
-        my $out=qq{<a href="./edit_form.pl?config=user&action=edit&id=$s->{u__id}" target="_blank">$s->{u__firm}</a>};
+        my $out=qq{<a href="/edit_form/user/$s->{u__id}" target="_blank">$s->{u__firm}</a>};
         #if(){
         $out.=qq{
             <div style="margin-top: 10px; margin-bottom: 10px;"><a href="/tools/paid_division_parts.pl?bill_id=$s->{wt__id}" target="_blank">разделения</a></div>
@@ -378,14 +422,14 @@ $form={
     {
       description=>'Номер счёта',
       type=>'text',
-      filter_on=>1,
+      #filter_on=>1,
       name=>'number',
       read_only=>1
     },
     {
       description=>'Номер договора',
       type=>'filter_extend_text',
-      filter_on=>1,
+      #filter_on=>1,
       name=>'d_number',
       db_name=>'number',
       tablename=>'d',
@@ -412,20 +456,20 @@ $form={
       description=>'Сумма',
       type=>'text',
       filter_type=>'range',
-      filter_on=>1,
+      #filter_on=>1,
       name=>'summ'
     },
     {
       description=>'Комментарий',
       type=>'textarea',
-      filter_on=>1,
+      #filter_on=>1,
       name=>'comment'
     },
     {
         description=>'Дата выставления',
         type=>'date',
         name=>'registered',
-        filter_on=>1,
+        #filter_on=>1,
         default_off=>1,
         read_only=>1,
         before_code=>sub{
@@ -524,7 +568,7 @@ $form={
         description=>'Дата оплаты',
         type=>'date',
         name=>'paid_date',
-        filter_on=>1,
+        #filter_on=>1,
         default_off=>1,
         read_only=>1,
         before_code=>sub{
@@ -539,7 +583,7 @@ $form={
       description=>'Оплачен до',
       type=>'date',
       name=>'paid_to',
-      filter_on=>1,
+      #filter_on=>1,
       default_off=>1,
       read_only=>1,
         before_code=>sub{
@@ -579,7 +623,7 @@ $form={
       tablename=>'mg',
       header_field=>'header',
       value_field=>'id',
-      filter_on=>1,
+      #filter_on=>1,
       read_only=>1,
         before_code=>sub{
             my $e=shift;
@@ -589,6 +633,17 @@ $form={
         },
     },
     {
+      description=>'Назначение в детализации',
+      name=>'bp_comment_id',
+      type=>'filter_extend_select_from_table',
+      #filter_table=>'bill_part_comment',
+      table=>'bill_part_comment',
+      tablename=>'bpc',
+      header_field=>'header',
+      value_field=>'id',
+      db_name=>'id',
+    },
+    {
       description=>'Менеджер счёта',
       name=>'manager_id',
       type=>'select_from_table',
@@ -596,7 +651,7 @@ $form={
       tablename=>'m',
       header_field=>'name',
       value_field=>'id',
-      filter_on=>1,
+      #filter_on=>1,
       read_only=>1,
         before_code=>sub{
             my $e=shift;
@@ -612,7 +667,7 @@ $form={
         table=>'act',
         table_id=>'id',
         foreign_key=>'bill_id',
-        link_edit=>'./edit_form.pl?config=act&action=edit&id=<%id%>',
+        link_edit=>'/edit_form/act/<%id%>',
         not_create=>1,
         make_delete=>0,
         read_only=>1,
@@ -632,10 +687,9 @@ $form={
                 ||
                 $form->{old_values}->{manager_id}==$form->{manager}->{id}
             ){
-            $e->{not_create}=0;
-            $e->{read_only}=0;
-            $e->{link_add}=qq{./edit_form.pl?config=act&action=new&bill_id=$form->{id}};
-            #pre('ok');
+              $e->{not_create}=0;
+              $e->{read_only}=0;
+              $e->{link_add}=qq{./edit_form/act?bill_id=$form->{id}};
             }
             
         },

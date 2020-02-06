@@ -9,11 +9,6 @@ sub admin_table_find{ # Поиск результатов
 
     my $form=read_conf(config=>$R->{config},script=>'find_objects');
     
-    
-    
-    #set_default_attributes($form);
-    
-    
     if($R->{page}=~m{^\d+$} && $R->{page}){
         $form->{page}=$R->{page}
     }
@@ -54,15 +49,9 @@ sub admin_table_find{ # Поиск результатов
         $form->{query_search}->{on_filters_hash}->{$name}=$values->[1];
     }
 
-    #use Data::Dumper;
-    #print Dumper($form->{query_search}->{on_filters_hash});
-
     get_search_tables($s,$form,$R->{query});
-
     get_search_where($s,$form,$R->{query});
-    #$s->pre($form->{query_search}); 
-    # Формируем запрос
-    #print "=======\n";
+
     run_event(
         event=>$form->{events}->{before_search},
         description=>'events->before_search',
@@ -74,10 +63,6 @@ sub admin_table_find{ # Поиск результатов
     );
     
     my ($query,$query_count)=gen_query_search($s,$form);
-    
-
-
-    
 
     my $total_count=$s->{db}->query(query=>qq{select sum(cnt) from ($query_count) x},onevalue=>1,errors=>$form->{errors});
     $form->{SEARCH_RESULT}->{count_total}=$total_count;
@@ -183,83 +168,83 @@ sub admin_table_find{ # Поиск результатов
                 }
             }
 
-
+            my $type='html';
 
             if(!$field->{make_change_in_search} && ref($field->{filter_code}) eq 'CODE'){
                 $value=&{$field->{filter_code}}({str=>$r,value=>$value});
             }
-            #if($field->{type} eq 'memo'){
-                #$value=[grep {$r->{wt__id}==$_->{fk_id}} @{$memo_values->{$name}} ];
-                #push @{$data},{name=>$name,type=>'memo',value=>$value}
-            #}
-            my $type='html';
-            #print "$field->{name} => $field->{type}\n";
-            if($field->{type} eq 'memo'){
-                $type='memo'
-            }
-            elsif($field->{type} eq 'multiconnect'){
-                $type='multiconnect';
-                $value=$multiconnect_values->{$r->{wt__id}};
-                $value='' unless($value);
-            }
-            elsif($field->{type}=~m{^font}){
-                $type=$field->{type};
-            }
-            elsif($field->{type}=~m/^(checkbox|switch)$/){
-                if($field->{make_change_in_search}){
-                    $type=$field->{type}
-                }
-                else{
-                    $value=$value?'да':'нет'
-                }
-                
-            }
-            elsif($field->{type}=~m/^filter_extend_(checkbox|switch)$/){
-                $value=$value?'да':'нет'
-            }
-            elsif($field->{type_orig}=~m{^(filter_extend_)?select_from_table}){
-                if($field->{make_change_in_search}){
-                    $type='select';
-                    $value=$r->{$tbl.'__'.$field->{value_field}};
-                    if(!$form->{SEARCH_RESULT}->{selects}->{$field->{name}}){
-                        $form->{SEARCH_RESULT}->{selects}->{$field->{name}}=$field->{values}
-                    }   
-                }
-                else{
-                    if($r->{$tbl.'__'.$field->{header_field}}){
-                        $value=$r->{$tbl.'__'.$field->{header_field}}
+            else{
+                    #print "$field->{name} => $field->{type}\n";
+                    if($field->{type} eq 'memo'){
+                        $type='memo'
                     }
-                    else{
-                        $value='-';
+                    elsif($field->{type} eq 'multiconnect'){
+                        $type='multiconnect';
+                        $value=$multiconnect_values->{$r->{wt__id}};
+                        $value='' unless($value);
                     }
-                }                
-            }
-            elsif($field->{type_orig}=~m{^(filter_extend_)?select_values$}){
-                if($field->{make_change_in_search}){
-                    $type='select';
-                    $value=$r->{$tbl.'__'.$db_name};
-                    if(!$form->{SEARCH_RESULT}->{selects}->{$field->{name}}){
-                        $form->{SEARCH_RESULT}->{selects}->{$field->{name}}=$field->{values}
+                    elsif($field->{type}=~m{^font}){
+                        $type=$field->{type};
                     }
-                }
-                
-            }
-            elsif($field->{type}=~m{^(text|textarea)}){
-                if($field->{make_change_in_search}){
-                    $type=$field->{type}; $value=$r->{$tbl.'__'.$db_name};
-                }
-            }
-            elsif($field->{type} eq 'password'){
-                $value='[пароль нельзя увидеть]'
-            }
-            elsif($field->{type} eq 'in_ext_url'){
-                $value=$r->{in_ext_url__ext_url}
-            }
+                    elsif($field->{type}=~m/^(checkbox|switch)$/){
+                        if($field->{make_change_in_search}){
+                            $type=$field->{type}
+                        }
+                        else{
+                            $value=$value?'да':'нет'
+                        }
+                        
+                    }
+                    elsif($field->{type}=~m/^filter_extend_(checkbox|switch)$/){
+                        $value=$value?'да':'нет'
+                    }
+                    elsif($field->{type}=~m{^(filter_extend_)?select_from_table}){
+                        if($field->{make_change_in_search}){
+                            $type='select';
+                            $value=$r->{$tbl.'__'.$field->{value_field}};
+                            if(!$form->{SEARCH_RESULT}->{selects}->{$field->{name}}){
+                                $form->{SEARCH_RESULT}->{selects}->{$field->{name}}=$field->{values}
+                            }   
+                        }
+                        else{
 
+                            if($r->{$tbl.'__'.$field->{header_field}}){
+                                $value=$r->{$tbl.'__'.$field->{header_field}}
+                            }
+                            else{
+                                $value='-';
+                            }
+
+                        }                
+                    }
+                    elsif($field->{type}=~m{^(filter_extend_)?select_values$}){
+                        if($field->{make_change_in_search}){
+                            $type='select';
+                            $value=$r->{$tbl.'__'.$db_name};
+                            if(!$form->{SEARCH_RESULT}->{selects}->{$field->{name}}){
+                                $form->{SEARCH_RESULT}->{selects}->{$field->{name}}=$field->{values}
+                            }
+                        }
+                        
+                    }
+                    elsif($field->{type}=~m{^(filter_extend_)?(text|textarea)}){
+                        my $t=$2;
+                        if($field->{make_change_in_search}){
+                            $type=$t; 
+                        }
+                        $value=$r->{$tbl.'__'.$db_name};
+                    }
+                    elsif($field->{type} eq 'password'){
+                        $value='[пароль нельзя увидеть]'
+                    }
+                    elsif($field->{type} eq 'in_ext_url'){
+                        $value=$r->{in_ext_url__ext_url}
+                    }
+            }
             
-            push @{$data},{name=>$name,type=>$type,value=>$value}
+            push @{$data},{name=>$name,type=>$type,value=>$value};
             
-            
+            #print "v: $value\n";
         }
         push @{$output},{key=>$r->{wt__id},data=>$data};
     }
@@ -267,11 +252,13 @@ sub admin_table_find{ # Поиск результатов
     $form->{SEARCH_RESULT}->{log}=$form->{log};
     $form->{SEARCH_RESULT}->{output}=$output; 
     $form->{explain_query}='' unless($form->{explain_query});
+    $form->{out_before_search}=[] unless($form->{out_before_search});
     $s->print_json(
         $s->clean_json({
             success=>errors($form)?0:1,
             results=>$form->{SEARCH_RESULT},
             errors=>$form->{errors},
+            out_before_search=>$form->{out_before_search},
             explain_query=>$form->{explain_query}
         })
     )->end;
@@ -293,9 +280,20 @@ sub gen_query_search{
     if(scalar(@{$qs->{GROUP}})){
         $query.=" GROUP BY ".join(', ',@{$qs->{GROUP}})
     }
-    if(scalar(@{$qs->{ORDER}})){
-        $query.=" ORDER BY ".join(', ',@{$qs->{ORDER}})
+    if($qs->{HAVING} && scalar(@{$qs->{HAVING}})){
+        $query.=" HAVING ".join(' AND ',@{$qs->{HAVING}})
     }
+
+    if($qs->{ORDER}){
+        if(ref($qs->{ORDER}) ne 'ARRAY'){
+            $qs->{ORDER}=[$qs->{ORDER}]
+        }
+        if( scalar(@{$qs->{ORDER}}) ){
+            $query.=" ORDER BY ".join(', ',@{$qs->{ORDER}})
+        }
+    }
+
+
 
     if(!$form->{not_perpage}){
         $query.=" LIMIT ".($form->{page}-1)*$form->{perpage}.', '.($form->{perpage})
@@ -303,26 +301,32 @@ sub gen_query_search{
     my $query_count;
 
     if( scalar @{$qs->{GROUP}} ){
+        #pre(1);
         $query_count=q{
         SELECT count(*) cnt FROM (
-            select wt.id FROM }.join("\n",@{$qs->{TABLES}}).
+            select }.join(',',@{$qs->{SELECT_FIELDS}}).' FROM '.join("\n",@{$qs->{TABLES}}).
             (
                 scalar(@{$qs->{WHERE}})?(" WHERE ".join(' AND ',@{$qs->{WHERE}})):''
             ).
             (
                 scalar(@{$qs->{GROUP}})?(" GROUP BY ".join(', ',@{$qs->{GROUP}})):''
             ).
+            (
+               $qs->{HAVING} && scalar(@{$qs->{HAVING}})?(" HAVING ".join(', ',@{$qs->{HAVING}})):''
+            ).
         ') x';
+        #pre($query_count);
     }
     else{
+       # pre(2);
         $query_count="SELECT count(*) cnt FROM ".join("\n",@{$qs->{TABLES}}).
         (
             scalar(@{$qs->{WHERE}})?(" WHERE ".join(' AND ',@{$qs->{WHERE}})):''
         ).
         (
             scalar(@{$qs->{GROUP}})?(" GROUP BY ".join(', ',@{$qs->{GROUP}})):''
-        )
-        .(
+        ).
+        (
            $qs->{HAVING} && scalar(@{$qs->{HAVING}})?(" HAVING ".join(', ',@{$qs->{HAVING}})):''
         )
         ;
@@ -461,9 +465,11 @@ sub get_search_where{
             }
         }
     }
+    $form->{query_hash}={};
     foreach my $q (@{$query}){
         my $name=$q->[0]; my $values=$q->[1];
         my $f=$form->{fields_hash}->{$name};
+        $form->{query_hash}->{$name}=$values;
         # собираем сразу заголовки будущей таблицы
         push @{$form->{SEARCH_RESULT}->{query_fields}},$f;
         my $header={h=>$f->{description},n=>$name,make_sort=>(!$form->{not_order} && !$f->{not_order})};
@@ -473,7 +479,7 @@ sub get_search_where{
         push @{$form->{SEARCH_RESULT}->{headers}},$header;
 
 
-
+        next if($f->{not_process});
         my $db_name=$f->{db_name}?$f->{db_name}:$f->{name};
         my $table=($f->{tablename}?$f->{tablename}:'wt');
         if($f->{type} eq 'multiconnect'){
@@ -599,7 +605,7 @@ sub get_search_where{
 
         
     }
-
+    #print Dumper($form->{query_hash});
     # если не было выбранных фильтров -- выводим заголовки согласно default_find_filter
     unless(scalar(@{$headers})){
 

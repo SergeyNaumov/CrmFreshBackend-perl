@@ -407,6 +407,7 @@ sub new{
         code=>sub{
           my $s=shift;
           require CRM::Ajax;
+          
           CRM::Ajax::process('s'=>$s,script=>'ajax',config=>$1,name=>$2)
         }
       },

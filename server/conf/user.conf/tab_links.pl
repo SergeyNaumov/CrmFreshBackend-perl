@@ -13,16 +13,16 @@
           return $e->{d} unless($e->{l});
           return qq{<a href="$e->{l}" $style $onclick $id target="_blank">$e->{d}</a>};
         }
-
+      #pre($form->{ol});
       #pre(7777);
       my @links=(
         {
                 d=>qq{Карточка бухгалтера},
-                l=>qq{/edit_form.pl?config=buhgalter_card&action=edit&id=$form->{id}}
+                l=>qq{/edit_form/buhgalter_card/$form->{id}}
         }
       );
         #pre($form->{manager});
-
+        #pre($form);
         
         if($form->{id}){
             # my $sth=$form->{dbh}->prepare("SELECT * FROM anketa_promotion where display=1");
@@ -40,10 +40,10 @@
                   cl=>q{return confirm("При удалении карт клиентов удаляться все их дочерние карты и комментарии.\n\nВосстановить будет сложно :)\nВы уверены?")}
               }
             }
-
+            
             # КАРТОЧКА ИНТЕРНЕТ-МАРКЕТИНГА
             if($form->{old_values}->{im_exists}){
-              push @links, {d=>'Карточка интернет-маркетинга',l=>qq{./edit_form.pl?config=internet_market&action=edit&id=$form->{id}}}
+              push @links, {d=>'Карточка интернет-маркетинга',l=>qq{./edit_form/internet_market/$form->{id}}}
             }
             else{
               push @links, {
@@ -51,11 +51,11 @@
                   cl=>q{return confirm("Вы уверены?")}
               }
             }
-            
+            #pre($form->{old_values});
             #push @links, {d=>'Создать карту интернет-проектов',l=>qq{./edit_form.pl?config=internet_project&action=new&user_id=$form->{id}}};
             # КАРТОЧКА ОПТИМИЗАТОРА
             if($form->{old_values}->{user_optimization_exists}){
-              push @links, {d=>'Карточка оптимизации',l=>qq{./edit_form.pl?config=user_optimization&action=edit&id=$form->{id}}}
+              push @links, {d=>'Карточка оптимизации',l=>qq{./edit_form/user_optimization/$form->{id}}}
             }
             elsif($form->{manager}->{optimize_permissions}->{superuser} || $form->{manager}->{optimize_permissions}->{ag_closers}){
               push @links, {
@@ -66,7 +66,7 @@
 
             # карточка согл. оптимизации
             if($form->{old_values}->{anketa_optim_exists}){
-              push @links, {d=>'Карточка согласования оптимизации',l=>qq{./edit_form.pl?config=anketa_optim&action=edit&id=$form->{id}}}
+              push @links, {d=>'Карточка согласования оптимизации',l=>qq{./edit_form/anketa_optim/$form->{id}}}
             }
             else{
               push @links, {
@@ -79,7 +79,7 @@
 
             # SMM https://naumov.ia-trade.su/moderator/crm_fresh/edit_form.pl?config=smm&action=create_card&id=124
             if($form->{old_values}->{smm_exists}){
-              push @links, {d=>'SMM',l=>qq{./edit_form.pl?config=smm&action=edit&id=$form->{id}}}
+              push @links, {d=>'SMM',l=>qq{./edit_form/smm/$form->{id}}}
             }
             else{
               push @links, {
@@ -91,7 +91,7 @@
             #pre($form->{old_values});
             # Карточка интернет-проектов
             if($form->{old_values}->{internet_project_exsists}){
-              push @links, {d=>'Карточка интернет-проектов',l=>qq{./edit_form.pl?config=internet_project&action=edit&id=$form->{id}}}
+              push @links, {d=>'Карточка интернет-проектов',l=>qq{./edit_form/internet_project/$form->{id}}}
             }
             elsif($form->{manager}->{permissions}->{internet_projects} || $form->{is_admin}){
               push @links, {

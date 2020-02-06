@@ -13,7 +13,7 @@ $form={
     include=>['./conf/manager.conf/init.js?ns=1']
   },
   unique_keys=>[['login']],
-  #explain=>1,
+  explain=>1,
   run=>{
      gen_pas=>sub{
         my $len=shift;
@@ -27,6 +27,27 @@ $form={
         return $key
      }
   },
+  AJAX=>{
+    check_login=>sub{
+        my $s=shift; my $values=shift;
+        print "id: $form->{id}\n";
+        my $where='login=?';
+        if($form->{id}=~m/^\d+$/){
+          $where.=' AND id<>'.$form->{id}
+        }
+
+        my $exists=$s->{db_r}->query(
+          query=>'select count(*) from manager where '.$where,
+          values=>[$values->{login}],
+          onevalue=>1
+        );
+        return [
+          login=>{
+            error=>$exists?'такой логин уже существует':''
+          }
+        ]
+    }
+  },
 	events=>{
 		permissions=>[
       sub{
@@ -37,9 +58,6 @@ $form={
               }
       },
       sub{
-        
-
-
         if(!$form->{manager}->{permissions}->{manager_adm} && ($form->{manager}->{login} ne 'admin')){
 
           foreach my $f (@{$form->{fields}}){
@@ -65,7 +83,7 @@ $form={
               $sth->execute($newpassword,$form->{id});
               #pre(param('need_send_pas')); pre($form->{old_values}->{email});
               if(param('need_send_pas') && $form->{old_values}->{email}=~m/@/){
-                print "отправлено на $form->{old_values}->{email}<br>";
+                #print "отправлено на $form->{old_values}->{email}<br>";
                 $form->{self}->send_mes({
                   from=>'info@crm.strateg.ru',
                   to=>$form->{old_values}->{email},
@@ -144,8 +162,19 @@ $form={
         $login=~s{([^a-zA-Z\-_0-9\.\@]+)}{<span style="color: red;">$1</span>}gs;
         return $login;
       },
+      frontend=>{
+          ajax=>{
+            name=>'check_login'
+          }
+      },
       tab=>'main'
-		},
+    },
+    {
+      description=>'Пароль',
+      name=>'password',
+      type=>'password',
+      tab=>'main'
+    },
     {
       name=>'login_tel',
       description=>'Логин для IP-телефонии',
@@ -197,44 +226,7 @@ $form={
         ['(\d)\+7','$1, +7']
       ],
     },
-    {
-      description=>'Пароль',
-      name=>'password',
-      type=>'code',
-      before_code=>sub{
-        my $e=shift;
-        if($form->{action} eq 'new'){
-          $e->{value}=&{$form->{run}->{gen_pas}};
-        }
-        if($form->{action}=~m{^(new|insert)$}){
-          $e->{type}='text';
-          $e->{code_completed}=1;
-        }
-        
-      },
-      code=>sub{
-        my $e=shift;
-        return '' unless($form->{id});
-        unless($form->{is_admin}){
-          return 'возможность изменять пароль есть только у сотрудников со специальными правами';
-        }
 
-        my $need_send_pas=$form->{old_values}->{email}=~m/@/?
-        qq{<input type="checkbox" id="need_send_pas"> отправить сотруднику на почту}:'';
-
-        return qq{
-          <div style="padding: 10px 0 10px 0">
-            <p>Текущий пароль сотрудника <b>зашифрован</b>.<br>Вы не можете его увидеть, но можете изменить его:</p>
-            $need_send_pas
-            <input type="text" id="newpassword" placeholder="изменить"> <input type="button" id="changepas" value="изменить">
-            <br><a href="#" id="genpas">сгенерировать</a>
-          </div>
-          <div id="password_process" style="color: red; font-weight: bold;">
-          </div>
-        }
-      },
-      tab=>'main'
-    },
 
     {
       name => 'name',

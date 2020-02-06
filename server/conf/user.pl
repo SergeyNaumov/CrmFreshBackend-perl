@@ -95,6 +95,7 @@ $form={
     ]
   ],
   events=>{
+        permissions=>[%INCLUDE './conf/user.conf/permissions.pl'%],
         before_save=>sub{
           my $next_contact=&{$form->{run}->{date_to_int}}(param('next_contact'));
           my $cur_date=&{$form->{run}->{date_to_int}}(&{$form->{run}->{cur_date}}());
@@ -128,8 +129,8 @@ $form={
             $sth->execute($form->{id});
             my $values=$sth->fetchall_arrayref({});
             
-          
-            my $values_json=$form->{self}->to_json($values);
+            my $s=&{$form->{self}};
+            my $values_json=$s->to_json($values);
             $sth=$form->{dbh}->prepare("SELECT body from user_history where id=? order by moment desc limit 1");
             $sth->execute($form->{id});
             my $body=$sth->fetchrow();
@@ -147,7 +148,7 @@ $form={
         after_search=>sub{
           if(param('to_doc') eq 'yes'){
               my $result_list=shift;
-              pre($result_list);
+              
               exit;
           }
 

@@ -312,10 +312,10 @@ sub get_values_form{ # получаем старые значения для ф�
             
         }
 
-        if(exists($f->{before_code}) && ref($f->{before_code}) eq 'CODE'){
-            #&{$f->{before_code}}($f);
-            run_event(event=>$f->{before_code},description=>'before code for '.$name,form=>$form,arg=>$f);
-        }
+        # if(exists($f->{before_code}) && ref($f->{before_code}) eq 'CODE'){
+        #     #&{$f->{before_code}}($f);
+        #     run_event(event=>$f->{before_code},description=>'before code for '.$name,form=>$form,arg=>$f);
+        # }
 
         if($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_from_table'){
             $f->{type_orig}=$f->{type}; $f->{type}='select'; 
@@ -347,18 +347,18 @@ sub get_values_form{ # получаем старые значения для ф�
         $form->{values}->{$f->{name}}=$f->{value};
     }
     $form->{values}=$values;
-    foreach my $f (@{$form->{fields}}){
-        my $name=$f->{name};
+    # foreach my $f (@{$form->{fields}}){
+    #     my $name=$f->{name};
 
 
-        if(ref($f->{code}) eq 'CODE'){
-          #print "code: $name\n";
-            $f->{after_html}=run_event(event=>$f->{code},description=>'code for '.$name,form=>$form,arg=>$f);
-            #print "$f->{after_html}\n\n";
-            #$f->{before_html}=&{$f->{code}}($f);
-            #$f->{before_html}=$f->{after_html}='ZZZZ';
-        }      
-    }
+    #     if(ref($f->{code}) eq 'CODE'){
+    #       #print "code: $name\n";
+    #         $f->{after_html}=run_event(event=>$f->{code},description=>'code for '.$name,form=>$form,arg=>$f);
+    #         #print "$f->{after_html}\n\n";
+    #         #$f->{before_html}=&{$f->{code}}($f);
+    #         #$f->{before_html}=$f->{after_html}='ZZZZ';
+    #     }      
+    # }
     
 }
 return 1;
