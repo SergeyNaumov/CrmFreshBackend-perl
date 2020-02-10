@@ -129,148 +129,93 @@
 
         }
       },
-      sub{
+      # sub{
         
-        if($form->{action} eq 'view_history' && $form->{id}){
-          #use field_operations;
-          $s->print_header();
+      #   if($form->{action} eq 'view_history' && $form->{id}){
+      #     #use field_operations;
+      #     $s->print_header();
          
-          my $moment_list;
+      #     my $moment_list;
           
           
-          my $sth=$form->{dbh}->prepare("SELECT MOMENT FROM user_history WHERE id=$form->{id} order by MOMENT desc");
-          $sth->execute();
-          $moment_list=[map {$_->{MOMENT}} @{$sth->fetchall_arrayref({})}];
+      #     my $sth=$form->{dbh}->prepare("SELECT MOMENT FROM user_history WHERE id=$form->{id} order by MOMENT desc");
+      #     $sth->execute();
+      #     $moment_list=[map {$_->{MOMENT}} @{$sth->fetchall_arrayref({})}];
           
-          my $MOMENT=$form->{self}->param('MOMENT');
-          $MOMENT=$moment_list->[0] unless($MOMENT);
+      #     my $MOMENT=$form->{self}->param('MOMENT');
+      #     $MOMENT=$moment_list->[0] unless($MOMENT);
           
-          $sth=$form->{dbh}->prepare(q{
-            SELECT h.body,m.name manager FROM 
-              user_history h
-              left join manager m ON m.id=h.manager_id
-            WHERE h.id=? and h.MOMENT=?
-          });
-          $sth->execute($form->{id},$MOMENT);
-          my $current=$sth->fetchrow_hashref;
+      #     $sth=$form->{dbh}->prepare(q{
+      #       SELECT h.body,m.name manager FROM 
+      #         user_history h
+      #         left join manager m ON m.id=h.manager_id
+      #       WHERE h.id=? and h.MOMENT=?
+      #     });
+      #     $sth->execute($form->{id},$MOMENT);
+      #     my $current=$sth->fetchrow_hashref;
           
-          $sth=$form->{dbh}->prepare(q{
-            SELECT h.body,m.name manager FROM 
-              user_history h
-              left join manager m ON m.id=h.manager_id
-            WHERE h.id=? and h.MOMENT>? order by h.MOMENT limit 1
-          });
-          $sth->execute($form->{id},$MOMENT);
-          my $next=$sth->fetchrow_hashref;
+      #     $sth=$form->{dbh}->prepare(q{
+      #       SELECT h.body,m.name manager FROM 
+      #         user_history h
+      #         left join manager m ON m.id=h.manager_id
+      #       WHERE h.id=? and h.MOMENT>? order by h.MOMENT limit 1
+      #     });
+      #     $sth->execute($form->{id},$MOMENT);
+      #     my $next=$sth->fetchrow_hashref;
           
-          if($next->{body}){
-            $next->{body}=from_json($next->{body});
-            $next->{body}=$next->{body}->[0];
-          }
-          else{
-            $next={body=>$form->{old_values}};
-          }
-          #pre($next);
+      #     if($next->{body}){
+      #       $next->{body}=from_json($next->{body});
+      #       $next->{body}=$next->{body}->[0];
+      #     }
+      #     else{
+      #       $next={body=>$form->{old_values}};
+      #     }
+      #     #pre($next);
 
-          if($current->{body}){
-            $current->{body}=from_json($current->{body});
-            $current->{body}=$current->{body}->[0];
+      #     if($current->{body}){
+      #       $current->{body}=from_json($current->{body});
+      #       $current->{body}=$current->{body}->[0];
 
             
             
-            foreach my $n (qw(company_role status vajn)){
-              #$current->{body}->{$n.'__v'}=field_operations::get_label_from_select_values(form=>$form,name=>$n,value=>$current->{body}->{$n});
-            }
+      #       foreach my $n (qw(company_role status vajn)){
+      #         #$current->{body}->{$n.'__v'}=field_operations::get_label_from_select_values(form=>$form,name=>$n,value=>$current->{body}->{$n});
+      #       }
             
             
-          }
+      #     }
           
-          my $changed={};
+      #     my $changed={};
           
-          foreach my $k (keys(%{$current->{body}})){
-            if($next->{body}->{$k} && ($current->{body}->{$k} ne $next->{body}->{$k})){
+      #     foreach my $k (keys(%{$current->{body}})){
+      #       if($next->{body}->{$k} && ($current->{body}->{$k} ne $next->{body}->{$k})){
               
-              $changed->{$k}=1;
-            }
-          }
-          #pre($current->{'next_contact'} ne $next->{next_contact});
-          #pre($changed);
-          if(exists($current->{body}->{manager_id}) && $current->{body}->{manager_id}){
-            my $sth=$form->{connects}->{strateg_read}->prepare("SELECT name FROM manager where id=?");
-            $sth->execute($current->{body}->{manager_id});
-            $current->{body}->{manager_name}=$sth->fetchrow;
-          }
-          template({
-            template=>'./conf/user.conf/view_history.tmpl',
-            vars=>{
-              form=>$form,
-              moment_list=>$moment_list,
-              MOMENT=>$MOMENT,
-              current=>$current,
-              changed=>$changed
-            },
-            utf8=>1,
-            print=>1
-          });
-          exit;
-        }
+      #         $changed->{$k}=1;
+      #       }
+      #     }
+      #     #pre($current->{'next_contact'} ne $next->{next_contact});
+      #     #pre($changed);
+      #     if(exists($current->{body}->{manager_id}) && $current->{body}->{manager_id}){
+      #       my $sth=$form->{connects}->{strateg_read}->prepare("SELECT name FROM manager where id=?");
+      #       $sth->execute($current->{body}->{manager_id});
+      #       $current->{body}->{manager_name}=$sth->fetchrow;
+      #     }
+      #     template({
+      #       template=>'./conf/user.conf/view_history.tmpl',
+      #       vars=>{
+      #         form=>$form,
+      #         moment_list=>$moment_list,
+      #         MOMENT=>$MOMENT,
+      #         current=>$current,
+      #         changed=>$changed
+      #       },
+      #       utf8=>1,
+      #       print=>1
+      #     });
+      #     exit;
+      #   }
         
-      },
-      sub{
-        if($form->{id} && $form->{action} eq 'update_bill_comment'){
-            &{$form->{run}->{update_bill_comment}}();
-        }
-        elsif($form->{id} && $form->{action} eq 'refresh_bill'){
-          my $bill_id=$form->{self}->param('bill_id');
-          $s->print_header;
-          
-          if($bill_id=~m{^\d+$}){
-            &{$form->{run}->{refresh_bill}}($bill_id);
-          }
-          exit;
-            
-        }
-        elsif($form->{id} && $form->{action} eq 'gen_new_bill'){
-          my $docpack_id=$form->{self}->param('docpack_id');
-          
-          $s->print_header;
-          if($docpack_id=~m{^\d+$}){
-            &{$form->{run}->{gen_bill}}($docpack_id);
-          }
-          $s->end;
-        }
-        elsif($form->{id} && $form->{action} eq 'delete_bill'){
-          &{$form->{run}->{delete_bill}}();
-
-        }
-        elsif($form->{is_admin} && $form->{action} eq 'paid_bill'){ # маркеровка оплаты для пакета документов
-          my $bill_id=param('bill_id');
-          $s->print_header();
-          
-          if($bill_id=~m{^\d+$}){
-            #pre($bill_id);
-            
-            my $sth=$form->{dbh}->prepare(q{
-              select
-                t.*
-              from
-                bill b
-                JOIN docpack d ON (b.docpack_id=d.id)
-                LEFT JOIN tarif t ON (t.id=d.tarif_id)
-              WHERE
-                b.id=?
-            });
-            $sth->execute($bill_id);
-            my $item=$sth->fetchrow_hashref;
-            $item->{count_days}=0 unless($item->{count_days}=~m{^\d+$});
-            $sth=$form->{dbh}->prepare("UPDATE bill SET paid_date=curdate(),paid_to=from_days(to_days(curdate())+?),paid=1 WHERE id=?");
-            $sth->execute($item->{count_days},$bill_id);
-            print qq{Счёт отмечен как оплаченный. <a href="/edit_form/user/$form->{id}">Вернуться в карту</a>};
-          }
-          exit;
-        }
-        
-      },
+      # },
       sub{ # доступ в карту
         
         #$form->{make_delete} = 1 if($form->{manager}->{permissions}->{user_delete});
@@ -286,10 +231,7 @@
           
           #$form->{add_where}=qq{ ( (wt.manager_id = $form->{manager}->{id}) OR ((wt.manager_id=0 OR wt.manager_id) IS NULL AND (status=0 OR status=1)) ) };
         }
-        
-
-        
-          if(
+        if(
             $form->{read_only} && 
             (
             ($form->{script} eq 'edit_form' && $form->{action}=~m/^(insert|new)$/)
@@ -304,34 +246,33 @@
                # статус: не указан или "в базе"
             )
             )
-           ){
+        ){
             # Если чел работает со своим клиентом -- разрешаем редактировать
             $form->{read_only} = 0;
           }
-               
-      
       },
-      sub{
-          if($form->{self}->param('debug')){
-            $form->{self}->pre($form->{manager}->{permissions}->{manager_sopr});
-          }
-          if($form->{manager}->{login} eq 'admin' || $form->{manager}->{permissions}->{manager_sopr}){
-            # если для менеджера сопр. форма закрыта -- разрешаем редактировать 2 поля: "состояние ОСО" и "Контакты"
-            if($form->{read_only}){
-              foreach my $f (@{$form->{fields}}){
-                if($f->{name}=~m{^(contacts|memo_sopr|nuz|docpack)$}){
-                  $f->{read_only}=0;  
-                }
-                else{
-                  $f->{read_only}=1;
-                }
-              }
-              $form->{read_only}=0;
-            }
-            #$e->{read_only}=0;
-           }
+
+      # sub{
+      #     if($form->{self}->param('debug')){
+      #       $form->{self}->pre($form->{manager}->{permissions}->{manager_sopr});
+      #     }
+      #     if($form->{manager}->{login} eq 'admin' || $form->{manager}->{permissions}->{manager_sopr}){
+      #       # если для менеджера сопр. форма закрыта -- разрешаем редактировать 2 поля: "состояние ОСО" и "Контакты"
+      #       if($form->{read_only}){
+      #         foreach my $f (@{$form->{fields}}){
+      #           if($f->{name}=~m{^(contacts|memo_sopr|nuz|docpack)$}){
+      #             $f->{read_only}=0;  
+      #           }
+      #           else{
+      #             $f->{read_only}=1;
+      #           }
+      #         }
+      #         $form->{read_only}=0;
+      #       }
+      #       #$e->{read_only}=0;
+      #      }
           
-      },
+      # },
       sub {
         # меняем поля местами поля для комментарие в инструменте "пользователи сопр"
         return unless($form->{config} eq 'user_sopr');
@@ -363,14 +304,6 @@
                     $sth->execute($form->{id});
                     my $is_paid=
                     $form->{is_paid}=$sth->fetchrow;
-                    #if($is_paid && $form->{old_values}->{is_consult}){
-                    #  $form->{dbh}->do("UPDATE user set is_consult=0 where id=$form->{id}")
-                    #}
-
-
-
-
-
                     my $read_only=1;
 
                     if($form->{manager}->{login}=~m{^(admin|skrash|KSemenov|svcomplex)$}){

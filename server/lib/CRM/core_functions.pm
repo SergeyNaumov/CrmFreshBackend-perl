@@ -1,6 +1,7 @@
 use utf8;
 use strict;
 use Date::Parse qw/ str2time /;
+use Data::Dumper;
 #use Storable qw/dclone/; 
 # для работы с полями
 sub pre{

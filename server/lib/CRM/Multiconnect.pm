@@ -60,7 +60,6 @@ sub process{
         data=>{
           $field->{relation_table_header}=>$R->{header}
         },
-        debug=>1,
         #log=>$form->{log},
         #errors=>$form->{errors}
       );
@@ -172,7 +171,6 @@ sub save{ # вызывается из EditForm
          $values_joined?" AND $field->{relation_save_table_id_relation} not in ($values_joined)":
          ''
       ),
-      #debug=>1,
       values=>[$form->{id}]
     );
 
@@ -186,7 +184,6 @@ sub save{ # вызывается из EditForm
             $field->{relation_save_table_id_worktable}=>$form->{id},
             $field->{relation_save_table_id_relation}=>$v
           },
-          #debug=>1
         )
       }
     }

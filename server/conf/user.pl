@@ -7,20 +7,20 @@ $form={
     make_delete=>0,
     tree_use => '0',
     GROUP_BY=>'wt.id',
-    filters_groups=>[
-      {
-        description=>'Данные о компании',show=>1,filter_list=>
-        [
-          'login','firm','otr_id','region_id','web', 'company_type', 'company_role'
-        ]
-      },
-    {
-      description=>'Данные о продажах',show=>1,filter_list=>
-      [
-        'memo','is_consult','not_export','status','vajn','state','manager_id'
-      ]
-    },
-  ],
+  #   filters_groups=>[
+  #     {
+  #       description=>'Данные о компании',show=>1,filter_list=>
+  #       [
+  #         'login','firm','otr_id','region_id','web', 'company_type', 'company_role'
+  #       ]
+  #     },
+  #   {
+  #     description=>'Данные о продажах',show=>1,filter_list=>
+  #     [
+  #       'memo','is_consult','not_export','status','vajn','state','manager_id'
+  #     ]
+  #   },
+  # ],
   before_filters_html=>q{
     
   },
