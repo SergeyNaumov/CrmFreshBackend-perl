@@ -164,6 +164,9 @@ sub save_form{
                     }
                 }
             }
+            if( ($f->{type} eq 'select_from_table' || $f->{type} eq 'select_values') && !$v){
+                next
+            }
 
             $save_hash->{$name}=$v
         }

@@ -3,7 +3,7 @@ $form={
     header_field=>'header',
     tree_use=>1,
     sort=>1,
-    #max_level=>2,
+    #read_only=>1,
     events=>{
       permissions=>sub{
         if($form->{id}){

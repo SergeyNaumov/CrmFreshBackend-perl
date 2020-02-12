@@ -1,0 +1,1 @@
+cp -R lib /mnt/stg_w02/var/www/vod-serv/backend/perl

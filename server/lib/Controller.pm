@@ -5,7 +5,7 @@ use utf8;
 use Data::Dumper;
 use Digest::SHA qw(sha256_hex);
 use CRM;
-#use lib './lib/CRM';
+
 use CRM::Download;
 use CRM::Session;
 use CRM::AdminTree;
@@ -17,6 +17,8 @@ use CRM::Ajax;
 use CRM::Events;
 use CRM::Const;
 
+use lib './lib/extend';
+use extend::KLADR;
 
 #use CRM::FontAwesome;
 my $redirect='';
@@ -446,6 +448,14 @@ sub new{
           require CRM::LoadDocument;
           CRM::LoadDocument::process($s,$1);
           $s->end;
+        }
+      },
+      # KLADR
+      {
+        url=>'^\/extend\/KLADR',
+        code=>sub{
+          my $s=shift;
+          extend::KLADR::go($s)
         }
       },
       {

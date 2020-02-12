@@ -43,7 +43,7 @@ sub process{
       },
       {
         exp=>!$field->{encrypt_method},
-        'Не указан encrypt_method'
+        message=>'Не указан encrypt_method'
       },
       {
         exp=>($field->{encrypt_method}!~m/^(mysql_encrypt)$/),
@@ -65,7 +65,12 @@ sub process{
 
     foreach my $r (@{$rules}){ # проверка
       if(!CRM::errors($form)){
-          push @{$form->{errors}->{$r->{message}}} if($r->{exp});
+
+          if($r->{exp}){
+            #use Data::Dumper;
+            #print Dumper($r);
+            push @{$form->{errors}},$r->{message}
+          }
       }
 
     }
@@ -80,11 +85,14 @@ sub process{
       if($field->{encrypt_method} eq 'mysql_encrypt'){
         $encrypt_password=$form->{db}->query(query=>'select encrypt(?)',values=>[$R->{new_password}],onevalue=>1);
       }
+      elsif($field->{encrypt_method} eq 'mysql_encrypt'){ # сюда добавляем другие методы шифрования
+        $encrypt_password=$form->{db}->query(query=>'select encrypt(?)',values=>[$R->{new_password}],onevalue=>1);
+      }
 
       $form->{db}->query(
         query=>"UPDATE $form->{work_table} SET $field->{name}=? where id=?",
         errors=>$form->{errors},
-        debug=>1,
+        #debug=>1,
         values=>[$encrypt_password,$form->{id}]
       );
     }

@@ -89,7 +89,7 @@ $form={
   #   {name=>'tags'},
   #   {name=>'enabled',value=>[]},
   # ],
-  search_on_load=>0,
+  search_on_load=>1,
   fields =>
   [
     {

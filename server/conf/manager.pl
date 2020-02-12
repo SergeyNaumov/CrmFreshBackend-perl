@@ -1,5 +1,4 @@
-#use lib './lib';
-#use core_strateg qw(child_groups);
+
 $form={
 	title => 'Менеджеры',
 	work_table => 'manager',
@@ -51,11 +50,12 @@ $form={
 	events=>{
 		permissions=>[
       sub{
-              if($form->{id}){
-                my $sth=$form->{dbh}->prepare("SELECT * from manager where id=?");
-                $sth->execute($form->{id});
-                $form->{old_values}=$sth->fetchrow_hashref;
-              }
+        $form->{host}=$s->{vars}->{env}->{HTTP_HOST};
+        if($form->{id}){
+          my $sth=$form->{dbh}->prepare("SELECT * from manager where id=?");
+          $sth->execute($form->{id});
+          $form->{old_values}=$sth->fetchrow_hashref;
+        }
       },
       sub{
         if(!$form->{manager}->{permissions}->{manager_adm} && ($form->{manager}->{login} ne 'admin')){
@@ -75,33 +75,6 @@ $form={
           $form->{read_only}=0;
           $form->{make_delete}=1;
           $form->{not_create}=0;
-          if($form->{id} && $form->{action} eq 'changepas'){
-            print_header;
-            my $newpassword=param('newpassword');
-            if(length($newpassword)){
-              my $sth=$form->{dbh}->prepare("UPDATE manager set password=ENCRYPT(?) where id=?");
-              $sth->execute($newpassword,$form->{id});
-              #pre(param('need_send_pas')); pre($form->{old_values}->{email});
-              if(param('need_send_pas') && $form->{old_values}->{email}=~m/@/){
-                #print "отправлено на $form->{old_values}->{email}<br>";
-                $form->{self}->send_mes({
-                  from=>'info@crm.strateg.ru',
-                  to=>$form->{old_values}->{email},
-                  subject=>'изменение пароля',
-                  message=>qq{
-                    Для доступа в https://crm.strateg.ru/:<br>
-                    Логин: $form->{old_values}->{login}<br>
-                    Пароль: $newpassword
-                  }
-                });
-              }
-              print "Пароль для данного сотрудника был успешно изменён";
-            }
-            else{
-              print "Не удалось изменить пароль"
-            }
-            exit;
-          }
         }
 
       },
@@ -110,22 +83,20 @@ $form={
     ],
     before_delete=>sub{
         if($form->{old_values}->{login} eq 'admin'){
-          print "<p style='text-align: center;'>Админа удалять нельзя!</p>";
+          push @{$form->{errors}},'Админа удалять нельзя!';
         }
-        exit; 
     },
     before_search=>sub{
-      if($form->{where_list}=~m{mg.id IN \((.+?)\)}){
-        my $list=$1;
-        my @ids=$list=~m{(\d+)}g;
-        @ids=core_strateg::child_groups(
-            connect=>$form->{connects}->{strateg_read},
-            group_id=>\@ids
-        );
-        my $ids_str=join(',',@ids);
-        $form->{where_list}=~s{mg.id IN \((.+?)\)}{mg.id in \($ids_str\)};
-      }
-
+      # if($form->{where_list}=~m{mg.id IN \((.+?)\)}){
+      #   my $list=$1;
+      #   my @ids=$list=~m{(\d+)}g;
+      #   @ids=core_strateg::child_groups(
+      #       connect=>$form->{connects}->{strateg_read},
+      #       group_id=>\@ids
+      #   );
+      #   my $ids_str=join(',',@ids);
+      #   $form->{where_list}=~s{mg.id IN \((.+?)\)}{mg.id in \($ids_str\)};
+      # }
     },
 
 	},
@@ -173,6 +144,16 @@ $form={
       description=>'Пароль',
       name=>'password',
       type=>'password',
+      encrypt_method=>'mysql_encrypt',
+      methods_send=>[
+        {
+          description=>'сохранить',
+          method_send=>sub{
+            my $new_password=shift;
+            $s->send_mes()
+          }
+        }
+      ],
       tab=>'main'
     },
     {
@@ -336,7 +317,7 @@ $form={
       tab=>'permissions',
       filter_code=>sub{
         my $s=$_[0]->{str};
-        return qq{<a href="./edit_form.pl?config=manager_group&action=edit&id=$s->{mg__id}" target="_blank">$s->{mg__header}</a>}
+        return qq{<a href="/edit_form/manager_group/$s->{mg__id}" target="_blank">$s->{mg__header}</a>}
       }
 		},
 
