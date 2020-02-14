@@ -6,10 +6,12 @@ $form={
 	make_delete => '0',
   not_create=>1,
   read_only=>1,
+  #explain=>1,
 	tree_use => '0',
 	events=>{
 		permissions=>[
       sub{
+        #pre($form->{manager}->{login});
         if($form->{manager}->{login} eq 'admin' || $form->{manager}->{permissions}->{operator}){
             $form->{make_delete}=1;
             $form->{read_only}=0;
@@ -78,10 +80,11 @@ $form={
       name=>'main_master_id',
       type=>'select_from_table',
       table=>'main_master',
+      tablename=>'mm',
       header_field=>'header',
       value_field=>'id',
       regexp_rules=>[
-        '^\d+$/','обязательно выберите главного мастера'
+        '/^\d+$/','обязательно выберите главного мастера'
       ],
       filter_on=>1
     },

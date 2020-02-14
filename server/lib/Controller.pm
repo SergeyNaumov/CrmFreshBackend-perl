@@ -18,7 +18,6 @@ use CRM::Events;
 use CRM::Const;
 
 use lib './lib/extend';
-use extend::KLADR;
 
 #use CRM::FontAwesome;
 my $redirect='';
@@ -455,6 +454,7 @@ sub new{
         url=>'^\/extend\/KLADR',
         code=>sub{
           my $s=shift;
+          require extend::KLADR;
           extend::KLADR::go($s)
         }
       },

@@ -19,17 +19,27 @@ $Data::Dumper::Useperl = 1;
 sub process{
     
     my %arg=@_;
-    my $parser=read_conf(%arg);
-    my $s=$arg{s};
-    my $R=$s->request_content(from_json=>1);
-    my $action=$R->{action};
-    if($action eq 'init'){
+    my $parser=read_conf(%arg); my $s=$arg{s};
+    if(scalar(@{$parser->{errors}})){
         $s->print(
             $s->to_json({
                 success=>scalar(@{$parser->{errors}})?0:1,
                 errors=>$parser->{errors},
                 parser=>$parser
             })
+        )->end;
+        return ;
+    }
+    
+    my $R=$s->request_content(from_json=>1);
+    my $action=$R->{action};
+    if($action eq 'init'){
+        $s->print_json(
+            {
+                success=>scalar(@{$parser->{errors}})?0:1,
+                errors=>$parser->{errors},
+                parser=>$s->clean_json($parser)
+            }
         )->end;
         
     }
@@ -56,23 +66,25 @@ sub preload{
     }
     if($src=~m/^data:(.+?);base64,(.+)/gs){
         my ($mime,$base64)=($1,$2);
-        
+
         unless(-d $parser->{tmp_dir}){
-            mkdir($parser->{tmp_dir}) || die($!);
+            mkdir($parser->{tmp_dir}) || push @errors, "Ошибка при создании $parser->{tmp_dir}";
         }
         
         my $filename=time().'_'.substr(rand(),3,3).'.'.$ext;
         
         my $fullname=$parser->{tmp_dir}.'/'.$filename;
+
         
-        #print "save to: $fullname\n";
         open F, '>'.$fullname;
         binmode F;
         my $bin=decode_base64($base64) || die($!);
+        
         print F $bin;
         close F;
+        
         my $result=go_parse(filename=>$filename,tmp_path=>$parser->{tmp_dir},limit=>30);
-        #print Dumper({s=>$s});
+        #print "result\n";
         $s->print(
             $s->to_json($result)
         )->end;
@@ -109,11 +121,13 @@ sub load{
         $hash_fields->{$f->{selected}}=$f->{name}
     }
     unless(scalar(@errors)){
+        my $errors=[];
         go_parse(
             filename=>$loaded_filename,
             hash_fields=>$hash_fields,
             tmp_path=>$parser->{tmp_dir},
             data_line_number=>$data_line_number,
+            before_loopback=>($parser->{before_loopback}?$parser->{before_loopback}:''),
             loopback=>sub{
                 my $data=shift;
                 if(scalar( keys %{$data} )){
@@ -121,10 +135,15 @@ sub load{
                         table=>$parser->{work_table},
                         data=>$data,
                         #debug=>1,
+                        errors=>$errors
                     );
                 }
             }
         );
+        if(scalar(@{$errors})){
+            push @errors, @{$errors};
+        }
+
     }
     # print Dumper({
     #      fields=>$hash_fields,
@@ -168,7 +187,7 @@ sub read_conf{
         eval ($data);
         if($@){
           #$s->print($@.'<hr>');
-          $parser={errors=>[$@.' in '.$config]};
+          $parser={errors=>["В конфиге $config ошибка: $@"]};
         }
         else{
             $parser->{errors}=[] unless($parser->{errors});
@@ -284,6 +303,7 @@ sub go_parse{
   my $row=0;
   
   my $data=[];
+  my $cnt_empty_str=0;
   foreach my $c (@{$Cells}){
     my $str=[]; my $hash_str={};
     my $col=0;
@@ -319,15 +339,29 @@ sub go_parse{
         }
         $col++;
     }
+
     if($arg{loopback}){
-            #print Dumper({hash_str=>$hash_str});
-            &{$arg{loopback}}($hash_str);
+            if(is_empty_str($hash_str)){
+                $cnt_empty_str++
+            }
+            else{
+                if($arg{before_loopback} && (ref($arg{before_loopback}) eq 'CODE') ){
+                    $arg{before_loopback}($hash_str);
+                }
+
+                &{$arg{loopback}}($hash_str);
+            }
+
+            
     }
     else{
         $str=clear_empty_str($str);
         $data->[$row]=$str;
     }
     
+    if($cnt_empty_str>20){
+        last;
+    }
 
     
     $row++;
@@ -343,13 +377,22 @@ sub go_parse{
     data=>$data
   }
 }
-
+sub is_empty_str{
+    my $hash_fields=shift;
+    my $empty=1;
+    foreach my $k ( keys %{$hash_fields}){
+        if($hash_fields->{$k}=~m/\S/){
+            return 0
+        }
+    }
+    return 1;
+}
 sub clear_empty_str{ # вычищаем пустые значения в конце строки
   my $str=shift;
   my @new_str=();
   my $need_clean=1;
   foreach my $v ( reverse(@{$str}) ){
-    if(!$v || $v=~m/^\s+$/){ # значение пустое
+    if(!$v || $v=~m/^\s*$/gs){ # значение пустое
       unless($need_clean){
          push @new_str,$v;
       }

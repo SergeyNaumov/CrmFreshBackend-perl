@@ -105,6 +105,7 @@ sub processEditForm{
                     id=>$form->{id},
                     log=>$form->{log},
                     read_only=>$form->{read_only},
+                    width=>$form->{width}?$form->{width}:'',
                     cols=>$form->{cols}?$form->{cols}:[],
                     config=>$form->{config}
         });
@@ -165,6 +166,7 @@ sub save_form{
                 }
             }
             if( ($f->{type} eq 'select_from_table' || $f->{type} eq 'select_values') && !$v){
+                #print Dumper({f=>$f,v=>$v});
                 next
             }
 

@@ -1,11 +1,14 @@
+# 1. Проверить, почему не disable-тся форма при наличии хотя бы одного не валидного получится
+# 2. проверять regexp_rules на стороне сервер
+# 3. проверять regexp_rules на стороне клиента (select_from_table)
 
 $form={
-	title => 'Выполненные работы',
+	title => 'Выполненные работы по выездной поверке',
 	work_table => 'work',
 	work_table_id => 'id',
 	make_delete => '0',
   not_create=>1,
-  
+  width=>'800',
 	tree_use => '0',
   #explain=>1,
 
@@ -24,12 +27,12 @@ $form={
   AJAX=>{
     check_num_sv1=>sub{
       my $s=shift; my $v=shift;
-      if($v->{num_sv1}!~m/^\d{5}$/){
+      if($v->{num_sv1}!~m/^\d+$/){
         return [
-          'num_sv1',{error=>'должно быть 5 цифр'}
+          'num_sv1',{error=>'номер не указан или указан не корректно'}
         ]
       }
-      elsif($v->{num_sv2}=~m/^\d{3}$/ && $v->{num_sv3}=~m/^\d{4}$/){
+      elsif($v->{num_sv2}=~m/^\d{3}$/ && $v->{num_sv3}=~m/^\d{2}$/){
         
         my @where="(num_sv1=? and num_sv2=? and num_sv3=?)";
         if($form->{id}){
@@ -46,12 +49,17 @@ $form={
             'num_sv1',{error=>qq{такой номер уже есть: <a href="/edit_form/work/$exists_num->{id}" target="_blank">здесь</a>}}
           ]
         }
+        return [
+          'num_label',{value=>"$v->{num_sv1}/$v->{num_sv2}/$v->{num_sv3}"},
+          'num_sv1',{error=>''}
+        ]
       }
       return [
-        'num_sv1',{error=>''}
+        'num_sv1',{error=>''},
+
       ]
     },
-    num_sv=>sub{ # вычисляем номер сивдетельства
+    num_sv=>sub{ # вычисляем номер свидетельства
       my $s=shift; my $v=shift;
       my $result=[];
       
@@ -62,15 +70,16 @@ $form={
       if($master){
         #if(!$v->{num_sv1}){
           if($v->{num_sv2} && $v->{num_sv3}){
+            my $where='num_sv2=? and num_sv3=?';
+            if($form->{id}){
+              $where.=" and id<>$form->{id}"
+            }
             my $num_sv1=$form->{db}->query(
-              query=>'SELECT max(num_sv1) from work WHERE num_sv2=? and num_sv3=?',
+              query=>'SELECT max(num_sv1) from work WHERE '.$where,
               values=>[$v->{num_sv2},$v->{num_sv3}],
               onevalue=>1,
             );
-            $num_sv1=sprintf("%05d",$num_sv1+1);
-            
-
-
+            $num_sv1++;
 
             if($num_sv1 ne $v->{num_sv1}){
               $v->{num_sv1}=$num_sv1;
@@ -80,9 +89,6 @@ $form={
             
           }
         #}
-
-
-
         push @{$result},(
           'master_id',{value=>$master->{id}},
           'num_label',{
@@ -145,14 +151,14 @@ $form={
       return []
     }
   },
-  cols=>[
-    [
-      {name=>'c1'}
-    ],
-    [
-      {name=>'c2',description=>'ГРСИ и мастер'}
-    ]
-  ],
+  # cols=>[
+  #   [
+  #     {name=>'c1'}
+  #   ],
+  #   [
+  #     {name=>'c2',description=>'ГРСИ и мастер'}
+  #   ]
+  # ],
   QUERY_SEARCH_TABLES=>
   [
     {table=>'work',alias=>'wt'},
@@ -162,17 +168,6 @@ $form={
   fields =>
   [
     {
-      name => 'address',
-      description => 'Адрес',
-      type => 'text',
-      subtype=>'kladr',
-      regexp_rules=>[
-        '/^.+$/','заполните адрес'
-      ],
-      tab=>'c1',
-      filter_on=>1
-    },
-    {
       name => 'dat_pov',
       description => 'Дата поверки',
       type => 'date',
@@ -180,6 +175,72 @@ $form={
       frontend=>{ajax=>{name=>'calc_dat_pov_next'}},
       tab=>'c1'
     },
+
+    {
+      name => 'num_sv1',
+      description => 'Порядковый номер по журналу',
+      type => 'text',
+      regexp_rules=>[
+        '/^[1-9]\d*$/','целое число'
+      ],
+      tab=>'c2',
+      filter_on=>1,
+      frontend=>{ajax=>{name=>'check_num_sv1'}},
+    },
+    {
+      name => 'num_sv2',
+      description => 'Табельный номер журнала',
+      type => 'text',
+      tab=>'c2',
+      regexp_rules=>[
+        '/^\d+$/','3 цифры'
+      ],
+      frontend=>{ajax=>{name=>'num_sv'}},
+      filter_on=>1
+    },
+    {
+      name => 'num_sv3',
+      description => 'Год поверки',
+      type => 'select_values',
+      before_code=>sub{
+        my $f=shift;
+        my $cur_year=cur_year()-2000;
+        
+        if($form->{action} eq 'new'){
+          $f->{value}=sprintf("%02d",$cur_year);
+        }
+        foreach my $y (1..$cur_year){
+
+          my $v=sprintf("%02d",$y);
+
+          push @{$f->{values}},{v=>$v,d=>$v};
+        }
+      },
+      values=>[],
+      tab=>'c2',
+      regexp_rules=>[
+        '/^\d{2}$/','2 цифры'
+      ],
+      filter_on=>1
+    },
+    {
+      description=>'№ свидетельства/извещения/протокола', # а карте
+      name=>'num_label',
+      type=>'text',
+      read_only=>1,
+      not_process=>1,
+      tab=>'c2',
+    },
+    {
+      description=>'Поверитель',
+      type=>'select_from_table',
+      table=>'master',
+      name=>'master_id',
+      header_field=>'header',
+      value_field=>'id',
+      tab=>'c2'
+    },
+    # Эталон
     {
       description=>'Номер ГРСИ',
       type=>'select_from_table',
@@ -190,78 +251,23 @@ $form={
       tab=>'c1',
       frontend=>{ajax=>{name=>'calc_dat_pov_next'}},
     },
-    {
-      description=>'Номер свидетельства / извещения / протокола', # а карте
-      name=>'num_label',
-      type=>'text',
-      read_only=>1,
-      not_process=>1,
-      tab=>'c2',
-    },
-    {
-      name => 'num_sv1',
-      description => 'Свидетельство - порядковый номер',
-      type => 'text',
-      regexp_rules=>[
-        '/^\d{5}$/','5 цифр'
-      ],
-      tab=>'c2',
-      filter_on=>1,
-      frontend=>{ajax=>{name=>'check_num_sv1'}},
-    },
-    {
-      name => 'num_sv2',
-      description => 'Свидетельство',
-      type => 'text',
-      tab=>'c2',
-      regexp_rules=>[
-        '/^\d{3}$/','3 цифры'
-      ],
-      frontend=>{ajax=>{name=>'num_sv'}},
-      filter_on=>1
-    },
-    {
-      name => 'num_sv3',
-      description => 'ГРСИ - год',
-      type => 'text',
-      before_code=>sub{
-        my $f=shift;
-        if($form->{action} eq 'new'){
-          $f->{value}=cur_year()
-        }
-      },
-      tab=>'c2',
-      regexp_rules=>[
-        '/^\d{4}$/','4 цифры'
-      ],
-      filter_on=>1
-    },
-    {
-      description=>'Мастер',
-      type=>'select_from_table',
-      table=>'master',
-      name=>'master_id',
-      header_field=>'header',
-      value_field=>'id',
-      tab=>'c2'
-    },
+    # Наименование счётчика
+    # тип счётчика воды
+    # методика поверки
+
+
+
+
     {
       name => 'type_wather',
-      description => 'Водоснабжение',
+      description => 'ХВС/ГВС',
       type => 'select_values',
       values=>[
-        {v=>'hv',d=>'Х/В'},
-        {v=>'gv',d=>'Г/В'},
+        {v=>'hv',d=>'ХВС'},
+        {v=>'gv',d=>'ГВС'},
       ],
       tab=>'c1',
       frontend=>{ajax=>{name=>'calc_dat_pov_next'}},
-      filter_on=>1
-    },
-    {
-      description=>'Следующая дата поверки',
-      name=>'dat_pov_next',
-      type=>'date',
-      tab=>'c1',
       filter_on=>1
     },
     {
@@ -269,8 +275,8 @@ $form={
       description => 'Диаметр (DN)',
       type => 'select_values',
       values=>[
-        {v=>'15',d=>'ДУ15'},
-        {v=>'20',d=>'ДУ20'},
+        {v=>'15',d=>'DN15'},
+        {v=>'20',d=>'DN20'},
       ],
       tab=>'c1',
       filter_on=>1
@@ -286,7 +292,7 @@ $form={
       filter_on=>1
     },
     {
-      description=>'Год выпуска',
+      description=>'Год изготовления',
       name=>'born_year',
       type=>'select_values',
       before_code=>sub{
@@ -303,12 +309,72 @@ $form={
     },
     {
       name => 'is_ok',
-      description => 'Годен',
-      type => 'switch',
+      description => 'Годен/не годен',
+      type => 'select_values',
+      before_code=>sub{
+        my $e=shift;
+        if($form->{action} eq 'new'){
+          $e->{value}=1
+        }
+      },
+      values=>[
+        {v=>0,d=>'не годен'},
+        {v=>1,d=>'годен'},
+      ],
       tab=>'c2',
       filter_on=>1
     },
+    {
+      description=>'Дата очередной поверки',
+      name=>'dat_pov_next',
+      type=>'date',
+      tab=>'c1',
+      filter_on=>1
+    },
+    {
+      name => 'address',
+      description => 'Адрес',
+      type => 'text',
+      subtype=>'kladr',
+      regexp_rules=>[
+        '/^.+$/','заполните адрес'
+      ],
+      tab=>'c1',
+      kladr=>{
+        after_search=>sub{
+          my $data=shift; my $i=0;
+          my $list=[];
+          foreach my $d (@{$data}){
+            print Dumper($d);
+            my @res=();
+            foreach my $d2 (@{$d->{parents}}){
+              
+              # пропускаем регион "Москва", если у нас город "Москва"
+              if($d2->{zip} eq '123182' && $d2->{contentType} eq 'city'){
+                pop @res;
+              }
+              if($d2->{zip} eq '123182' && $d2->{contentType} eq 'cityOwner'){
+                next;
+              }
+              push @res,"$d2->{typeShort} $d2->{name}"
+            }
 
+            push @res,"$d->{typeShort} $d->{name}";
+            my $h=join(', ',@res);
+            push @{$list},{header=>$h};
+          }
+          return $list;
+        },
+      },
+
+      
+      filter_on=>1
+    },
+    {
+      description=>'Заказчик',
+      type=>'text',
+      name=>'owner'
+    }
 	]
 };
 

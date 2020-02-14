@@ -155,7 +155,8 @@ sub admin_table_find{ # Поиск результатов
             #else{
             $value=$r->{$tbl.'__'.$db_name};
             #}
-            
+            $field->{type_orig}=$field->{type} unless($field->{type_orig});
+            #print "$field->{name} $field->{type_orig}=> $field->{type}\n";
             if($field->{type_orig} eq 'select_values'){ # преобразуем select_values
                 my $values_finded=0;
                 foreach my $v (@{$field->{values}}){
@@ -174,7 +175,7 @@ sub admin_table_find{ # Поиск результатов
                 $value=&{$field->{filter_code}}({str=>$r,value=>$value});
             }
             else{
-                    #print "$field->{name} => $field->{type}\n";
+                    #print "ZZZ ($field->{type_orig})\n";
                     if($field->{type} eq 'memo'){
                         $type='memo'
                     }
@@ -186,7 +187,7 @@ sub admin_table_find{ # Поиск результатов
                     elsif($field->{type}=~m{^font}){
                         $type=$field->{type};
                     }
-                    elsif($field->{type}=~m/^(checkbox|switch)$/){
+                    elsif($field->{type_orig}=~m/^(checkbox|switch)$/){
                         if($field->{make_change_in_search}){
                             $type=$field->{type}
                         }
@@ -195,10 +196,11 @@ sub admin_table_find{ # Поиск результатов
                         }
                         
                     }
-                    elsif($field->{type}=~m/^filter_extend_(checkbox|switch)$/){
+                    elsif($field->{type_orig}=~m/^filter_extend_(checkbox|switch)$/){
                         $value=$value?'да':'нет'
                     }
-                    elsif($field->{type}=~m{^(filter_extend_)?select_from_table}){
+                    elsif($field->{type_orig}=~m{^(filter_extend_)?select_from_table}){
+                        #print "This!\n";
                         if($field->{make_change_in_search}){
                             $type='select';
                             $value=$r->{$tbl.'__'.$field->{value_field}};
@@ -209,6 +211,7 @@ sub admin_table_find{ # Поиск результатов
                         else{
 
                             if($r->{$tbl.'__'.$field->{header_field}}){
+                                #print "tbl: $field->{tablename}\n";
                                 $value=$r->{$tbl.'__'.$field->{header_field}}
                             }
                             else{
@@ -217,7 +220,7 @@ sub admin_table_find{ # Поиск результатов
 
                         }                
                     }
-                    elsif($field->{type}=~m{^(filter_extend_)?select_values$}){
+                    elsif($field->{type_orig}=~m{^(filter_extend_)?select_values$}){
                         if($field->{make_change_in_search}){
                             $type='select';
                             $value=$r->{$tbl.'__'.$db_name};
@@ -227,17 +230,17 @@ sub admin_table_find{ # Поиск результатов
                         }
                         
                     }
-                    elsif($field->{type}=~m{^(filter_extend_)?(text|textarea)}){
+                    elsif($field->{type_orig}=~m{^(filter_extend_)?(text|textarea)}){
                         my $t=$2;
                         if($field->{make_change_in_search}){
                             $type=$t; 
                         }
                         $value=$r->{$tbl.'__'.$db_name};
                     }
-                    elsif($field->{type} eq 'password'){
+                    elsif($field->{type_orig} eq 'password'){
                         $value='[пароль нельзя увидеть]'
                     }
-                    elsif($field->{type} eq 'in_ext_url'){
+                    elsif($field->{type_orig} eq 'in_ext_url'){
                         $value=$r->{in_ext_url__ext_url}
                     }
             }

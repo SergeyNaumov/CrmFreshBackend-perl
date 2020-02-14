@@ -3,12 +3,20 @@ $parser={
   work_table=>'cdek_in_comp',
   tmp_dir=>'./tmp/parse-cdek',
   livetime_tmp=>'3600',# время жизни временных файлов
+  before_loopback=>sub{ # собстве
+    my $data=shift;
+    unless($data->{manager_id}=~m/^\d+$/){
+      $data->{manager_id}=0;
+    }
+
+  },
   fields=>[
     {name=>'header',description=>'Наименование'},
     {name=>'inn',description=>'ИНН'},
     {name=>'email',description=>'Почта'},
     {name=>'site',description=>'Сайт'},
-    {name=>'phone',description=>'Телефон'}
+    {name=>'phone',description=>'Телефон'},
+    {name=>'manager_id',description=>'ID менеджера'}
   ]
 };
 # create table cdek_in_comp(
