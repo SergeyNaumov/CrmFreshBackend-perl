@@ -242,6 +242,7 @@ sub get_values_for_select_from_table{ # получаем список значе
     # }
     #use Data::Dumper;print Dumper($list);
   }
+  unshift(@{$list},{v=>0,d=>'значение не указано'});
   return $list
 }
 sub tree_to_list{

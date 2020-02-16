@@ -5,11 +5,17 @@ $form={
     tree_use=>1,
     sort=>1,
     max_level=>2,
+    read_only=>1,
+    explain=>1,
     events=>{
       permissions=>sub{
+        my $v=$form->{values};
         # if($form->{manager}->{login} ne 'admin'){
         #   push @{$form->{errors}},'Доступ запрещён!'
         # }
+        if($form->{manager}->{login} eq 'admin' || $v->{manager_id}==$form->{manager}->{id}){
+          $form->{read_only}=0;
+        }
         if($form->{id}){
           $form->{title}='Редактирование компании'
         }
@@ -46,7 +52,7 @@ $form={
           filter_on=>1
       },
       {
-          description=>'site',
+          description=>'Сайт',
           type=>'text',
           name=>'site',
           tab=>'info',
@@ -84,7 +90,14 @@ $form={
         header_field=>'name',
         value_field=>'id',
         tablename=>'m',
-
+        read_only=>1,
+        before_code=>sub{
+          my $e=shift;
+          if($form->{manager}->{login} eq 'admin'){
+            $e->{read_only}=0;
+            $e->{make_change_in_search}=1
+          }
+        },
         tab=>'work'
       },
       {
@@ -94,7 +107,7 @@ $form={
         tab=>'work'
       },
       {
-        description=>'Статус',
+        description=>'Статус процесса',
         name=>'status',
         type=>'select_values',
         tab=>'work',
@@ -110,8 +123,30 @@ $form={
           {v=>'1',d=>'жду реквизиты'},
           {v=>'3',d=>'жду сканы'},
           {v=>'4',d=>'жду оригинал'},
-          {v=>'5',d=>'оригинал получен'},
         ]
+      },
+      {
+        description=>'Статус результата',
+        name=>'status_result',
+        type=>'select_values',
+        tab=>'work',
+        read_only=>1,
+        make_change_in_search=>1,
+        before_code=>sub{
+          # здесь руководителю разрешаем редактировать
+          my $e=shift;
+          if($form->{manager}->{login} eq 'admin'){
+            $e->{read_only}=1
+          }
+        },
+        values=>[
+          {v=>'0',d=>"нет результата"},
+          {v=>'2',d=>"получены реквизиты"},
+          {v=>'1',d=>"получен скан"},
+          {v=>'3',d=>"получен оригинал"},
+          
+        ]
+
       },
       { # Memo
           # Комментарий 
