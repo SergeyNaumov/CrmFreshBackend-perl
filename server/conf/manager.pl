@@ -73,7 +73,7 @@ $form={
         else{
           $form->{is_admin}=1;
           $form->{read_only}=0;
-          $form->{make_delete}=1;
+          #$form->{make_delete}=1;
           $form->{not_create}=0;
         }
 
