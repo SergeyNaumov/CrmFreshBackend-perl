@@ -88,13 +88,29 @@ $form={
         tab=>'work'
       },
       {
+        description=>'Следующий контакт',
+        type=>'date',
+        name=>'next_contact',
+        tab=>'work'
+      },
+      {
         description=>'Статус',
         name=>'status',
         type=>'select_values',
+        tab=>'work',
+        before_code=>sub{
+          my $e=shift;
+          if($form->{manager}->{login} eq 'admin'){
+            $e->{make_change_in_search}=1
+          }
+        },
         values=>[
           {v=>'0',d=>'не выбрано'},
-          {v=>'1',d=>'в работе'},
           {v=>'2',d=>'некачественный контакт'},
+          {v=>'1',d=>'жду реквизиты'},
+          {v=>'3',d=>'жду сканы'},
+          {v=>'4',d=>'жду оригинал'},
+          {v=>'5',d=>'оригинал получен'},
         ]
       },
       { # Memo
