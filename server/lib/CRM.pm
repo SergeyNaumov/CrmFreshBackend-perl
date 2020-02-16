@@ -87,41 +87,54 @@ sub delete_element{
   my %arg=@_; my $s=$arg{'s'};
   my $form=read_conf(%arg);
 
-  run_event(
-      event=>$form->{events}->{before_delete},
-      description=>'events->before_delete',
-      form=>$form
-  );
-  foreach my $f  (@{$form->{fields}}){
-    if($f->{before_delete}){
-        run_event(
-            event=>$f->{before_delete},description=>'field: $f->{name} event: before_delete',form=>$form
-        );
-    }
-  }
-  if(!errors($form)){
-    $form->{db}->query(
-      query=>qq{DELETE FROM $form->{work_table} WHERE $form->{work_table_id}=$form->{id}},
-      errors=>$form->{errors},
-    );
+  if(
+      (defined($form->{make_delete}) && !$form->{make_delete}) || 
+      $form->{read_only}
+    ){
+    push @{$form->{errors}},'Удаление запрещено!'
   }
 
   if(!errors($form)){
-    run_event(
-        event=>$form->{events}->{after_delete},
-        description=>'events->after_delete',
-        form=>$form
-    );
-  }
-  foreach my $f  (@{$form->{fields}}){
-    if($f->{after_delete}){
-        if(!errors($form)){
-          run_event(
-              event=>$f->{after_delete},description=>'field: $f->{name} event: after_delete',form=>$form
-          );
+      run_event(
+          event=>$form->{events}->{before_delete},
+          description=>'events->before_delete',
+          form=>$form
+      );
+
+
+
+      foreach my $f  (@{$form->{fields}}){
+        if($f->{before_delete}){
+            run_event(
+                event=>$f->{before_delete},description=>'field: $f->{name} event: before_delete',form=>$form
+            );
         }
-    }
+      }
+      if(!errors($form)){
+        $form->{db}->query(
+          query=>qq{DELETE FROM $form->{work_table} WHERE $form->{work_table_id}=$form->{id}},
+          errors=>$form->{errors},
+        );
+      }
+
+      if(!errors($form)){
+        run_event(
+            event=>$form->{events}->{after_delete},
+            description=>'events->after_delete',
+            form=>$form
+        );
+      }
+      foreach my $f  (@{$form->{fields}}){
+        if($f->{after_delete}){
+            if(!errors($form)){
+              run_event(
+                  event=>$f->{after_delete},description=>'field: $f->{name} event: after_delete',form=>$form
+              );
+            }
+        }
+      }
   }
+
   $s->print_json({
     success=>errors($form)?0:1,
     errors=>$form->{errors}

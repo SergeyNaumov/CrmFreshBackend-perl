@@ -102,7 +102,11 @@ sub get_filters{
             log=>$form->{log},
             permissions=>{
               make_create=>(!defined $form->{make_create} || $form->{make_create})?1:0,
-              make_delete=>(!defined $form->{make_delete} || $form->{make_delete})?1:0,
+              make_delete=>(
+                  (!defined $form->{make_delete} || $form->{make_delete}) 
+                &&
+                  !$form->{read_only}
+              )?1:0,
               not_edit=>$form->{not_edit}?1:0
             },
             on_filters=>$form->{on_filters},
