@@ -218,6 +218,7 @@ sub get_values_for_select_from_table{ # получаем список значе
   }
   #print "q: $query\n";
   my $list=$s->{db}->query(query=>$query,errors=>$form->{errors});
+  unshift @{$list}, {v=>0,d=>'не выбрано'};
   if($f->{tree_use}){
     my $tree_list=[];
     my $hash={};
@@ -346,6 +347,7 @@ sub get_values_form{ # получаем старые значения для ф�
         push @{$form->{edit_form_fields}},$f;
         $form->{values}->{$f->{name}}=$f->{value};
     }
+
     $form->{values}=$values;
     # foreach my $f (@{$form->{fields}}){
     #     my $name=$f->{name};

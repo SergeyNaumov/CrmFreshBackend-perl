@@ -5,8 +5,43 @@ $form={
     tree_use=>1,
     sort=>1,
     max_level=>2,
-    read_only=>1,
+    engine=>'mysql-strong',
     events=>{
+      before_save=>sub{
+        if(
+            $form->{new_values}->{status} && $form->{values}->{status} && 
+            ($form->{new_values}->{status} ne $form->{values}->{status}) 
+        ){
+          #pre($form->{new_values}->{status});
+          if($form->{new_values}->{status}==2 || $form->{values}->{status}==2){ # некачественный контакт
+
+          }
+          elsif($form->{new_values}->{status} < $form->{values}->{status}){
+            push @{$form->{errors}},'статус не может меняться в обратном направлении'
+          }
+          elsif($form->{new_values}->{status}=~m/^[34]$/){ # жду сканы , жду оригинал
+            if(
+                ($form->{manager}->{login} ne 'admin') &&  !$form->{manager}->{is_owner}
+            ){
+              push @{$form->{errors}},'статус "жду сканы" или "жду оригинал" может ставить только руководитель'
+            }
+          }
+        }
+        
+      },
+      after_save=>sub{
+        my @set=();
+        if($form->{new_values}->{status} ne $form->{values}->{status}){
+          push @set,'dt_status=now()'
+        }
+        if($form->{new_values}->{status_result} ne $form->{values}->{status_result}){
+          push @set,'dt_status_result=now()'
+        }
+        if(scalar(@set)){
+          $form->{db}->query(query=>'UPDATE cdek_in_comp SET '.join(', ',@set).' where id=?',values=>[$form->{id}],debug=>1)
+        }
+        
+      },
       permissions=>sub{
         #pre($form->{manager});
 
@@ -42,6 +77,7 @@ $form={
                 $form->{ov}->{group_id}
               }
           ){
+            $form->{is_owner}=1;
             $form->{read_only}=0;
           }
         }
@@ -93,11 +129,12 @@ $form={
           tab=>'info',
           filter_on=>1
       },
-      {
+      { # результат проверки
         description=>'Результат проверки',
         type=>'select_values',
         tab=>'work',
         name=>'checked',
+        read_only=>1,
         values=>[
           {v=>'0',d=>'не проверялась'},
           {v=>'1',d=>'дубль (ИНН)'},
@@ -144,7 +181,7 @@ $form={
         tab=>'work',
         before_code=>sub{
           my $e=shift;
-          if($form->{manager}->{login} eq 'admin'){
+          if($form->{manager}->{login} eq 'admin' || $form->{manager}->{is_owner}){
             $e->{make_change_in_search}=1
           }
         },
@@ -156,6 +193,42 @@ $form={
           {v=>'4',d=>'жду оригинал'},
           {v=>'5',d=>'оригинал получен'},
         ]
+      },
+      {
+        description=>'Последнее изменение статуса',
+        type=>'datetime',
+        name=>'dt_status',
+        read_only=>1,
+        tab=>'work'
+      },
+      {
+        description=>'Статус результата',
+        name=>'status_result',
+        type=>'select_values',
+        tab=>'work',
+        read_only=>1,
+        before_code=>sub{
+          my $e=shift;
+          if($form->{manager}->{login} eq 'admin' || $form->{id_owner}){
+            $e->{read_only}=0;
+            $e->{make_change_in_search}=1; 
+          }
+          if($form->{ov} && $form->{ov}->{status_result_dt}){
+            $e->{after_html}=qq{последнее изменение: $form->{ov}->{status_result_dt}}
+          }
+        },
+        values=>[
+          {v=>'0',d=>'нет результата'},
+          {v=>'1',d=>'получены реквизиты'},
+          {v=>'2',d=>'получен скан'},
+        ]
+      },
+      {
+        description=>'Последнее изменение статуса результата',
+        type=>'datetime',
+        name=>'dt_status_result',
+        read_only=>1,
+        tab=>'work'
       },
       { # Memo
           # Комментарий 

@@ -14,8 +14,8 @@ sub processEditForm{
     return unless($form);
 
     if($form->{action}=~m{^(insert|update)$}){
-        if(defined $form->{make_create} && !$form->{make_create}){
-            push @{$form->{errors}},"Вам запрещено создавать новые записи";
+        if(defined($form->{not_create}) && $form->{not_create}){
+            push @{$form->{errors}},"Вам запрещено создавать новые записи $form->{make_create}";
             $form->{read_only}=1;
         }
     }

@@ -65,8 +65,10 @@ $form={
       
       my $master=$form->{db}->query(
         query=>'SELECT id from master where tnumber=?',
-        values=>[$v->{num_sv2}], onerow=>1
+        values=>[$v->{num_sv2}], onerow=>1,
+        debug=>1,
       );
+      print Dumper($master);
       if($master){
         #if(!$v->{num_sv1}){
           if($v->{num_sv2} && $v->{num_sv3}){
