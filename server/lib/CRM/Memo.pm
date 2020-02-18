@@ -72,25 +72,31 @@ sub delete_from_memo{
   my %arg=@_;
   my $s=$arg{'s'};
   my ($form,$field)=memo_init(%arg);
-  my $request={success=>0};
-  if($field->{make_delete}){
+  
+  if(!$field->{make_delete} || !$form->{make_delete}){
+    push @{$form->{errors}},'запрещено удалять комментарии'
+  }
+  
+
+  if(!scalar(@{$form->{errors}})){
     $form->{db}->query(
       query=>"DELETE FROM $field->{memo_table} WHERE $field->{memo_table_id}=? and $field->{memo_table_foreign_key}=?",
       values=>[$arg{memo_id},$form->{id}],
     );
-    $request->{success}=1;
   }
-  $s->print_json($request)->end;
+  $s->print_json(
+    success=>scalar(@{$form->{errors}})?0:1,
+    errors=>$form->{errors}
+  )->end;
 }
 sub update_memo{
   my %arg=@_;
   my $s=$arg{'s'};
   my ($form,$field)=memo_init(%arg);
-  my $request={success=>0,user_id=>$form->{manager}->{id},user_name=>$form->{manager}->{name},now=>datetime()};
+  
   my $R=$s->request_content(from_json=>1);
   if(!$form->{read_only} && $field->{make_edit} && $R && (ref($R) eq 'HASH') && $R->{message}=~m/\S+/){
     
-    $request->{success}=1;
     $form->{db}->query(
       query=>"
         UPDATE
@@ -101,12 +107,18 @@ sub update_memo{
           $field->{memo_table_auth_id}=?
 
         WHERE $field->{memo_table_id}=? and $field->{memo_table_foreign_key}=?",
-      values=>[$R->{message},$request->{now},$form->{manager}->{id},$arg{memo_id},$form->{id}],
-      debug=>1
+      values=>[$R->{message},datetime(),$form->{manager}->{id},$arg{memo_id},$form->{id}],
+      errors=>$form->{errors}
     );
   }
   
-  $s->print_json($request)->end;
+  $s->print_json(
+    user_id=>$form->{manager}->{id},
+    user_name=>$form->{manager}->{name},
+    now=>datetime(),
+    success=>scalar(@{$form->{errors}})?0:1,
+    errors=>$form->{errors}
+  )->end;
   
 }
 sub add_to_memo{
@@ -115,30 +127,37 @@ sub add_to_memo{
   my ($form,$field)=memo_init(%arg);
   
   my $R=$s->request_content(from_json=>1);
-  #$s->pre({R=>$R});
+  
 
-  my $request={user_id=>$form->{manager}->{id},user_name=>$form->{manager}->{name},now=>datetime()};
-  if($R && (ref($R) eq 'HASH') && $R->{message}=~m/\S+/){
+  if($form->{read_only} || $field->{read_only}){
+    push @{$form->{errors}},'вы не можете добавлять записи в это поле'
+  }
+  my $memo_id=undef;
+  if(!scalar(@{$form->{errors}}) && $R && (ref($R) eq 'HASH') && $R->{message}=~m/\S+/){
 
-    $request->{memo_id}=$form->{db}->save(
+    $memo_id=$form->{db}->save(
       table=>$field->{memo_table},
       data=>{
         $field->{memo_table_foreign_key}=>$form->{id},
-        $field->{memo_table_registered}=>$request->{now},
+        $field->{memo_table_registered}=>datetime(),
         $field->{memo_table_auth_id}=>$form->{manager}->{id},
         $field->{memo_table_comment}=>$R->{message}
       },
-      #debug=>1
+
     );
 
-    $request->{success}=1;
+    
   }
-  else{
-    $request={
-      success=>0
-    }
-  }
-  $s->print_json($request)->end;
+  
+  
+  $s->print_json({
+      user_id=>$form->{manager}->{id},
+      user_name=>$form->{manager}->{name},
+      now=>datetime(),
+      errors=>$form->{errors},
+      success=>scalar(@{$form->{errors}})?0:1,
+      memo_id=>$memo_id
+  })->end;
 
 }
 sub get_many_memo{ # в данный момент не нужно

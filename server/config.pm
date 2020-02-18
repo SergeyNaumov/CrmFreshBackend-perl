@@ -23,7 +23,7 @@ sub get{
       const=>{
           project_id=>''
       },
-      events:[
+      events=>[
           'quiz'
       ]
   }

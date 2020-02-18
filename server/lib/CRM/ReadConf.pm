@@ -30,6 +30,27 @@ sub read_conf{
       push @{$errors},qq{config $config not found!};
     }
     $s->{form}=$form;
+    if(!defined($form->{read_only})){
+      $form->{read_only}=0;
+    }
+
+    if(!defined($form->{make_delete})){
+      if($form->{read_only}){
+        $form->{make_delete}=0;
+      }
+      else{
+        $form->{make_delete}=1;
+      }
+    }
+
+    if(!defined($form->{make_create})){
+      if($form->{read_only}){
+        $form->{make_create}=0;
+      }
+      else{
+        $form->{make_create}=1;
+      }
+    }
 
     $form->{errors}=$errors;
     create_fields_hash($form); # Routine
@@ -153,23 +174,34 @@ sub get_permissions_for{
     # Для каждого пользователя можно разделить свою файловую директорию
     $manager->{files_dir}='./files';
     $manager->{files_dir_web}='/files';
-
     #print Dumper($manager);
-    # права оптимизатора
-    # my $opt_perm_list=$connect->query(
-    #   query=>q{
-    #     SELECT
-    #       p.id, p.pname
-    #     from
-    #       optimization_permissions p, manager_optimization_permissions mp
-    #     where
-    #       p.id = mp.permissions_id and mp.manager_id = ?
-    #   },values=>[$manager->{id}]
-    # );
-    # foreach my $p (@{$opt_perm_list}){
-    #   $manager->{optimize_permissions}->{$p->{pname}}=$p->{id};
-    # }
+    $manager->{CHILD_GROUPS}=child_groups(group_id=>[$manager->{group_id}+0],db=>$connect);
+    $manager->{CHILD_GROUPS_HASH}={};
+    foreach my $g_id (@{$manager->{CHILD_GROUPS}}){
+      $manager->{CHILD_GROUPS_HASH}->{$g_id}=1;
+    }
+
     return $manager;
+}
+
+sub child_groups{
+  my %arg=@_;
+
+  my $group_id=$arg{group_id}; my $db=$arg{db};
+  return [] unless(scalar(@{$group_id}));
+  my @list=($group_id);
+    
+  my $g_list=$db->query(query=>"SELECT id from manager_group where parent_id IN (".join(',',@{$group_id}).')');
+  
+  #push @list,$arg{group_id}+0;
+  foreach my $g1 (@{$g_list}){
+
+      foreach my $g2 ( @{child_groups(db=>$arg{db},group_id=>[$g1->{id}])} ){
+        push @{$arg{group_id}},$g2;
+      }
+      
+  }
+  return $group_id;
 }
 sub get_cur_role {
   my %arg=@_;

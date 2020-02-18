@@ -3,6 +3,7 @@ package Engine;
 use Encode;
 use utf8;
 use freshdb;
+use config;
 #require './lib/engine_addons/engine_functions.pm';
 #exit;
 opendir D,'./lib/engine_addons';
@@ -34,8 +35,9 @@ sub new{
 
   my $sth; my $list;
   unless($s->{config}){
-      $s->{config}=$s->from_json($s->read_file('config.json'));
-      foreach my $name (keys(%{$s->{config}->{connects}})){
+      #$s->{config}=$s->from_json($s->read_file('config.json'));
+      $s->{config}=config::get();
+      foreach my $name (  keys(%{$s->{config}->{connects}})  ){
         
           my $db=$s->{config}->{connects}->{$name}; $db->{name}=$name;
           #print Dumper({config=>$s->{config}, name=>$name,db=>$db}); next;
