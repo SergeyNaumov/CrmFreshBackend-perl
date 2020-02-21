@@ -9,8 +9,10 @@ sub process{
   my $errors=[];
   my $path;
   my $R={};
+
   if($arg{action} eq 'upload'){
     $action=$arg{action};
+
     $path=$s->param('path');
   }
   else{
@@ -22,13 +24,12 @@ sub process{
   if(!$action){
     push @{$errors},'не передан параметр action'
   }
-  #print "action: $action\n";
+  
 
   my $form=CRM::read_conf(config=>$arg{config},script=>$arg{script},action=>$action,id=>$arg{id});
   
 
   my $file_list=[];
-  #print "path: $path\n";
   check_path($path,$errors);
   unless(scalar(@{$errors})){
           if($action eq 'file_list'){
@@ -42,6 +43,7 @@ sub process{
           }
           elsif($action eq 'upload'){
             my $uploads=[];
+
             unless(scalar(@{$errors})){
                 $uploads=$s->save_upload(
                     var=>'file',
@@ -60,6 +62,21 @@ sub process{
                 errors=>$errors
             })->end;
           }
+          elsif($action eq 'create_folder'){
+            my $errors=[];
+            my $new_folder_name=$R->{new_folder_name};
+            if($new_folder_name=~m/^[a-zA-Z0-9_\-\.]+$/){
+                mkdir $form->{manager}->{files_dir}.$path.'/'.$new_folder_name || push @{$errors},"не удаётся создать папку $new_folder_name $!";
+            }
+            else{
+                push @{$errors},"недопустимые символы в названии";
+            }
+            
+            $s->print_json({
+              errors=>$errors,
+              success=>scalar(@{$errors})?0:1
+            })->end;
+          }
           elsif($action eq 'delete'){
             my $name=$R->{name};
 
@@ -67,7 +84,14 @@ sub process{
                 push @{$errors},'не указан параметр name';
             }
             elsif($name!~m/^\.\./ && $name!~m/\//){ # не содержит слешей и две точки в начале имени
-                unlink($form->{manager}->{files_dir}.$path.$name);
+
+                if(-d $form->{manager}->{files_dir}.$path.$name){
+                  rmdir $form->{manager}->{files_dir}.$path.$name || push @{$errors}, "$!";
+                }
+                else{
+                  unlink($form->{manager}->{files_dir}.$path.$name);
+                }
+                
             }
             else{
                 push @{$errors},qq{параметр name не корректный: $name};

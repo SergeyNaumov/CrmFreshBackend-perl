@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+use lib '.';
 use lib './lib';
 use utf8;
 use Engine;

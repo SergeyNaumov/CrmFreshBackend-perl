@@ -1,5 +1,7 @@
 use utf8;
 use strict;
+
+
 sub read_conf{
 
   # read_conf(
@@ -17,13 +19,17 @@ sub read_conf{
     if(-f './conf/'.$config.'.pl'){
       my $data=$s->template({dir=>'./conf',template=>'./conf/'.$config.'.pl',errors=>$errors});
       eval($data);
+      
+      #print "script: $arg{script} action: $arg{action}\n";
       if($@){
           #$s->print($@.'<hr>');
           error_eval($@,$data,$s);
           return undef;
       }
-      else{
-        $form->{R}=$s->request_content(from_json=>1);
+      elsif($form->{script}=~m/^(edit_form|delete_element|admin_tree|admin_table|find_results|autocomplete|ajax)$/){
+        eval {
+          $form->{R}=$s->request_content(from_json=>1);
+        } 
       }
     }
     else{

@@ -358,11 +358,13 @@ sub new{
           );
         }
       },
+
       {
         # 
         url=>'^\/wysiwyg\/([^\/]+)\/([^\/]+)(\/(\d+))?(\/([^\/]+))?',
         code=>sub{
           my $s=shift;
+
           CRM::Wysiwyg::process(
             's'=>$s,
             config=>$1,
