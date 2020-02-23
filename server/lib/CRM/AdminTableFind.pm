@@ -547,20 +547,34 @@ sub get_search_where{
         elsif(($f->{type}=~m/^(filter_extend_)?(date|datetime)$/ && !$f->{filter_type}) || $f->{filter_type} eq 'range'){
                 my $min=$values->[0]; my $max=$values->[1];
                 if($min=~m{^\d+-\d+-\d+(\s+\d+:\d+(:\d+)?)?$}){
+                    if($min=~m/^\d+-\d+-\d+$/){
+                        $min.=' 00:00:00';
+                    }
                     push @{$WHERE}," ($table.$db_name>='$min') ";
                 }
                 
                 if($max=~m{^\d+-\d+-\d+(\s+\d+:\d+(:\d+)?)?$}){
+                    if($max=~m/^\d+-\d+-\d+$/){
+                        $max.=' 23:59:59';
+                    }
                     push @{$WHERE}," ($table.$db_name<='$max') ";
                 }
         }
         elsif($f->{type} eq 'memo'){
             my $v=$values->[0];
             if($v->{registered_low}=~m{^\d+-\d+-\d+(\s+\d{2}:\d{2}:\d{2})?$}){
+                
+                if($v->{registered_low}=~m/^\d+-\d+-\d+$/){
+                    $v->{registered_low}.=' 00:00:00'
+                }
                 push @{$WHERE}, qq{$f->{memo_table_alias}.$f->{memo_table_registered}>='$v->{registered_low}' }
             }
             if($v->{registered_hi}=~m{^\d+-\d+-\d+(\s+\d{2}:\d{2}:\d{2})?$}){
-                push @{$WHERE}, qq{$f->{memo_table_alias}.$f->{memo_table_registered}<='$v->{registered_low}' }
+                
+                if($v->{registered_hi}=~m/^\d+-\d+-\d+$/){
+                    $v->{registered_hi}.=' 23:59:59'
+                }
+                push @{$WHERE}, qq{$f->{memo_table_alias}.$f->{memo_table_registered}<='$v->{registered_hi}' }
             }
             if(my $m=$v->{message}){
                 $m=$form->{db}->{connect}->quote($m);
