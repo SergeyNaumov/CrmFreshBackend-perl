@@ -38,7 +38,7 @@ $form={
           push @set,'dt_status_result=now()'
         }
         if(scalar(@set)){
-          $form->{db}->query(query=>'UPDATE cdek_in_comp SET '.join(', ',@set).' where id=?',values=>[$form->{id}],debug=>1)
+          $form->{db}->query(query=>'UPDATE cdek_in_comp SET '.join(', ',@set).' where id=?',values=>[$form->{id}])
         }
         
       },

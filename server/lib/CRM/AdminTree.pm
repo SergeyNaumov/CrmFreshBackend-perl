@@ -245,7 +245,7 @@ elsif($form->{action} eq 'move'){ # перенос объекта из ветк�
         my ($from_path,$to_path)=('','');
         #$form->{db}->query(query=>"s");
         if($to){
-            my $to_item=$form->{db}->query(query=>"SELECT * from $form->{work_table} WHERE $form->{work_table_id}=?",debug=>1,values=>[$to],onerow=>1);
+            my $to_item=$form->{db}->query(query=>"SELECT * from $form->{work_table} WHERE $form->{work_table_id}=?",values=>[$to],onerow=>1);
             if($to_item){
                $to_path=$to_item->{path} 
             }
@@ -254,7 +254,7 @@ elsif($form->{action} eq 'move'){ # перенос объекта из ветк�
             }
         }
         
-        my $from_item=$form->{db}->query(query=>"SELECT * from $form->{work_table} WHERE $form->{work_table_id}=?",debug=>1,values=>[$id],onerow=>1);
+        my $from_item=$form->{db}->query(query=>"SELECT * from $form->{work_table} WHERE $form->{work_table_id}=?",values=>[$id],onerow=>1);
         if($from_item){
             $from_path=$from_item->{path} 
         }
@@ -286,7 +286,6 @@ elsif($form->{action} eq 'move'){ # перенос объекта из ветк�
                 $form->{db}->query(
                     query=>"UPDATE $form->{work_table} SET path=? WHERE $form->{work_table_id}=?",
                     values=>[$path,$c->{id}],
-                    debug=>1,
                 );
             }
 

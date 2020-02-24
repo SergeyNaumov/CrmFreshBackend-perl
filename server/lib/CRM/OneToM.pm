@@ -287,7 +287,6 @@ sub process{
                $form->{db}->query(
                   query=>$query,
                   errors=>$form->{errors},
-                  debug=>1
                );
           }
           
@@ -472,7 +471,6 @@ sub delete_file{
             $child_field->{name}=>''
           },
           errors=>$form->{errors}
-          #debug=>1
         );
         
 

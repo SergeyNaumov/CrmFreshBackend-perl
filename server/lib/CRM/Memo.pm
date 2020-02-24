@@ -44,7 +44,7 @@ sub get_memo{
               LEFT JOIN $field->{auth_table} user ON (memo.$field->{memo_table_auth_id} = user.$field->{auth_id_field} )
             WHERE
               memo.$field->{memo_table_foreign_key}=? ORDER BY memo.$field->{memo_table_registered} desc},
-        debug=>1,
+        
         log=>$form->{log},
         values=>[$form->{id}],
         errors=>$form->{errors}
