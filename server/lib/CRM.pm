@@ -136,8 +136,9 @@ sub delete_element{
   }
 
   $s->print_json({
-    success=>errors($form)?0:1,
-    errors=>$form->{errors}
+    success=>scalar(@{$form->{errors}})?0:1,
+    errors=>$form->{errors},
+    log=>$form->{log}
   })->end;
 }
 sub datetime{

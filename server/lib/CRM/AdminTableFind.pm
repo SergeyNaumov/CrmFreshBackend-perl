@@ -243,6 +243,11 @@ sub admin_table_find{ # Поиск результатов
                     elsif($field->{type_orig} eq 'in_ext_url'){
                         $value=$r->{in_ext_url__ext_url}
                     }
+                    elsif($field->{type_orig} eq 'date'){
+                        if($field->{make_change_in_search}){
+                            $type='date'
+                        }
+                    }
             }
             
             push @{$data},{name=>$name,type=>$type,value=>$value};

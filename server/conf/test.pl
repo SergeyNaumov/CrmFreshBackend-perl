@@ -4,10 +4,14 @@ $form={
     #log=>[undef],
     engine=>'mysql-strong', # default mysql
     default_find_filter=>'header',
-    explain=>1,
+    #explain=>1,
     events=>{
         permissions=>sub{
             #pre($form);
+        },
+        before_delete=>sub{
+            #pre({rndx=>'y',5=>6});
+            #push @{$form->{errors}},'888';
         }
     },
     cols=>[
@@ -65,7 +69,8 @@ $form={
             type=>'date',
             name=>'f_date',
             empty_value=>'null',
-            tab=>'timing'
+            tab=>'timing',
+            change_in_search=>1
         },
         # {
         #     description=>'Время',
