@@ -61,6 +61,14 @@ $form={
   },
   events=>{
     permissions=>sub{
+      #use Plugin::Search::XLS;
+      #use Plugin::Search::CSV;
+      
+      #Plugin::Search::XLS::go($form);
+      #Plugin::Search::CSV::go($form);
+      use Plugin::Search::Journal;
+      Plugin::Search::Journal::go($form);
+
       if($form->{manager}->{login} eq 'admin' || $form->{manager}->{permissions}->{content}){
         $form->{not_create}=0;
       }

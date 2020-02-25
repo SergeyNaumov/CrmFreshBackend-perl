@@ -43,7 +43,16 @@
         
 #       },
       sub{ # old_values
+
+        use Plugin::Search::XLS;
+        use Plugin::Search::CSV;
+        #print Dumper({1=>$form->{QUERY_SEARCH_TABLES}});
+        Plugin::Search::XLS::go($form);
+        Plugin::Search::CSV::go($form);
+
         my $R=$form->{R};
+
+
 
         if($form->{id}){
           my $cur_begin_mon=&{$form->{run}->{cur_date}};
@@ -216,41 +225,41 @@
       #   }
         
       # },
-      sub{ # доступ в карту
+      # sub{ # доступ в карту
         
-        #$form->{make_delete} = 1 if($form->{manager}->{permissions}->{user_delete});
-        if($form->{is_admin} || $form->{manager}->{permissions}->{make_delete}){
-          $form->{make_delete}=1
-        }
-        if($form->{is_admin} || $form->{manager}->{permissions}->{edit_all_users}){
+      #   #$form->{make_delete} = 1 if($form->{manager}->{permissions}->{user_delete});
+      #   if($form->{is_admin} || $form->{manager}->{permissions}->{make_delete}){
+      #     $form->{make_delete}=1
+      #   }
+      #   if($form->{is_admin} || $form->{manager}->{permissions}->{edit_all_users}){
         
-          $form->{read_only} = 0;
+      #     $form->{read_only} = 0;
           
-        }
-        else{ # для смертным разрешаем видеть только их клиентов
+      #   }
+      #   else{ # для смертным разрешаем видеть только их клиентов
           
-          #$form->{add_where}=qq{ ( (wt.manager_id = $form->{manager}->{id}) OR ((wt.manager_id=0 OR wt.manager_id) IS NULL AND (status=0 OR status=1)) ) };
-        }
-        if(
-            $form->{read_only} && 
-            (
-            ($form->{script} eq 'edit_form' && $form->{action}=~m/^(insert|new)$/)
-            ||
-            (
-              ($form->{old_values}->{manager_id} == $form->{manager}->{id})
-                ||
-              $form->{is_owner_group}
-                ||
-              ($form->{manager}->{permissions}->{edit_all_users})
+      #     #$form->{add_where}=qq{ ( (wt.manager_id = $form->{manager}->{id}) OR ((wt.manager_id=0 OR wt.manager_id) IS NULL AND (status=0 OR status=1)) ) };
+      #   }
+      #   if(
+      #       $form->{read_only} && 
+      #       (
+      #       ($form->{script} eq 'edit_form' && $form->{action}=~m/^(insert|new)$/)
+      #       ||
+      #       (
+      #         ($form->{old_values}->{manager_id} == $form->{manager}->{id})
+      #           ||
+      #         $form->{is_owner_group}
+      #           ||
+      #         ($form->{manager}->{permissions}->{edit_all_users})
                 
-               # статус: не указан или "в базе"
-            )
-            )
-        ){
-            # Если чел работает со своим клиентом -- разрешаем редактировать
-            $form->{read_only} = 0;
-          }
-      },
+      #          # статус: не указан или "в базе"
+      #       )
+      #       )
+      #   ){
+      #       # Если чел работает со своим клиентом -- разрешаем редактировать
+      #       $form->{read_only} = 0;
+      #     }
+      # },
 
       # sub{
       #     if($form->{self}->param('debug')){
@@ -273,47 +282,47 @@
       #      }
           
       # },
-      sub {
-        # меняем поля местами поля для комментарие в инструменте "пользователи сопр"
-        return unless($form->{config} eq 'user_sopr');
-        #use field_operations;
-        foreach my $c (@{$form->{cols}}){
-          foreach my $c2 (@{$c}){
-            if($c2->{name} eq 'sopr'){
-              $c2->{description}='Отдел продаж'
-            }
-          }
-        }
-        foreach my $f (@{$form->{fields}}){
-            if($f->{name} eq 'memo'){
-              $f->{description}='Комментарий Сопр';
-              $f->{tab}='sopr'; $f->{description}='Комментарий ОП'
-            }
-            elsif($f->{name} eq 'memo_sopr'){
-              $f->{tab}='work';
-            }
-            else{ next };
-        }
-        if($form->{id} && $form->{old_values}->{KEYFLD}=~m{^supplier_1_}){
-                    my $sth=$form->{dbh}->prepare(q{
-                        SELECT
-                         count(*) 
-                        FROM
-                           docpack d join bill b ON d.id=b.docpack_id where d.user_id=? and b.paid_to>=curdate()
-                      });
-                    $sth->execute($form->{id});
-                    my $is_paid=
-                    $form->{is_paid}=$sth->fetchrow;
-                    my $read_only=1;
+      # sub {
+      #   # меняем поля местами поля для комментарие в инструменте "пользователи сопр"
+      #   return unless($form->{config} eq 'user_sopr');
+      #   #use field_operations;
+      #   foreach my $c (@{$form->{cols}}){
+      #     foreach my $c2 (@{$c}){
+      #       if($c2->{name} eq 'sopr'){
+      #         $c2->{description}='Отдел продаж'
+      #       }
+      #     }
+      #   }
+      #   foreach my $f (@{$form->{fields}}){
+      #       if($f->{name} eq 'memo'){
+      #         $f->{description}='Комментарий Сопр';
+      #         $f->{tab}='sopr'; $f->{description}='Комментарий ОП'
+      #       }
+      #       elsif($f->{name} eq 'memo_sopr'){
+      #         $f->{tab}='work';
+      #       }
+      #       else{ next };
+      #   }
+      #   if($form->{id} && $form->{old_values}->{KEYFLD}=~m{^supplier_1_}){
+      #               my $sth=$form->{dbh}->prepare(q{
+      #                   SELECT
+      #                    count(*) 
+      #                   FROM
+      #                      docpack d join bill b ON d.id=b.docpack_id where d.user_id=? and b.paid_to>=curdate()
+      #                 });
+      #               $sth->execute($form->{id});
+      #               my $is_paid=
+      #               $form->{is_paid}=$sth->fetchrow;
+      #               my $read_only=1;
 
-                    if($form->{manager}->{login}=~m{^(admin|skrash|KSemenov|svcomplex)$}){
-                      $read_only=0;
-                    }
-                    if($form->{manager}->{permissions}->{manager_sopr} && !$is_paid && !$form->{old_values}->{is_consult}){
-                      $read_only=0;
-                    }
-        }
+      #               if($form->{manager}->{login}=~m{^(admin|skrash|KSemenov|svcomplex)$}){
+      #                 $read_only=0;
+      #               }
+      #               if($form->{manager}->{permissions}->{manager_sopr} && !$is_paid && !$form->{old_values}->{is_consult}){
+      #                 $read_only=0;
+      #               }
+      #   }
 
-      }
+      # }
 
  ]

@@ -141,19 +141,20 @@ $form={
             }
         },
         before_search=>sub{
-          if(param('to_doc') eq 'yes'){
-            $form->{perpage}=1000;
-          }
+          #if(param('to_doc') eq 'yes'){
+            #$form->{perpage}=1000;
+          #}
         },
         after_search=>sub{
-          if(param('to_doc') eq 'yes'){
-              my $result_list=shift;
+          # if(param('to_doc') eq 'yes'){
+          #     my $result_list=shift;
               
-              exit;
-          }
+          #     exit;
+          # }
 
         }
   },
+  perpage=>20,
   fields=>[
     [%INCLUDE './conf/user.conf/tab_links.pl'%],
     {
