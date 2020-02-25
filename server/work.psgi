@@ -27,11 +27,11 @@ my $app=sub{
     
     return sub{
       my $respond=shift;
-      print Dumper({respond=>$respond,headers=>$s->{APP}->{HEADERS}});
+      #print Dumper({respond=>$respond,headers=>$s->{APP}->{HEADERS}});
       my $writer = $respond->([200, $s->{APP}->{HEADERS}]);
       if($s->{stream_file}){
 
-        open (my $fh,'<',$s->{stream_file}) or print "error read $s->{stream_file}\n$!\n";
+        open (my $fh,'<',$s->{stream_file}) or print "work.psgi (stream_file) error read $s->{stream_file}\n$!\n";
         binmode $fh;
         while(my $row = <$fh>){
           $writer->write($row)

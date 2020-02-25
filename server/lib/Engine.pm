@@ -132,9 +132,9 @@ sub out{
   
 }
 sub end{
-  my $self=shift;
-  $self->{vars}->{end}=1;
-  return $self;
+  my $s=shift;
+  $s->{vars}->{end}=1;
+  return $s;
 }
 
 

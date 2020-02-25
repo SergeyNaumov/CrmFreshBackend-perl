@@ -172,10 +172,10 @@ sub odt_process {
   
   if($par->{format} && $par->{format} !~ /od[ts]$/i){
     #print "unoconv -p8100 -f $par->{format} $par->{tmp_file}\n"; # !!!
-
+    #print "unoconv -p8100 -f $par->{format} $par->{tmp_file}\n";
     `unoconv -p8100 -f $par->{format} $par->{tmp_file}`;
 
-    
+    #print "ZZ2\n";
 
     $par->{tmp_file} =~ s/\.\w+$//;
     $par->{tmp_file} = $par->{tmp_file} . '.' . $par->{format};
