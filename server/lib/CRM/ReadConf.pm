@@ -26,11 +26,15 @@ sub read_conf{
           error_eval($@,$data,$s);
           return undef;
       }
-      elsif($form->{script}=~m/^(edit_form|delete_element|admin_tree|admin_table|find_results|autocomplete|ajax)$/){
+      elsif($arg{script}=~m/^(edit_form|delete_element|admin_tree|admin_table|find_objects|autocomplete|ajax)$/){
+        #print "NEED EVAL!\n\n";
         eval {
           $form->{R}=$s->request_content(from_json=>1);
         } 
       }
+      #else{
+      #  print "NOT EVAL $form->{script}\n\n";
+      #}
     }
     else{
       push @{$errors},qq{config $config not found!};

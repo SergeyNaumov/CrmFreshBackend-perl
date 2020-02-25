@@ -368,9 +368,9 @@ sub process{
     foreach my $k (keys %{$data}){
           Encode::_utf8_off($data->{$k});
     }
-    print Dumper($data);
+    #print Dumper($data);
     odt_file2::odt_process( {
-      s=>$s,
+      's'=>$s,
       template            => $const->{template}, # шаблон, можно без пути если указан template_path
       template_path       => $const->{template_path}, # там лежат бланки шаблонов
       tmp_dir             => './tmp/'.$s->{manager}->{login},

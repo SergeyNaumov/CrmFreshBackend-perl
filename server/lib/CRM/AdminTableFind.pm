@@ -51,7 +51,7 @@ sub admin_table_find{ # Поиск результатов
 
     get_search_tables($s,$form,$R->{query});
     get_search_where($s,$form,$R->{query});
-
+    
     run_event(
         event=>$form->{events}->{before_search},
         description=>'events->before_search',
@@ -257,19 +257,36 @@ sub admin_table_find{ # Поиск результатов
         push @{$output},{key=>$r->{wt__id},data=>$data};
     }
     
-    $form->{SEARCH_RESULT}->{log}=$form->{log};
-    $form->{SEARCH_RESULT}->{output}=$output; 
-    $form->{explain_query}='' unless($form->{explain_query});
-    $form->{out_before_search}=[] unless($form->{out_before_search});
-    $s->print_json(
-        $s->clean_json({
-            success=>errors($form)?0:1,
-            results=>$form->{SEARCH_RESULT},
-            errors=>$form->{errors},
-            out_before_search=>$form->{out_before_search},
-            explain_query=>$form->{explain_query}
-        })
-    )->end;
+    run_event(
+        event=>$form->{events}->{after_search},
+        description=>'events->after_search',
+        form=>$form,
+        arg=>[
+            's'=>$s,
+            form=>$form,
+            headers=>$form->{SEARCH_RESULT}->{headers},
+            output=>$output,
+            tables=>join(" ",@{$form->{query_search}->{TABLES}}),
+            where=>join(" AND ",@{$form->{query_search}->{WHERE}})
+        ]
+    );
+    
+    if(!$s->{vars}->{end}){
+        $form->{SEARCH_RESULT}->{log}=$form->{log};
+        $form->{SEARCH_RESULT}->{output}=$output; 
+        $form->{explain_query}='' unless($form->{explain_query});
+        $form->{out_before_search}=[] unless($form->{out_before_search});
+        $s->print_json(
+            $s->clean_json({
+                success=>errors($form)?0:1,
+                results=>$form->{SEARCH_RESULT},
+                errors=>$form->{errors},
+                out_before_search=>$form->{out_before_search},
+                explain_query=>$form->{explain_query}
+            })
+        )->end;
+    }
+
     
 }
 
@@ -347,9 +364,9 @@ sub gen_query_search{
 sub get_search_tables{
     my $s=shift; my $form=shift; my $query=shift;
     my $TABLES=[];
-
+    #print "form :$form->{QUERY_SEARCH_TABLES}\n";
     # in_ext_url -- добавление таблицы
-    if( scalar(@{$form->{QUERY_SEARCH_TABLES}}) ){
+    if($form->{QUERY_SEARCH_TABLES} && scalar(@{$form->{QUERY_SEARCH_TABLES}}) ){
         foreach my $f (@{$form->{fields}}){
             if($f->{type} eq 'in_ext_url'){
                 my $in_ext_url=$f->{in_url};

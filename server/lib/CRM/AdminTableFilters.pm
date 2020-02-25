@@ -90,7 +90,10 @@ sub get_filters{
           #$filters=[];
         }
         
-        
+        # search_plugin
+        my $sp=$form->{search_plugin}?$form->{search_plugin}:undef;
+
+
         $request={
             success=>1,            
             title=>$form->{title},
@@ -110,6 +113,7 @@ sub get_filters{
               not_edit=>$form->{not_edit}?1:0
             },
             on_filters=>$form->{on_filters},
+            search_plugin=>$sp,
             search_on_load=>$form->{search_on_load}?1:0,
             errors=>$form->{errors}
         };
