@@ -171,8 +171,9 @@
 {
   description=>'Дата и время создания',
   name=>'registered',
-  type=>'datetime',
+  type=>'date',
   read_only=>0,
+  make_change_in_search=>1,
   tab=>'work',
 },
 {
@@ -181,8 +182,9 @@
 },
 {
   description=>'Следующий контакт',
-  type=>'datetime',
+  type=>'date',
   name=>'next_contact',
+  
   tab=>'work'
 },
 { # Комментарий руководителя

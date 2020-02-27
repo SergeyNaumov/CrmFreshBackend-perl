@@ -552,8 +552,13 @@ sub save{
   }
   
   if($opt->{debug}){
-
-    print "QUERY:\n$query\n".Dumper($dumpdata)."\n";
+    if($opt->{log}){
+      push @{$opt->{log}},"QUERY:\n$query\n".Dumper($dumpdata);
+    }
+    else{
+      print "QUERY:\n$query\n".Dumper($dumpdata)."\n";
+    }
+    
   }
   eval q{
     $sth=$self->{connect}->prepare($query);

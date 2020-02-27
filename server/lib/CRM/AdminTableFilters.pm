@@ -104,7 +104,7 @@ sub get_filters{
             filters_groups=>exists($form->{filters_groups})?$form->{filters_groups}:[],
             log=>$form->{log},
             permissions=>{
-              make_create=>(!defined $form->{make_create} || $form->{make_create})?1:0,
+              make_create=>(!defined $form->{not_create} || !$form->{not_create})?1:0,
               make_delete=>(
                   (!defined $form->{make_delete} || $form->{make_delete}) 
                 &&

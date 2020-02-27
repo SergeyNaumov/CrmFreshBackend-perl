@@ -132,6 +132,7 @@ sub read_conf{
         }
 
     }
+    get_values_form2(form=>$form,'s'=>$s);
     return $form;
 
 }

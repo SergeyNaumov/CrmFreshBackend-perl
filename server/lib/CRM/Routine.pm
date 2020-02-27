@@ -313,26 +313,12 @@ sub get_values_form{ # получаем старые значения для ф�
             
         }
 
-        # if(exists($f->{before_code}) && ref($f->{before_code}) eq 'CODE'){
-        #     #&{$f->{before_code}}($f);
-        #     run_event(event=>$f->{before_code},description=>'before code for '.$name,form=>$form,arg=>$f);
-        # }
-
         if($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_from_table'){
             $f->{type_orig}=$f->{type}; $f->{type}='select'; 
-            $f->{values}=get_values_for_select_from_table($f,$form);
-
-            # foreach my $v (@{ $f->{values} }){
-            #     if($v->{v}==$f->{value}){
-            #         #$f->{vuetify_value}=$v
-            #     }
-            # }
+            #$f->{values}=get_values_for_select_from_table($f,$form);
         }
         elsif($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_values'){
             $f->{type_orig}=$f->{type}; $f->{type}='select';
-        }
-        elsif($f->{type} eq '1_to_m'){
-          OneToM::get_1_to_m_data(form=>$form,'s'=>$s,field=>$f);
         }
         elsif($f->{type} eq 'in_ext_url'){
           get_in_ext_url('s'=>$s,form=>$form,field=>$f);
@@ -344,23 +330,44 @@ sub get_values_form{ # получаем старые значения для ф�
         if($f->{value}=~m/^\d+$/){ # в json-е должны быть только строки
             $f->{value}="$f->{value}"
         }
-        push @{$form->{edit_form_fields}},$f;
-        $form->{values}->{$f->{name}}=$f->{value};
+        #push @{$form->{edit_form_fields}},$f;
+        $values->{$f->{name}}=$f->{value};
     }
 
     $form->{values}=$values;
-    # foreach my $f (@{$form->{fields}}){
-    #     my $name=$f->{name};
 
-
-    #     if(ref($f->{code}) eq 'CODE'){
-    #       #print "code: $name\n";
-    #         $f->{after_html}=run_event(event=>$f->{code},description=>'code for '.$name,form=>$form,arg=>$f);
-    #         #print "$f->{after_html}\n\n";
-    #         #$f->{before_html}=&{$f->{code}}($f);
-    #         #$f->{before_html}=$f->{after_html}='ZZZZ';
-    #     }      
-    # }
     
+}
+sub get_values_form2{
+  my %arg=@_; my $form=$arg{form}; my $s=$arg{'s'};
+  my $values=$form->{values};
+  foreach my $f (@{$form->{fields}}){
+        next if($f->{type}=~m{^(filter_)});
+        my $name=$f->{name};
+
+
+        if($form->{action}!~m{^(insert|update)$} && $f->{type_orig} eq 'select_from_table'){
+            $f->{values}=get_values_for_select_from_table($f,$form);
+        }
+        elsif($f->{type} eq '1_to_m'){
+          OneToM::get_1_to_m_data(form=>$form,'s'=>$s,field=>$f);
+        }
+
+        # elsif($f->{type} eq '1_to_m'){
+        #   OneToM::get_1_to_m_data(form=>$form,'s'=>$s,field=>$f);
+        # }
+        # elsif($f->{type} eq 'in_ext_url'){
+        #   get_in_ext_url('s'=>$s,form=>$form,field=>$f);
+        #   $values->{$name}=$f->{value}
+        # }
+
+
+        #my $field=($f);
+        if($f->{value}=~m/^\d+$/){ # в json-е должны быть только строки
+            $f->{value}="$f->{value}"
+        }
+        push @{$form->{edit_form_fields}},$f;
+        $values->{$name}=$f->{value};
+  }
 }
 return 1;

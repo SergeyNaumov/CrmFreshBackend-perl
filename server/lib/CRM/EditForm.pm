@@ -153,7 +153,7 @@ sub save_form{
                 unless($v){
                     $v='00:00:00'
                 }
-                print "$f->{name}: $v\n";
+                #print "$f->{name}: $v\n";
             }
             elsif($f->{type} eq 'datetime'){
                 if(!$v || $v=~/^\s*$/){
@@ -165,8 +165,8 @@ sub save_form{
                     }
                 }
             }
-            if( ($f->{type} eq 'select_from_table' || $f->{type} eq 'select_values') && !$v){
-                #print Dumper({f=>$f,v=>$v});
+            if( ($f->{type} eq 'select_from_table' || $f->{type} eq 'select_values') && !defined($v)){
+                
                 next
             }
 
@@ -183,7 +183,8 @@ sub save_form{
                 update=>1,
                 data=>$save_hash,
                 errors=>$form->{errors},
-                debug=>$form->{explain}?1:0
+                debug=>$form->{explain}?1:0,
+                log=>$form->{log}
             );
         }
         else{
@@ -191,7 +192,8 @@ sub save_form{
                 table=>$form->{work_table},
                 data=>$save_hash,
                 errors=>$form->{errors},
-                debug=>$form->{explain}?1:0
+                debug=>$form->{explain}?1:0,
+                log=>$form->{log}
             );
             $form->{id}=$id unless(errors($form));
         }

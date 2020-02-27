@@ -143,6 +143,25 @@ $form={
       ],
       tab=>'main'
     },
+    {
+      description=>'Аватар',
+      type=>'file',
+      name=>'photo',
+      filedir=>'./files/manager',
+      # .accept=>'doc,.docx,.xml,application/msword,application/vnd.openxm
+      #accept=>'image/png, image/jpeg',
+      accept=>'image/*',
+      crops=>1,
+      resize=>[
+        {
+          description=>'Горизонтальное фото',
+          file=>'<%filename_without_ext%>_mini1.<%ext%>',
+          size=>'256x256',
+          quality=>'100'
+        },
+      ],
+      tab=>'main'
+    },
     # {
     #   name=>'login_tel',
     #   description=>'Логин для IP-телефонии',

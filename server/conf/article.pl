@@ -2,12 +2,12 @@ $form={
   title => 'Статьи',
   work_table => 'article',
   work_table_id => 'id',
-  make_delete => '1',
+  make_delete=>0,
+  not_create=>1,
+  read_only=>1,
   header_field=>'header',
   default_find_filter => 'header',
-  #sort_field=>'header',
-  #tree_use => '1',
-  #explain=>1,
+  explain=>1,
   GROUP_BY=>'wt.id',
   AJAX=>{
     in_ext_url=>sub{
@@ -61,21 +61,31 @@ $form={
   },
   events=>{
     permissions=>sub{
-      #use Plugin::Search::XLS;
-      #use Plugin::Search::CSV;
       
-      #Plugin::Search::XLS::go($form);
-      #Plugin::Search::CSV::go($form);
-      use Plugin::Search::Journal;
-      Plugin::Search::Journal::go($form);
-
-      if($form->{manager}->{login} eq 'admin' || $form->{manager}->{permissions}->{content}){
+      if(0 && $form->{manager}->{login} eq 'admin'){
         $form->{not_create}=0;
+        $form->{make_delete}=1;
+        $form->{read_only}=0;
+      }
+      elsif(1 || $form->{manager}->{permissions}->{author}){
+        $form->{not_create}=0;
+        $form->{make_delete}=0;
+
+        if($form->{action}=~m/^(new|insert)$/){
+          $form->{read_only}=0
+        }
+        elsif($form->{values}){
+          if($form->{manager}->{id}==$form->{values}->{manager_id}){
+            $form->{read_only}=0
+          }
+        }
+        
+
       }
       else{
         #print_header();
-        #print "Доступ запрещён!" ; exit;
-        push @{$form->{errors}},'Доступ запрещён';
+        
+        #push @{$form->{errors}},'Доступ запрещён';
       }
     },
     after_save=>sub{
@@ -97,7 +107,7 @@ $form={
   #   {name=>'tags'},
   #   {name=>'enabled',value=>[]},
   # ],
-  search_on_load=>1,
+  search_on_load=>0,
   fields =>
   [
     {
@@ -115,11 +125,11 @@ $form={
       type => 'text',
       full_str=>1,
       filter_on=>1,
-      regexp_rules=>[
-        q{/^.+$/},'Заполните заголовок',
-        #q{/^.{1,3}$/},'Заголовок слишком короткий',
-        q{/^.{3,255}$/},'Заголовок слишком длинный',
-      ],
+      # regexp_rules=>[
+      #   q{/^.+$/},'Заполните заголовок',
+      #   q{/.{34}/},'Заголовок слишком короткий (должен быть не менее 34 символов)',
+      #   q{/^.{34,48}$/},'Заголовок слишком длинный (должен быть не более 48 символов)',
+      # ],
       before_code=>sub{
         my $e=shift;
         if($form->{values}->{in_ext_url}){
@@ -140,19 +150,29 @@ $form={
       table=>'manager',
       header_field=>'name',
       value_field=>'id',
+      read_only=>1,
       tablename=>'m',
       before_code=>sub{
         my $e=shift;
         
-        if($form->{action} eq 'new'){
-          $e->{value}=$form->{manager}->{id}
-        }
+        # if($form->{action} eq 'new'){
+        #   $e->{value}=$form->{manager}->{id}
+        # }
 
-        if($form->{manager}->{login} ne 'admin'){
-          if($form->{action} eq 'insert'){
-            $e->{value}=$form->{manager}->{id}
+        
+        # if($form->{manager}->{login} eq 'admin'){
+        #   $e->{read_only}=0
+        # }
+        if(1 || $form->{manager}->{permissions}->{author}){
+          if($form->{action} eq 'new'){
+            $e->{read_only}=0;
           }
-          if($form->{action} ne 'insert'){$e->{read_only}=1}
+          if($form->{action}=~m/^(new|insert)$/){
+            $e->{value}=$form->{manager}->{id};
+            $e->{where}='id='.$form->{manager}->{id};
+            
+          }
+          #pre($e);
         }
         #$e->{after_html}=qq{<div style="border: 1px solid black;">$form->{manager}->{login}</div>}
 
@@ -218,28 +238,44 @@ $form={
         {
           description=>'Горизонтальное фото',
           file=>'<%filename_without_ext%>_mini2.<%ext%>',
-          size=>'502x245',
-          quality=>'70'
+          size=>'1004x490',
+          quality=>'90'
         },
         {
           description=>'Вертикальное фото',
           file=>'<%filename_without_ext%>_mini1.<%ext%>',
-          size=>'244x504',
-          quality=>'70'
+          size=>'488x1008',
+          quality=>'95'
         },
         {
           description=>'Квадратное фото',
           file=>'<%filename_without_ext%>_mini3.<%ext%>',
-          size=>'245x245',
-          quality=>'70'
+          size=>'500x500',
+          quality=>'95'
         },
         {
           description=>'Фото для страницы статьи',
           file=>'<%filename_without_ext%>_mini4.<%ext%>',
           size=>'1165x672',
-          quality=>'70'
+          quality=>'90'
         },
       ]
+    },
+    {
+      description=>'Фото2 подробного описания статьи',
+      type=>'file',
+      name=>'photo_in',
+      filedir=>'./files/article',
+      # crops=>1,
+      # resize=>[
+      #   {
+      #     description=>'Горизонтальное фото',
+      #     file=>'<%filename_without_ext%>_mini2.<%ext%>',
+      #     size=>'518x300',
+      #     quality=>'90'
+      #   },
+
+      # ]
     },
     {
       name => 'body',
