@@ -13,10 +13,12 @@ sub processEditForm{
     #print Dumper($form->{fields}->[0]);
     return unless($form);
 
-    if($form->{action}=~m{^(insert|update)$}){
-        if(defined($form->{not_create}) && $form->{not_create}){
+    if($form->{action}=~m/^(insert|new)$/ && $form->{not_create}){
+        $form->{read_only}=1
+    }
+    if($form->{action}=~m{^(insert)$}){
+        if($form->{not_create}){
             push @{$form->{errors}},"Вам запрещено создавать новые записи $form->{make_create}";
-            $form->{read_only}=1;
         }
     }
 
@@ -175,9 +177,11 @@ sub save_form{
 
     }
     #print Dumper($save_hash);
+
     if(scalar keys(%{$save_hash}) ){
         if($form->{id}){
-            $s->{db}->save(
+            #print "Debug!\n";
+            $form->{db}->save(
                 table=>$form->{work_table},
                 where=>"$form->{work_table_id} = $form->{id}",
                 update=>1,
@@ -188,7 +192,7 @@ sub save_form{
             );
         }
         else{
-            my $id=$s->{db}->save(
+            my $id=$form->{db}->save(
                 table=>$form->{work_table},
                 data=>$save_hash,
                 errors=>$form->{errors},
@@ -231,10 +235,7 @@ sub save_form{
 
 
 }
-sub is_wt_field{
-    my $f=shift;
-    return ($f->{type}=~m/^(text|textarea|hidden|wysiwyg|select_from_table|select_values|date|time|datetime|yearmon|daymon|hidden|checkbox|switch|font-awesome|file)$/);
-}
+
 
 
 

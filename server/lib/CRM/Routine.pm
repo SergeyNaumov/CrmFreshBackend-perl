@@ -217,7 +217,7 @@ sub get_values_for_select_from_table{ # получаем список значе
       $query.=' ORDER BY '.($f->{tree_use}?'parent_id':$f->{header_field});
   }
   #print "q: $query\n";
-  my $list=$s->{db}->query(query=>$query,errors=>$form->{errors});
+  my $list=$form->{db}->query(query=>$query,errors=>$form->{errors});
   unshift @{$list}, {v=>0,d=>'не выбрано'};
   if($f->{tree_use}){
     my $tree_list=[];
@@ -283,14 +283,33 @@ sub format_sql_query{
 sub get_values_form{ # получаем старые значения для формы (до редактирования, )
     my %arg=@_;
     my $form=$arg{form}; my $s=$arg{'s'};
-    my $values={};
+
+    foreach my $f (@{$form->{fields}}){
+        next if($f->{type}=~m{^(filter_)});
+        my $name=$f->{name};
+        if($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_from_table'){
+            $f->{type_orig}=$f->{type}; $f->{type}='select'; 
+            #$f->{values}=get_values_for_select_from_table($f,$form);
+        }
+        elsif($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_values'){
+            $f->{type_orig}=$f->{type}; $f->{type}='select';
+        }
+
+    }
+
+}
+sub get_values_form2{
+  my %arg=@_; my $form=$arg{form}; my $s=$arg{'s'};
+  
+  my $values=$form->{values}={};
     if($form->{id}){
-        $values=$s->{db}->query(
+
+        $values=$form->{db}->query(
             query=>qq{SELECT * from $form->{work_table} where $form->{work_table_id}=?},
             values=>[$form->{id}],
             onerow=>1,
         );
-
+        
         if(!$values){
             push @{$form->{errors}},qq{В инструменте $form->{title} запись с id: $form->{id} не найдена. Редактирование невозможно};
             return ;
@@ -303,47 +322,19 @@ sub get_values_form{ # получаем старые значения для ф�
 
         }
         
-    }
-    foreach my $f (@{$form->{fields}}){
+  }
+
+  foreach my $f (@{$form->{fields}}){
         next if($f->{type}=~m{^(filter_)});
         my $name=$f->{name};
 
         if(defined($values->{$name}) && is_wt_field($f) ){ # $f->{type}=~m{^(date|datetime|select_from_table|hidden|select_from_table|select_values|text|checkbox|switch|textarea)$}
             $f->{value}=$values->{$name};
+
+            
             
         }
 
-        if($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_from_table'){
-            $f->{type_orig}=$f->{type}; $f->{type}='select'; 
-            #$f->{values}=get_values_for_select_from_table($f,$form);
-        }
-        elsif($form->{action}!~m{^(insert|update)$} && $f->{type} eq 'select_values'){
-            $f->{type_orig}=$f->{type}; $f->{type}='select';
-        }
-        elsif($f->{type} eq 'in_ext_url'){
-          get_in_ext_url('s'=>$s,form=>$form,field=>$f);
-          $values->{$name}=$f->{value}
-        }
-
-
-        #my $field=($f);
-        if($f->{value}=~m/^\d+$/){ # в json-е должны быть только строки
-            $f->{value}="$f->{value}"
-        }
-        #push @{$form->{edit_form_fields}},$f;
-        $values->{$f->{name}}=$f->{value};
-    }
-
-    $form->{values}=$values;
-
-    
-}
-sub get_values_form2{
-  my %arg=@_; my $form=$arg{form}; my $s=$arg{'s'};
-  my $values=$form->{values};
-  foreach my $f (@{$form->{fields}}){
-        next if($f->{type}=~m{^(filter_)});
-        my $name=$f->{name};
 
 
         if($form->{action}!~m{^(insert|update)$} && $f->{type_orig} eq 'select_from_table'){
@@ -351,6 +342,10 @@ sub get_values_form2{
         }
         elsif($f->{type} eq '1_to_m'){
           OneToM::get_1_to_m_data(form=>$form,'s'=>$s,field=>$f);
+        }
+        elsif($f->{type} eq 'in_ext_url'){
+          get_in_ext_url('s'=>$s,form=>$form,field=>$f);
+          $values->{$name}=$f->{value}
         }
 
         # elsif($f->{type} eq '1_to_m'){
@@ -369,5 +364,24 @@ sub get_values_form2{
         push @{$form->{edit_form_fields}},$f;
         $values->{$name}=$f->{value};
   }
+
 }
+
+sub is_wt_field{
+    my $f=shift;
+    sub check{
+      my $t=shift;
+      return ($t=~m/^(text|textarea|hidden|wysiwyg|select_from_table|select_values|date|time|datetime|yearmon|daymon|hidden|checkbox|switch|font-awesome|file)$/)
+    }
+    if($f->{type_orig}){
+
+      return check($f->{type_orig})
+    }
+    else{
+      return check($f->{type})
+    }
+    
+      
+}
+
 return 1;

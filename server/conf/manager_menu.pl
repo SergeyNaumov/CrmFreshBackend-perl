@@ -44,15 +44,22 @@ $form={
       },
       {
         description=>'Значение',
-        type=>'select_values',
+        type=>'text',
         name=>'value',
-
-        values=>[
-          {v=>'admin-table',d=>'admin-table'},
-          {v=>'admin-tree',d=>'admin-tree'},
-          {v=>'const',d=>'const'},
-          {v=>'parser-excel',d=>'parser-excel'},
-        ],
+        after_html=>q{
+          <div>
+            admin-table<br>
+            admin-tree<br>
+            const<br>
+            parser-excel
+          </div>
+        },
+        # values=>[
+        #   {v=>'admin-table',d=>'admin-table'},
+        #   {v=>'admin-tree',d=>'admin-tree'},
+        #   {v=>'const',d=>'const'},
+        #   {v=>'parser-excel',d=>'parser-excel'},
+        # ],
         tab=>'main'
       },
       {

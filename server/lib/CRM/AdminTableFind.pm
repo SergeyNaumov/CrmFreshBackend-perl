@@ -1,6 +1,7 @@
 use utf8;
 use strict;
 use POSIX;
+no warnings 'experimental::smartmatch';
 
 sub admin_table_find{ # Поиск результатов
     my $s=$Work::engine; my $R=shift;
@@ -62,11 +63,29 @@ sub admin_table_find{ # Поиск результатов
         ]
     );
     
-    my ($query,$query_count)=gen_query_search($s,$form);
 
-    my $total_count=$s->{db}->query(query=>qq{select sum(cnt) from ($query_count) x},onevalue=>1,errors=>$form->{errors});
-    $form->{SEARCH_RESULT}->{count_total}=$total_count;
-    $form->{SEARCH_RESULT}->{count_pages}=($form->{not_perpage})?1:( ceil($total_count/$form->{perpage}) );
+    run_event(
+        event=>$form->{events}->{before_search_mysql},
+        description=>'events->before_search_mysql',
+        form=>$form,
+        arg=>[
+            tables=>join(" ",@{$form->{query_search}->{TABLES}}),
+            where=>join(" AND ",@{$form->{query_search}->{WHERE}})
+        ]
+    );
+
+    my ($query,$query_count)=gen_query_search($s,$form);
+    if($query_count){
+        my $total_count=$form->{db}->query(
+            query=>qq{select sum(cnt) from ($query_count) x},
+            onevalue=>1,
+            errors=>$form->{errors}
+        );
+
+        $form->{SEARCH_RESULT}->{count_total}=$total_count;
+        $form->{SEARCH_RESULT}->{count_pages}=($form->{not_perpage})?1:( ceil($total_count/$form->{perpage}) );
+    }
+
 
     # Если мы запрашиваем страницу, которой нет -- отдаём первую страницу
     if($form->{page} > $form->{SEARCH_RESULT}->{count_pages}){
@@ -75,12 +94,19 @@ sub admin_table_find{ # Поиск результатов
 
     my $debug_explain;
     my $log=[];
-    my $result_list=$s->{db}->query(
+    my ($result_list,$total_count)=$form->{db}->query(
         query=>$query,
         errors=>$form->{errors},
         #log=>$log,
-        #debug=>$form->{explain}
+        calc_count=>$query_count?0:1,
+        #debug=>1
     );
+    unless($query_count){
+        $form->{SEARCH_RESULT}->{count_total}=$total_count;
+        $form->{SEARCH_RESULT}->{count_pages}=($form->{not_perpage})?1:( ceil($total_count/$form->{perpage}) );
+    }
+
+
     if($form->{explain}){
         $form->{explain_query}=$query;#$debug_explain->{query}
     }
@@ -116,7 +142,7 @@ sub admin_table_find{ # Поиск результатов
                 $multiconnect_values=
                 {
                     map { $_->{id}=>$_->{header} }
-                    @{$s->{db}->query(
+                    @{$form->{db}->query(
                         query=>qq{
                             SELECT
                                 rst.$field->{relation_save_table_id_worktable} id,
@@ -157,7 +183,7 @@ sub admin_table_find{ # Поиск результатов
             #}
             $field->{type_orig}=$field->{type} unless($field->{type_orig});
             #print "$field->{name} $field->{type_orig}=> $field->{type}\n";
-            if($field->{type_orig} eq 'select_values'){ # преобразуем select_values
+            if($field->{type_orig}=~m/^(filter_extend_)?select_values$/){ # преобразуем select_values
                 my $values_finded=0;
                 foreach my $v (@{$field->{values}}){
                     if($v->{v}==$value || $v->{v} eq $value){
@@ -224,6 +250,10 @@ sub admin_table_find{ # Поиск результатов
                         if($field->{make_change_in_search}){
                             $type='select';
                             $value=$r->{$tbl.'__'.$db_name};
+                            if($field->{name} eq 'f_our_domain' ){
+                                print "v: $value"
+                            }
+                            
                             if(!$form->{SEARCH_RESULT}->{selects}->{$field->{name}}){
                                 $form->{SEARCH_RESULT}->{selects}->{$field->{name}}=$field->{values}
                             }
@@ -264,6 +294,7 @@ sub admin_table_find{ # Поиск результатов
         arg=>[
             's'=>$s,
             form=>$form,
+            result=>$result_list,
             headers=>$form->{SEARCH_RESULT}->{headers},
             output=>$output,
             tables=>join(" ",@{$form->{query_search}->{TABLES}}),
@@ -293,72 +324,107 @@ sub admin_table_find{ # Поиск результатов
 sub gen_query_search{
     # получаем поисковый запрос на основе $form->{query_search}
     my $s=shift; my $form=shift;
+    my $query=''; my $query_count='';
     my $qs=$form->{query_search};
-    my $query="SELECT ".join(',',@{$qs->{SELECT_FIELDS}}).
-        " FROM ".
-            join("\n",@{$qs->{TABLES}});
-    
-    if(scalar(@{$qs->{WHERE}})){
-        $query.=" WHERE ".join(' AND ',@{$qs->{WHERE}})
-    }
-
-    if(scalar(@{$qs->{GROUP}})){
-        $query.=" GROUP BY ".join(', ',@{$qs->{GROUP}})
-    }
-    if($qs->{HAVING} && scalar(@{$qs->{HAVING}})){
-        $query.=" HAVING ".join(' AND ',@{$qs->{HAVING}})
-    }
 
     if($qs->{ORDER}){
         if(ref($qs->{ORDER}) ne 'ARRAY'){
             $qs->{ORDER}=[$qs->{ORDER}]
         }
-        if( scalar(@{$qs->{ORDER}}) ){
-            $query.=" ORDER BY ".join(', ',@{$qs->{ORDER}})
-        }
-    }
-
-
-
-    if(!$form->{not_perpage}){
-        $query.=" LIMIT ".($form->{page}-1)*$form->{perpage}.', '.($form->{perpage})
-    }
-    my $query_count;
-
-    if( scalar @{$qs->{GROUP}} ){
-        #pre(1);
-        $query_count=q{
-        SELECT count(*) cnt FROM (
-            select }.join(',',@{$qs->{SELECT_FIELDS}}).' FROM '.join("\n",@{$qs->{TABLES}}).
-            (
-                scalar(@{$qs->{WHERE}})?(" WHERE ".join(' AND ',@{$qs->{WHERE}})):''
-            ).
-            (
-                scalar(@{$qs->{GROUP}})?(" GROUP BY ".join(', ',@{$qs->{GROUP}})):''
-            ).
-            (
-               $qs->{HAVING} && scalar(@{$qs->{HAVING}})?(" HAVING ".join(', ',@{$qs->{HAVING}})):''
-            ).
-        ') x';
-        #pre($query_count);
     }
     else{
-       # pre(2);
-        $query_count="SELECT count(*) cnt FROM ".join("\n",@{$qs->{TABLES}}).
-        (
-            scalar(@{$qs->{WHERE}})?(" WHERE ".join(' AND ',@{$qs->{WHERE}})):''
-        ).
-        (
-            scalar(@{$qs->{GROUP}})?(" GROUP BY ".join(', ',@{$qs->{GROUP}})):''
-        ).
-        (
-           $qs->{HAVING} && scalar(@{$qs->{HAVING}})?(" HAVING ".join(', ',@{$qs->{HAVING}})):''
-        )
-        ;
+        $qs->{ORDER}=[]
     }
-    
 
+    if($form->{QUERY_SEARCH}){
+            
+            if($qs->{WHERE} && scalar(@{$qs->{WHERE}})){
+                my $where_list=join(' AND ',@{$qs->{WHERE}});
+                $form->{QUERY_SEARCH}=~s/<\%WHERE\%>/ WHERE $where_list/gs ;
+            }
+            $form->{QUERY_SEARCH}=~s/<\%WHERE\%>//gs ;
+            
+
+
+            # if( scalar(@{$qs->{ORDER}}) ){
+            #         my $order=" ORDER BY ".join(', ',@{$qs->{ORDER}});
+
+            # }
+            
+            $query=$form->{QUERY_SEARCH};
+            $query.=qq{LIMIT $form->{page}, $form->{perpage}} if(!$form->{not_perpage});
+    }
+    else{
+            
+
+            $query="SELECT ".join(',',@{$qs->{SELECT_FIELDS}}).
+                " FROM ".
+                    join("\n",@{$qs->{TABLES}});
+            
+            if(scalar(@{$qs->{WHERE}})){
+                $query.=" WHERE ".join(' AND ',@{$qs->{WHERE}})
+            }
+
+            if(scalar(@{$qs->{GROUP}})){
+                $query.=" GROUP BY ".join(', ',@{$qs->{GROUP}})
+            }
+            if($qs->{HAVING} && scalar(@{$qs->{HAVING}})){
+                $query.=" HAVING ".join(' AND ',@{$qs->{HAVING}})
+            }
+
+            if($qs->{ORDER}){
+                if(ref($qs->{ORDER}) ne 'ARRAY'){
+                    $qs->{ORDER}=[$qs->{ORDER}]
+                }
+                if( scalar(@{$qs->{ORDER}}) ){
+                    $query.=" ORDER BY ".join(', ',@{$qs->{ORDER}})
+                }
+            }
+
+
+
+            if(!$form->{not_perpage}){
+                $query.=" LIMIT ".($form->{page}-1)*$form->{perpage}.', '.($form->{perpage})
+            }
+            
+
+            if( scalar @{$qs->{GROUP}} ){
+                #pre(1);
+                $query_count=q{
+                SELECT count(*) cnt FROM (
+                    select }.join(',',@{$qs->{SELECT_FIELDS}}).' FROM '.join("\n",@{$qs->{TABLES}}).
+                    (
+                        scalar(@{$qs->{WHERE}})?(" WHERE ".join(' AND ',@{$qs->{WHERE}})):''
+                    ).
+                    (
+                        scalar(@{$qs->{GROUP}})?(" GROUP BY ".join(', ',@{$qs->{GROUP}})):''
+                    ).
+                    (
+                       $qs->{HAVING} && scalar(@{$qs->{HAVING}})?(" HAVING ".join(', ',@{$qs->{HAVING}})):''
+                    ).
+                ') x';
+                #pre($query_count);
+            }
+            else{
+               # pre(2);
+                $query_count="SELECT count(*) cnt FROM ".join("\n",@{$qs->{TABLES}}).
+                (
+                    scalar(@{$qs->{WHERE}})?(" WHERE ".join(' AND ',@{$qs->{WHERE}})):''
+                ).
+                (
+                    scalar(@{$qs->{GROUP}})?(" GROUP BY ".join(', ',@{$qs->{GROUP}})):''
+                ).
+                (
+                   $qs->{HAVING} && scalar(@{$qs->{HAVING}})?(" HAVING ".join(', ',@{$qs->{HAVING}})):''
+                )
+                ;
+            }
+            
+
+            
+    }
     return ($query,$query_count);
+
     
 }
 sub get_search_tables{
@@ -366,7 +432,7 @@ sub get_search_tables{
     my $TABLES=[];
     #print "form :$form->{QUERY_SEARCH_TABLES}\n";
     # in_ext_url -- добавление таблицы
-    if($form->{QUERY_SEARCH_TABLES} && scalar(@{$form->{QUERY_SEARCH_TABLES}}) ){
+    if(!$form->{QUERY_SEARCH} && $form->{QUERY_SEARCH_TABLES} && scalar(@{$form->{QUERY_SEARCH_TABLES}}) ){
         foreach my $f (@{$form->{fields}}){
             if($f->{type} eq 'in_ext_url'){
                 my $in_ext_url=$f->{in_url};
@@ -434,7 +500,7 @@ sub get_search_tables{
             push @{$TABLES},$t_str ;
             if(!$t->{not_add_in_select_fields}){
                 
-                my $desc=$s->{db}->query(query=>"desc $t->{table}",errors=>$form->{log});
+                my $desc=$form->{db}->query(query=>"desc $t->{table}",errors=>$form->{log});
                 if($desc){
                     foreach my $db_field (@{$desc}){
                         if(!$t->{select_fields}  || ($t->{select_fields} && ref($t->{select_fields}) eq 'HASH' && $t->{select_fields}->{$db_field->{Field}})){
@@ -559,7 +625,7 @@ sub get_search_where{
 
         if($f->{type}=~m/^(filter_extend_)?(text|textarea|email)$/){
             if(my $v=$values->[0]){
-                $v=$s->{db}->{connect}->quote($v);
+                $v=$form->{db}->{connect}->quote($v);
                 $v=~s/^'/%/; $v=~s/'$/%/;
                 push @{$WHERE},qq{ ($table.$db_name like "$v") };
             }

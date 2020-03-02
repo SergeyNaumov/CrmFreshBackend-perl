@@ -103,19 +103,17 @@ sub read_conf{
     $form->{self}=sub{return $s};
     
     set_default_attributes($form); # Routine
-    
+
     if($form->{script} eq 'edit_form'){
       $form->{new_values}=$arg{values} if($form->{action}=~m/^(update|insert)$/);
       
     }
-    
-    #if($form->{id}){
+
+
       get_values_form(form=>$form,'s'=>$s)
 
       ;
-    #}
-    
-    
+
     run_event(event=>$form->{events}->{permissions},description=>'events.permissions',form=>$form);
     foreach my $f (@{$form->{fields}}){
       if(exists($f->{permissions}) && ref($f->{permissions}) eq 'CODE'){
@@ -132,6 +130,7 @@ sub read_conf{
         }
 
     }
+
     get_values_form2(form=>$form,'s'=>$s);
     return $form;
 
