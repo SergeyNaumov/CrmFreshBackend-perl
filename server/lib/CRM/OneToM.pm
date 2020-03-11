@@ -531,8 +531,8 @@ sub get_1_to_m_data{
           #$element->{fields}
       }
       my $values;
+
       foreach my $d (@{$data}){
-          
           normalize_value_row(form=>$form,field=>$f,row=>$d);
           push @{$values},$d;
       }
@@ -560,7 +560,11 @@ sub normalize_value_row{
             $d->{$c_name.'_filename'}=$d->{$c_name};
           }
       }
-  
+      else{
+        $d->{$c_name}="$d->{$c_name}";
+      }
+      
+    
       if($cf->{slide_code} && ref($cf->{slide_code}) eq 'CODE'){
           $d->{$c_name}=CRM::run_event(
             event=>$cf->{slide_code},
