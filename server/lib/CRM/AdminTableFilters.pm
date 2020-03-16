@@ -16,7 +16,7 @@ sub get_filters{
           if(ref($f->{before_code}) eq 'CODE'){
             run_event(event=>$f->{before_code},description=>'before_code for '.$f->{name},form=>$form,arg=>$f);
           }
-          next if($f->{type}=~m{^(password|code|1_to_m|hidden)$} || !$f->{description});
+          next if($f->{type}=~m{^(password|code|1_to_m|hidden)$} || !$f->{description} || $f->{not_filter});
 
 
           if($f->{type}=~m{filter_extend_text|textarea}){
