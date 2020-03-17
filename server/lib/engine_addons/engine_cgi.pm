@@ -1,5 +1,6 @@
 use Plack::Request;
 use strict;
+use Image::Magick; 
 sub set_status{$_[0]->{APP}->{STATUS}=$_[1]; return $_[0]}
 
 # методы plack
@@ -115,26 +116,47 @@ sub save_upload{
       if(exists($args{resize})){
         foreach my $r (@{$args{resize}}){
 
-          my $to_path; my $resize_name;
-          #print Dumper($r);
-          if($r->{file}){
-            $resize_name=$r->{file};
-            #$to_path=qq{$args{to}/$r->{file}};
-            $resize_name=~s/\[\%ext\%\]/$ext/;
-            $resize_name=~s/\[\%filename_without_ext\%\]/$orig_name_without_ext/;
-            $to_path=qq{$args{to}/$resize_name};
-          }
-          else{ # если сохраняем в оригинальный файл
-            $to_path=$full_path; $resize_name=$args{newname};
-          }
-          push @{$return_resize_info},{fullname=>$to_path, name=>$resize_name};
-          #print "./app/resize.pl $full_path  --output_file=$to_path --size='$r->{size}'\n";
-          #print
-          `./app/resize.pl $full_path  --output_file=$to_path --size='$r->{size}'`
+          my ($width,$height)=split /x/,$r->{size};
+          my $filename=$r->{file};
+          $filename=~s/<\%filename_without_ext\%>/$orig_name_without_ext/g;
+          $filename=~s/<\%ext\%>/$ext/g;
+          my $to_path=qq{$args{to}/$filename};
+          push @{$return_resize_info},{fullname=>$to_path, name=>$args{filename}};
 
+
+          resize(
+              from=>"$full_path",
+              to=>$to_path,
+              width=>"$width",
+              height=>"$height",
+              grayscale=>$r->{grayscale}?$r->{grayscale}:'',
+              composite_file=>$r->{composite_file}?$r->{composite_file}:'',
+              quality=>$r->{quality}?$r->{quality}:''
+          );
         }
+        # foreach my $r (@{$args{resize}}){
+
+        #   my $to_path; my $resize_name;
+        #   #print Dumper($r);
+        #   if($r->{file}){
+        #     $resize_name=$r->{file};
+        #     #$to_path=qq{$args{to}/$r->{file}};
+        #     $resize_name=~s/<%ext%>/$ext/;
+        #     $resize_name=~s/<%filename_without_ext%>/$orig_name_without_ext/;
+        #     $to_path=qq{$args{to}/$resize_name};
+        #   }
+        #   else{ # если сохраняем в оригинальный файл
+        #     $to_path=$full_path; $resize_name=$args{newname};
+        #   }
+        #   push @{$return_resize_info},{fullname=>$to_path, name=>$resize_name};
+        #   #print "./app/resize.pl $full_path  --output_file=$to_path --size='$r->{size}'\n";
+        #   #print
+        #   `./app/resize.pl $full_path  --output_file=$to_path --size='$r->{size}'`
+
+        # }
 
       }
+
       push @{$result},
       {
           name=>$newname,
@@ -143,9 +165,88 @@ sub save_upload{
           resize=>$return_resize_info
       }
   }
-  
+  #print Dumper($result);
   return $args{multi}?$result:$result->[0];
 
+}
+
+sub resize{
+    my %arg=@_;
+    my $image = Image::Magick->new();
+    $image->Read($arg{from});
+    my ($ox,$oy)=$image->Get('base-columns','base-rows');
+    my ($k,$nx,$ny);
+    if($arg{quality}=~m{^\d+$}){
+        $image->Set( quality => $arg{quality} );
+    }
+
+    if(!$arg{height}){
+        if($arg{width}>$ox){
+          # Тимоненкова попросила сделать так, что если у нас ресайз вида 800x0, А мы загружаем картинку меньшую, чем
+          # 800 по ширине -- чтобы она оставалась без изменений, кладём на пропорции
+          $image->Write($arg{to});
+          return;
+          
+        }
+        $k=$oy/$ox;$arg{height}=int($arg{width}*$k);
+    }
+    elsif(!$arg{width}){
+        $k=$ox/$oy;$arg{width}=int($arg{height}*$k);
+    }
+    else{
+        $ny=int(($oy/$ox)*$arg{width});
+        $nx=int(($ox/$oy)*$arg{height});
+    }
+
+    if($arg{width} eq $arg{height}){
+        if($ox ne $oy){
+            my $min=minarg($ox,$oy);
+            $image->Crop(geometry=>$min.'x'.$min, gravity=>'center');
+        }
+        $image->Resize(geometry=>'geometry', width=>$arg{width}, height=>$arg{height});
+    }
+    if($nx>=$arg{width}){ # горизонтально ориентированная
+        $nx=$arg{width} if($nx<$arg{width});
+        $image->Resize(geometry=>'geometry', width=>$nx, height=>$arg{height});
+        if($nx>$arg{width}) { #Если ширина получилась больше 200
+            my $nnx=int(($nx-$arg{width})/2); #Вычисляем откуда нам резать
+            $image->Crop(geometry=>$arg{width}.'x'.$arg{height}, gravity=>'center');
+        }
+    }
+    else{ # вертикально ориентированная
+        $ny=$arg{height} if($ny < $arg{height});
+        $image->Resize(geometry=>'geometry', width=>$arg{width}, height=>$ny);
+    
+        if($ny>$arg{height}) {
+            my $nny=int(($ny-$arg{height})/2); #Вычисляем откуда нам резать
+            $image->Crop(geometry=>$arg{width}.'x'.$arg{height}, gravity=>'center');
+        }
+    }
+
+    if($arg{composite_file}){
+        my $layer = new Image::Magick;
+        $layer->Read($arg{composite_file});
+        if($arg{composite_resize}){
+            $layer->Resize(geometry=>$arg{composite_resize});
+        }
+        $image->Composite(image=>$layer,gravity=>'SouthEast',x=>10,y=>10); # compose=>'Atop',x=>10, y=>20
+
+        $layer=undef;
+    }
+    $image->Quantize(colorspace=>'gray') if($arg{grayscale});
+
+    #  $img->Strip;
+    $image->Write($arg{to});
+    chmod 0664, $arg{to};
+    $image=undef;
+}
+
+sub minarg{
+  my $min=100000000;
+  foreach my $m (@_){
+    $min=$m if($m<$min);
+  }
+  return $min
 }
 
 sub get_cookie{

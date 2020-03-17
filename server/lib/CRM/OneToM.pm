@@ -4,6 +4,8 @@ package OneToM;
 use utf8;
 use strict;
 use CRM;
+
+
 sub one_to_m_init{
   my %arg=@_;
   my $form=$arg{form};
@@ -73,8 +75,41 @@ sub process{
 
                   $file_info=$s->save_upload(
                     var=>$child_field->{name},
-                    to=>$child_field->{filedir}
+                    to=>$child_field->{filedir},
+                    resize=>$child_field->{resize}
                   );
+                  
+                  # $file_info
+
+                  # foreach my $r (@{$child_field->{resize}}){
+                  #     my ($width,$height)=split /x/,$r->{size};
+                  #     my $filename=$r->{file};
+                  #     $filename=~s/<\%filename_without_ext\%>/$filename_without_ext/g;
+                  #     $filename=~s/<\%ext\%>/$ext/g;
+
+                  #     print Dumper({
+                  #       resize=>{
+                  #         from=>"$child_field->{filedir}/$filename_without_ext\.$ext",
+                  #         to=>"$child_field->{filedir}/$filename",
+                  #         width=>"$width",
+                  #         height=>"$height",
+                  #         grayscale=>$r->{grayscale}?$r->{grayscale}:'',
+                  #         composite_file=>$r->{composite_file}?$r->{composite_file}:'',
+                  #         quality=>$r->{quality}?$r->{quality}:''
+                  #       }
+                  #     });
+
+                  #     resize(
+                  #         from=>"$child_field->{filedir}/$filename_without_ext\.$ext",
+                  #         to=>"$child_field->{filedir}/$filename",
+                  #         width=>"$width",
+                  #         height=>"$height",
+                  #         grayscale=>$r->{grayscale}?$r->{grayscale}:'',
+                  #         composite_file=>$r->{composite_file}?$r->{composite_file}:'',
+                  #         quality=>$r->{quality}?$r->{quality}:''
+                  #     );
+
+                  # }
 
                   if($file_info){
                     my $db_value="";
@@ -103,41 +138,47 @@ sub process{
               my $values=[];
               my $i=0;
               my $uploads=$s->save_upload(
-                  var=>$child_field->{name},
-                  to=>$child_field->{filedir},
-                  multi=>1
+                  var=>"$child_field->{name}",
+                  to=>"$child_field->{filedir}",
+                  multi=>"1",
+                  resize=>$child_field->{resize}
               );
-              
-              foreach my $file_info(@{$uploads}){
+
+
+              foreach my $file_info (@{$uploads}){
                   if($file_info){
                     my $value={}; # вставляемая в таблицу строка
                     
-                        my $db_value="";
-                        if($child_field->{keep_orig_filename}){
-                          $db_value="$file_info->{name};$file_info->{orig_name}"
-                        }
-                        else{
-                          $db_value="$file_info->{name}"
-                        }
+                    my $db_value="";
+                    if($child_field->{keep_orig_filename}){
+                      $db_value="$file_info->{name};$file_info->{orig_name}"
+                    }
+                    else{
+                      $db_value="$file_info->{name}"
+                    }
 
-                        my $id=$form->{db}->save(
-                          table=>$field->{table},
-                          data=>{
-                            $field->{foreign_key}=>$form->{id},
-                            $child_field->{name}=>$db_value
-                          }
-                        );
-                        $arg{one_to_m_id}=$id;
+                    my $id=$form->{db}->save(
+                      table=>$field->{table},
+                      data=>{
+                        $field->{foreign_key}=>$form->{id},
+                        $child_field->{name}=>$db_value
+                      }
+                    );
+                    
+                    $arg{one_to_m_id}=$id;
                         $value={
+                          $field->{foreign_key}=>$form->{id},
                           $field->{table_id}=>$id,
-                          $child_field->{name}.'_filename'=>$file_info->{orig_name}
+                          $child_field->{name}=>$file_info->{name},
+                          $child_field->{name}.'_filename'=>$file_info->{name}
+                          #$child_field->{name}.'_filename'=>$file_info->{orig_name}
                         };
-                        foreach my $cf (@{$field->{fields}}){
-                          $value->{$cf->{name}}=''
-                        }
+                        # foreach my $cf (@{$field->{fields}}){
+                        #   $value->{$cf->{name}}=''
+                        # }
                         
                         push @{$values},$value;
-                        #print Dumper({values=>$values});
+                        
                         $i++;
                         if($i>30){
                           print "exit!";
@@ -455,7 +496,23 @@ sub delete_file{
           $oldfile=$1;
         }
         my $fullname=$child_field->{filedir}.'/'.$oldfile;
+        if($child_field->{resize} && scalar(@{$child_field->{resize}})){
+          if($oldfile=~m/^(.+)\.([^\.]+)$/){
+            my $filename_without_ext=$1; my $ext=$2;
+            foreach my $r (@{$child_field->{resize}}){
+              my $file=$r->{file};
+              $file=~s/<%filename_without_ext%>/$filename_without_ext/;
+              $file=~s/<%ext%>/$ext/;
+              unlink "$child_field->{filedir}/$file";
+              
+            }
+          }
+
+        }
+        
+        
         if($oldfile && -e $fullname){ # сделать проверку, удалился ли
+          
           unlink $fullname;
           if(-e $fullname){
             push @{$form->errors},qq{Не удалось удалить файл $fullname. Обратитесь к разработчику}
