@@ -17,6 +17,8 @@ use CRM::Ajax;
 use CRM::Events;
 use CRM::Const;
 
+# документы для конкретного проекта
+use Controller::Doc;
 use lib './lib/extend';
 
 #use CRM::FontAwesome;
@@ -24,7 +26,26 @@ my $redirect='';
 # Документация по CRM
 # https://docs.google.com/document/d/15HZe0FP7uXhwViaC6QQ3FL-45rinyH1Z9ApiItfp7S8/edit#heading=h.u72z2f6wm8ll
 sub new{
+  my $rules=[];
+  my $rules_main=get_rules();
+
+  push @{$rules},@{$rules_main};
+  my $rules_doc=Controller::Doc::get();
+  if(scalar(@{$rules_doc})){
+    push @{$rules},@{$rules_doc};
+  }
+  
+  push @{$rules},
   {
+        url=>'^(.+)$',
+        code=>sub{
+
+          my $s=shift;
+          $s->print("unknown url: $1")->end;
+        }
+  };
+  
+  return {
     layout=>'index.html',
     template_folder=>'',
     TMPL_VARS=>{ # переменные шаблона по умолчанию
@@ -32,7 +53,12 @@ sub new{
       view_folder=>'./views',
       #layout=>'index.html',
     },
-    rules=>[
+    rules=>$rules
+  };
+}
+
+sub get_rules{
+  return [
       {
         url=>'.*',
         code=>sub{
@@ -441,16 +467,7 @@ sub new{
           CRM::ParserExcel::process('s'=>$s,config=>$1);
         }
       },
-      # load_document (для документооборота)
-      {
-        url=>'^\/load_document(\/(.+))?$',
-        code=>sub{
-          my $s=shift;
-          require CRM::LoadDocument;
-          CRM::LoadDocument::process($s,$1);
-          $s->end;
-        }
-      },
+
       # KLADR
       {
         url=>'^\/extend\/KLADR',
@@ -460,14 +477,7 @@ sub new{
           extend::KLADR::go($s)
         }
       },
-      {
-        url=>'^(.+)$',
-        code=>sub{
 
-          my $s=shift;
-          $s->print("unknown url: $1")->end;
-        }
-      }
       # { # 1_to_m: delete
       #   url=>'^\/1_to_m\/delete\/([^\/]+)\/([^\/]+)\/(\d+)\/(\d+)$',
       #   code=>sub{
@@ -503,8 +513,5 @@ sub new{
       # }
 
     ]
-  };
 }
-
-
 return 1;

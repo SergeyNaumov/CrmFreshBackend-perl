@@ -207,13 +207,14 @@ sub odt_process {
     
     if($par->{s}){
       my $s=$par->{s};
+      
       $s->{vars}->{print_header}=1;
       $s->{APP}->{STATUS}=100;
       push @{$s->{APP}->{HEADERS}},q{Content-Type: application/x-force-download};
       push @{$s->{APP}->{HEADERS}},qq{Content-Disposition:attachment; filename=\"dogovor.doc\"};
       $s->{stream_file}=$par->{tmp_file};
       $s->{stream_file_need_unlink}=1;
-
+      $s->{stream_out}=1;
     }
 
 

@@ -29,6 +29,13 @@ $form={
             $form->{read_only}=0;
             $form->{not_create}=0,
         }
+        if($form->{id}){
+          $form->{ov}=$form->{db}->query(
+            query=>'select * from work where id=?',
+            values=>[$form->{id}],
+            onerow=>1
+          )
+        }
       }
       
     ],
@@ -181,9 +188,15 @@ $form={
       type=>'code',
       name=>'links',
       code=>sub{
-        return q{
-          <a href="./">Скачать протокол ДУ</a>
+        if($form->{id}){
+          return qq{
+            <a href="http://dev-crm.test/backend/DU/load/$form->{id}/ДУ.doc">Скачать протокол ДУ</a>
+          }
         }
+        else{
+          return ''
+        }
+
       }
     },
     {
@@ -364,7 +377,7 @@ $form={
           my $data=shift; my $i=0;
           my $list=[];
           foreach my $d (@{$data}){
-            print Dumper($d);
+            
             my @res=();
             foreach my $d2 (@{$d->{parents}}){
               
