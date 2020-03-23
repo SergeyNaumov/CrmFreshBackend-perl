@@ -200,7 +200,7 @@ $form={
       }
     },
     {
-      name => 'dat_pov',
+      name => 'dat_pov', 
       description => 'Дата поверки',
       type => 'date',
       filter_on=>1,
@@ -279,7 +279,7 @@ $form={
       table=>'reestr_si',
       header_field=>'id',
       value_field=>'id',
-      name=>'grsi_num',
+      name=>'grsi_num', # [%grsi_num%]
       tab=>'c1',
       frontend=>{ajax=>{name=>'calc_dat_pov_next'}},
     },
@@ -314,7 +314,7 @@ $form={
       filter_on=>1
     },
     {
-      name => 'zav_num',
+      name => 'zav_num', # 
       description => 'Заводской номер',
       type => 'text',
       regexp_rules=>[

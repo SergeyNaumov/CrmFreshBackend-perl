@@ -22,9 +22,18 @@ sub get{
             code=>sub{
 
                 my $s=shift; my $id=$1;
-
+                # [%rtype%] [%zav_num%] [%grsi_num%]
                 my $data=$s->{db}->query(
-                    query=>'SELECT * from work where id=?',
+                    query=>q{
+                        SELECT
+                            w.*,r.header rheader, r.type rtype, r.method rmethod,
+                            m.header master
+                        from
+                            work w
+                            LEFT JOIN reestr_si r ON r.id=w.grsi_num
+                            LEFT JOIN master m ON w.master_id=m.id
+                        where w.id=?
+                    },
                     values=>[$id],
                     onerow=>1
                 );
@@ -33,10 +42,18 @@ sub get{
                     return
 
                 }
-                if($data->{is_ok}){
+                my $is_ok=$data->{is_ok};
+                {
+                    
                     $data={}; # для отладки, чтобы не было лишнего
                     
                     my $dn=$data->{dn};
+
+                    
+                    # по одному адресу за одно число эти показатели должны быть одинаковые
+                    $data->{temp}=range(21,27); # температура
+                    $data->{vlajn}=range(31,48); # относительная влажность
+                    $data->{davl}=range(98,102); # атмосферное давление
 
                     $data->{qmax}=51;
                     $data->{b11}=range(from=>-1,to=>1,order=>1);
@@ -69,22 +86,57 @@ sub get{
                     $data->{f4}=$data->{f3}+range(from=>-0.3,to=>0.3,order=>1); # F3 +/- 0.3 c шагом 0.01
                     $data->{f5}=$data->{f4}+range(from=>-0.3,to=>0.3,order=>1); # F3 +/- 0.3 c шагом 0.01
 
-                    $data->{n9}=range(from=>0,to=>5,order=>2); #от 0 до +5 с шагом 0.01
+                    if($is_ok){ # если годен
+                        $data->{n9}=range(from=>0,to=>5,order=>2); #от 0 до +5 с шагом 0.01
+                    }
+                    else{
+                        $data->{n9}=range(from=>5.5,to=>10,order=>2);
+                    }
+                    
                     $data->{n10}=$data->{n9} + range(from=>-0.3,to=>0.3,order=>2)."\n";; # +/- 0.3 от n9
                     $data->{n11}=$data->{10} + range(from=>-0.3,to=>0.3,order=>2)."\n";; # +/- 0.3 от n10
 
-                    $data->{h6}=$data->{e5};
+                    $data->{h6}=$data->{e5}+range(from=>30,to=>50);
+
 
                     if($dn==15){
+                        $data->{h7}=$data->{i6}=$data->{h6}+range(from=>50,to=>55);
+                        $data->{h8}=$data->{i7}=$data->{h7}+range(from=>50,to=>55);
+                        $data->{i8}=$data->{h8}+range(from=>50,to=>55);
+                    }
+                    else{ # dn=20
+                        $data->{h7}=$data->{i6}=$data->{h6}+range(from=>60,to=>65);
+                        $data->{h8}=$data->{i7}=$data->{h7}+range(from=>60,to=>65);
+                        $data->{i8}=$data->{h8}+range(from=>60,to=>65);
+                    }
 
+                    $data->{l9}=$data->{i8}+range(from=>5,to=>10);
+                    if($dn==15){
+                        $dala->{l10}=$data->{m9}=$data->{l9}+60;
+                        $dala->{l11}=$data->{m10}=$data->{l10}+60;
+                        $data->{m11}=$data->{l11}+60;
+                    }
+                    else{ # dn=20
+                        $dala->{l10}=$data->{m9}=$data->{l9}+100;
+                        $dala->{l11}=$data->{m10}=$data->{l10}+100;
+                        $data->{m11}=$data->{l11}+100;
                     }
 
 
+                    if($is_ok){
+                        $data->{o8}=$data->{o9}=$data->{o10}='годен'
+                    }
+                    else{
+                        $data->{o8}=$data->{o9}=$data->{o10}='не годен'
+                    }
                 }
-                $s->pre($data)->end;
-                return;
-                
-                my $t=$data->{is_ok}?'du1.odt':'du2.odt';
+                #$s->pre($data)->end;
+                #return;
+                foreach my $k (keys %{$data}){
+                      Encode::_utf8_off($data->{$k});
+                }
+                my $t='du1.odt';
+                #$data->{is_ok}?'du1.odt':'du2.odt';
                 # du2.odt -- не годен
                 odt_file2::odt_process( {
                   's'=>$s,
