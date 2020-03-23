@@ -14,7 +14,16 @@ $form={
 
 	events=>{
 		permissions=>[
+
+
       sub{
+        use Plugin::Search::XLS;
+        use Plugin::Search::CSV;
+        
+        Plugin::Search::XLS::go($form);
+        Plugin::Search::CSV::go($form);
+
+
         if($form->{manager}->{login} eq 'admin' || $form->{manager}->{permissions}->{operator}){
             $form->{make_delete}=1;
             $form->{read_only}=0;
@@ -65,10 +74,8 @@ $form={
       
       my $master=$form->{db}->query(
         query=>'SELECT id from master where tnumber=?',
-        values=>[$v->{num_sv2}], onerow=>1,
-        debug=>1,
+        values=>[$v->{num_sv2}], onerow=>1
       );
-      print Dumper($master);
       if($master){
         #if(!$v->{num_sv1}){
           if($v->{num_sv2} && $v->{num_sv3}){
@@ -169,6 +176,16 @@ $form={
   search_on_load=>1,
   fields =>
   [
+    {
+      description=>'Ссылки',
+      type=>'code',
+      name=>'links',
+      code=>sub{
+        return q{
+          <a href="./">Скачать протокол ДУ</a>
+        }
+      }
+    },
     {
       name => 'dat_pov',
       description => 'Дата поверки',
@@ -363,6 +380,13 @@ $form={
 
             push @res,"$d->{typeShort} $d->{name}";
             my $h=join(', ',@res);
+            # Encode::_utf8_on($h);
+            # {
+            #   use utf8;
+            #   $h=~s/^г Москва,\s+(г Москва)/$1/g;
+            # }
+            
+            #print "$h\n";
             push @{$list},{header=>$h};
           }
           return $list;

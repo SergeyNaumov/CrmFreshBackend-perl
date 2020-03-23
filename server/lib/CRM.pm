@@ -32,33 +32,16 @@ sub get_startpage{
     my $s=$Work::engine;
     #$s->pre($s->{db})->end; return;
     my $errors=[];
-    my $manager=get_permissions_for(
-      login=>$s->{login},
-      's'=>$s
-    );
-    #print Dumper($manager);
-    #my $manager=$s->{db}->query(query=>'select * from manager where login=?',values=>[$s->{login}],onerow=>1);
-    #delete $manager->{password};
     my $left_menu=$s->{db}->query(
-         query=>'
-         SELECT
-            m.*,group_concat( concat(mmp.denied,":",p.pname) SEPARATOR ";") permissions
-         FROM
-            manager_menu m
-            LEFT JOIN manager_menu_permissions mmp ON (mmp.menu_id=m.id)
-            LEFT JOIN permissions p ON (mmp.permission_id=p.id)
-        WHERE
-            m.parent_id is null
-            GROUP BY m.id
-        order by m.sort',
+         query=>'SELECT * from manager_menu where parent_id is null order by sort',
          errors=>$errors,
          tree_use=>1
     );
-    #print Dumper($left_menu);
-    $left_menu=hide_not_permit_items($left_menu,$manager->{permissions});
+
     my $cur_year=cur_year();
     $s->{config}->{copyright}=~s/\{cur_year\}/$cur_year/g;
-
+    my $manager=$s->{db}->query(query=>'select * from manager where login=?',values=>[$s->{login}],onerow=>1);
+    delete $manager->{password};
     return $s->to_json(
         {
             title=>$s->{config}->{title},
@@ -71,41 +54,7 @@ sub get_startpage{
     );
 }
 
-sub hide_not_permit_items{
-  my $menu=shift; my $permissions=shift; 
-  my $list=[];
-  foreach my $m (@{$menu}){
-      my $m_perm=$m->{permissions};
-      my $make_show=0;
-      if($m_perm){
-        
-        foreach my $p (split(/;/,$m_perm)){
-          my ($denied,$pname)=split(/:/,$p);
-          if($denied && !$permissions->{$pname}){
-            $make_show=1; last;
-          }
-          elsif($permissions->{$pname}){
-            $make_show=1; last;
-          }
 
-          #print "make_show: $make_show\n";
-        }
-      }
-      else{
-        $make_show=1;
-      }
-      
-      if($make_show){
-
-        if($m->{child} && scalar(@{$m->{child}})){
-          $m->{child}=hide_not_permit_items($m->{child},$permissions)
-        }
-        push @{$list},$m;
-      }
-
-  }
-  return $list;
-}
 
 #sub process_form{
 #

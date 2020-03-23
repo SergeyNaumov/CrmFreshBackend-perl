@@ -4,10 +4,10 @@ $form={
   work_table_id => 'id',
   make_delete=>0,
   not_create=>1,
-  read_only=>1,
+  read_only=>0,
   header_field=>'header',
   default_find_filter => 'header',
-  explain=>1,
+
   GROUP_BY=>'wt.id',
   AJAX=>{
     in_ext_url=>sub{
@@ -61,17 +61,24 @@ $form={
   },
   events=>{
     permissions=>sub{
-      
-      if(0 && $form->{manager}->{login} eq 'admin'){
+      #pre($form->{manager});
+      if($form->{manager}->{login} eq 'admin'){
         $form->{not_create}=0;
         $form->{make_delete}=1;
         $form->{read_only}=0;
       }
-      elsif(1 || $form->{manager}->{permissions}->{author}){
+      elsif($form->{manager}->{permissions}->{author}){
+        
         $form->{not_create}=0;
         $form->{make_delete}=0;
-
-        if($form->{action}=~m/^(new|insert)$/){
+        if($form->{id}){
+          $form->{values}=$form->{db}->query(
+            query=>'select * from article where id=?',
+            values=>[$form->{id}],
+            onerow=>1
+          );
+        }
+        if($form->{script} eq 'admin_table' || $form->{action}=~m/^(new|update)$/){
           $form->{read_only}=0
         }
         elsif($form->{values}){
@@ -79,14 +86,14 @@ $form={
             $form->{read_only}=0
           }
         }
-        
+        #pre([$form->{not_create},$form->{read_only}]);
 
       }
-      else{
+      #
         #print_header();
-        
-        #push @{$form->{errors}},'Доступ запрещён';
-      }
+        #print "Доступ запрещён!" ; exit;
+      #  push @{$form->{errors}},'Доступ запрещён';
+      #}
     },
     after_save=>sub{
       if($form->{new_values}->{top}){
@@ -101,6 +108,7 @@ $form={
     {t=>'article_tag',a=>'ar_t',l=>'wt.id=ar_t.article_id',lj=>1,for_fields=>['tags'],not_add_in_select_fields=>1},
     {t=>'tag',a=>'t',l=>'ar_t.tag_id=t.id',lj=>1,for_fields=>['tags'],not_add_in_select_fields=>1},
   ],
+
   # on_filters=>[
   #   {name=>'header',value=>''},
   #   {name=>'anons'},
@@ -152,33 +160,34 @@ $form={
       value_field=>'id',
       read_only=>1,
       tablename=>'m',
+
       before_code=>sub{
         my $e=shift;
         
-        # if($form->{action} eq 'new'){
-        #   $e->{value}=$form->{manager}->{id}
-        # }
+        if($form->{action} eq 'new'){
+          $e->{value}=$form->{manager}->{id}
+        }
 
-        
-        # if($form->{manager}->{login} eq 'admin'){
-        #   $e->{read_only}=0
-        # }
-        if(1 || $form->{manager}->{permissions}->{author}){
-          if($form->{action} eq 'new'){
-            $e->{read_only}=0;
-          }
+        $e->{read_only}=1;
+        if($form->{manager}->{login} eq 'admin'){
+          $e->{read_only}=0;
+          $e->{make_change_in_search}=1
+        }
+        elsif($form->{manager}->{permissions}->{author}){
           if($form->{action}=~m/^(new|insert)$/){
             $e->{value}=$form->{manager}->{id};
             $e->{where}='id='.$form->{manager}->{id};
-            
+            $e->{read_only}=0;
           }
-          #pre($e);
         }
         #$e->{after_html}=qq{<div style="border: 1px solid black;">$form->{manager}->{login}</div>}
 
       },
-
-      make_change_in_search=>1
+      regexp_rules=>[
+       q{/[1-9]/},'Выберите автора',
+        q{/^\d+$/},'Выберите автора',
+      ],
+      #make_change_in_search=>1
     },
     {
       description=>'Рубрика статьи',
@@ -225,8 +234,8 @@ $form={
       full_str=>1,
       style=>'height: 100px'
     },
-    {
-      description=>'Фото',
+    { 
+      description=>'Фото', # Фото статьи
       type=>'file',
       name=>'photo',
       filedir=>'./files/article',
@@ -259,6 +268,140 @@ $form={
           size=>'1165x672',
           quality=>'90'
         },
+      ]
+    },
+    { 
+      description=>'Фотогалерея1', # Галерея1
+      name=>'galery',
+      type=>'1_to_m',
+      table=>'article_photos1',
+      table_id=>'id',
+      foreign_key=>'article_id',
+      sort=>1,
+      view_type=>'list',
+      fields=>[
+        {
+          description=>'Наименование',
+          name=>'header',
+          type=>'text'
+        },
+        {
+          description=>'Фото',
+          type=>'file',
+          filedir=>'./files/article_galery1',
+          name=>'photo',
+          preview=>'50x0',
+          resize=>[
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini1.<%ext%>',
+               size=>'200x0',
+               quality=>'90'
+            },
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini2.<%ext%>',
+               size=>'800x0',
+               quality=>'90'
+            },
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini3.<%ext%>',
+               size=>'1200x0',
+               quality=>'90'
+            },
+          ]
+        }
+      ]
+    },
+    { 
+      description=>'Фотогалерея2', # Галерея2
+      name=>'galery2',
+      type=>'1_to_m',
+      table=>'article_photos2',
+      table_id=>'id',
+      foreign_key=>'article_id',
+      sort=>1,
+      view_type=>'list',
+      
+      fields=>[
+        {
+          description=>'Наименование',
+          name=>'header',
+          type=>'text'
+        },
+        {
+          description=>'Фото',
+          type=>'file',
+          filedir=>'./files/article_galery2',
+          name=>'photo',
+          preview=>'50x0',
+          resize=>[
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini1.<%ext%>',
+               size=>'200x0',
+               quality=>'90'
+            },
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini2.<%ext%>',
+               size=>'800x0',
+               quality=>'90'
+            },
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini3.<%ext%>',
+               size=>'1200x0',
+               quality=>'90'
+            },
+          ]
+        }
+      ]
+    },
+    { 
+      description=>'Фотогалерея3', # Галерея3
+      name=>'galery3',
+      type=>'1_to_m',
+      table=>'article_photos3',
+      table_id=>'id',
+      foreign_key=>'article_id',
+      sort=>1,
+      view_type=>'list',
+      
+      fields=>[
+        {
+          description=>'Наименование',
+          name=>'header',
+          type=>'text'
+        },
+        {
+          description=>'Фото',
+          type=>'file',
+          filedir=>'./files/article_galery3',
+          name=>'photo',
+          preview=>'50x0',
+          resize=>[
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini1.<%ext%>',
+               size=>'200x0',
+               quality=>'90'
+            },
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini2.<%ext%>',
+               size=>'800x0',
+               quality=>'90'
+            },
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini3.<%ext%>',
+               size=>'1200x0',
+               quality=>'90'
+            },
+          ]
+        }
       ]
     },
     {

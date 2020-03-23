@@ -99,7 +99,6 @@ sub processEditForm{
             #    $f->{values}=get_values_for_select_from_table($f,$form,$s);
             #}
         }
-        #print Dumper($s->clean_json($form->{edit_form_fields})->[5]->{values});
         $s->print_json({
                     title=>$form->{title},
                     success=>scalar(@{$form->{errors}})?0:1,
