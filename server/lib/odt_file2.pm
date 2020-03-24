@@ -90,7 +90,7 @@ sub odt_process {
     #$content=~s{\[\%#.+?\%\]}{}gs;
     while($content=~m{(\[\%.+?\%\])}gs){
       my $command_first=$1; my $command=$1;
-      print "$command_first\n";
+      #print "$command_first\n";
       # !!!!!!!!!!!!!!!1 сделать фикс тэгов
       my @tags=($command=~m{(<.+?>)}gs);
       $command=~s/<.+?>//gs; $command=join('',@tags).$command;
@@ -198,7 +198,7 @@ sub odt_process {
       $par->{result_dir} .= '/' if $par->{result_dir} !~ /\/$/;
     }
     $par->{result_file_name} = $par->{result_dir} . $par->{result_file_name};
-    print "move($par->{tmp_file},$par->{result_file_name})\n"; # !!!
+    #print "move($par->{tmp_file},$par->{result_file_name})\n"; # !!!
     move($par->{tmp_file},$par->{result_file_name});
   } else{
     if (!$par->{upload_file_name}){

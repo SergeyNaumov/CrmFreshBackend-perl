@@ -27,11 +27,13 @@ sub get{
                     query=>q{
                         SELECT
                             w.*,r.header rheader, r.type rtype, r.method rmethod,
-                            m.header master
+                            m.header master, md5(w.address) address_md5,
+                            ae.hash address_hash, ae.temp, ae.vlajn, ae.davl
                         from
                             work w
                             LEFT JOIN reestr_si r ON r.id=w.grsi_num
                             LEFT JOIN master m ON w.master_id=m.id
+                            LEFT JOIN address_env ae ON (md5(w.address) = ae.hash)
                         where w.id=?
                     },
                     values=>[$id],
@@ -45,15 +47,23 @@ sub get{
                 my $is_ok=$data->{is_ok};
                 {
                     
-                    $data={}; # для отладки, чтобы не было лишнего
+                    #$data={}; # для отладки, чтобы не было лишнего
                     
                     my $dn=$data->{dn};
 
                     
                     # по одному адресу за одно число эти показатели должны быть одинаковые
-                    $data->{temp}=range(21,27); # температура
-                    $data->{vlajn}=range(31,48); # относительная влажность
-                    $data->{davl}=range(98,102); # атмосферное давление
+                    unless($data->{address_hash}){
+                        $data->{temp}=range(from=>21,to=>27); # температура
+                        $data->{vlajn}=range(from=>31,to=>48); # относительная влажность
+                        $data->{davl}=range(from=>98,to=>102); # атмосферное давление
+                        $s->{db}->query(
+                            query=>'REPLACE INTO address_env(hash,dat_pov,temp,vlajn,davl) values(?,?,?,?,?)',
+                            values=>[$data->{address_md5},$data->{dat_pov},$data->{temp},$data->{vlajn},$data->{davl}],
+                        );
+                        #$s->pre("RECORD");
+                    }
+
 
                     $data->{qmax}=51;
                     $data->{b11}=range(from=>-1,to=>1,order=>1);
@@ -93,8 +103,8 @@ sub get{
                         $data->{n9}=range(from=>5.5,to=>10,order=>2);
                     }
                     
-                    $data->{n10}=$data->{n9} + range(from=>-0.3,to=>0.3,order=>2)."\n";; # +/- 0.3 от n9
-                    $data->{n11}=$data->{10} + range(from=>-0.3,to=>0.3,order=>2)."\n";; # +/- 0.3 от n10
+                    $data->{n10}=$data->{n9} + range(from=>-0.3,to=>0.3,order=>2); # +/- 0.3 от n9
+                    $data->{n11}=$data->{10} + range(from=>-0.3,to=>0.3,order=>2); # +/- 0.3 от n10
 
                     $data->{h6}=$data->{e5}+range(from=>30,to=>50);
 
