@@ -4,7 +4,7 @@ $form={
   work_table_id => 'id',
   make_delete=>0,
   not_create=>1,
-  read_only=>1,
+  read_only=>0,
   header_field=>'header',
   default_find_filter => 'header',
 
@@ -288,20 +288,26 @@ $form={
         {
           description=>'Фото',
           type=>'file',
-          filedir=>'./files/article_galery',
+          filedir=>'./files/article_galery1',
           name=>'photo',
-          preview=>'200x0',
+          preview=>'50x0',
           resize=>[
             {
                description=>'Горизонтальное фото',
                file=>'<%filename_without_ext%>_mini1.<%ext%>',
-               size=>'50x50',
+               size=>'200x0',
                quality=>'90'
             },
             {
                description=>'Горизонтальное фото',
                file=>'<%filename_without_ext%>_mini2.<%ext%>',
-               size=>'100x100',
+               size=>'800x0',
+               quality=>'90'
+            },
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini3.<%ext%>',
+               size=>'1200x0',
                quality=>'90'
             },
           ]
@@ -327,20 +333,26 @@ $form={
         {
           description=>'Фото',
           type=>'file',
-          filedir=>'./files/article_galery',
+          filedir=>'./files/article_galery2',
           name=>'photo',
-          preview=>'200x0',
+          preview=>'50x0',
           resize=>[
             {
                description=>'Горизонтальное фото',
                file=>'<%filename_without_ext%>_mini1.<%ext%>',
-               size=>'50x50',
+               size=>'200x0',
                quality=>'90'
             },
             {
                description=>'Горизонтальное фото',
                file=>'<%filename_without_ext%>_mini2.<%ext%>',
-               size=>'100x100',
+               size=>'800x0',
+               quality=>'90'
+            },
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini3.<%ext%>',
+               size=>'1200x0',
                quality=>'90'
             },
           ]
@@ -366,20 +378,26 @@ $form={
         {
           description=>'Фото',
           type=>'file',
-          filedir=>'./files/article_galery',
+          filedir=>'./files/article_galery3',
           name=>'photo',
-          preview=>'200x0',
+          preview=>'50x0',
           resize=>[
             {
                description=>'Горизонтальное фото',
                file=>'<%filename_without_ext%>_mini1.<%ext%>',
-               size=>'50x50',
+               size=>'200x0',
                quality=>'90'
             },
             {
                description=>'Горизонтальное фото',
                file=>'<%filename_without_ext%>_mini2.<%ext%>',
-               size=>'100x100',
+               size=>'800x0',
+               quality=>'90'
+            },
+            {
+               description=>'Горизонтальное фото',
+               file=>'<%filename_without_ext%>_mini3.<%ext%>',
+               size=>'1200x0',
                quality=>'90'
             },
           ]

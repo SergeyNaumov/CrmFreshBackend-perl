@@ -14,11 +14,27 @@ $form={
 
 	events=>{
 		permissions=>[
+
+
       sub{
+        use Plugin::Search::XLS;
+        use Plugin::Search::CSV;
+        
+        Plugin::Search::XLS::go($form);
+        Plugin::Search::CSV::go($form);
+
+
         if($form->{manager}->{login} eq 'admin' || $form->{manager}->{permissions}->{operator}){
             $form->{make_delete}=1;
             $form->{read_only}=0;
             $form->{not_create}=0,
+        }
+        if($form->{id}){
+          $form->{ov}=$form->{db}->query(
+            query=>'select * from work where id=?',
+            values=>[$form->{id}],
+            onerow=>1
+          )
         }
       }
       
@@ -65,10 +81,8 @@ $form={
       
       my $master=$form->{db}->query(
         query=>'SELECT id from master where tnumber=?',
-        values=>[$v->{num_sv2}], onerow=>1,
-        debug=>1,
+        values=>[$v->{num_sv2}], onerow=>1
       );
-      print Dumper($master);
       if($master){
         #if(!$v->{num_sv1}){
           if($v->{num_sv2} && $v->{num_sv3}){
@@ -170,7 +184,23 @@ $form={
   fields =>
   [
     {
-      name => 'dat_pov',
+      description=>'Ссылки',
+      type=>'code',
+      name=>'links',
+      code=>sub{
+        if($form->{id}){
+          return qq{
+            <a href="http://dev-crm.test/backend/DU/load/$form->{id}/ДУ.doc">Скачать протокол ДУ</a>
+          }
+        }
+        else{
+          return ''
+        }
+
+      }
+    },
+    {
+      name => 'dat_pov', 
       description => 'Дата поверки',
       type => 'date',
       filter_on=>1,
@@ -249,7 +279,7 @@ $form={
       table=>'reestr_si',
       header_field=>'id',
       value_field=>'id',
-      name=>'grsi_num',
+      name=>'grsi_num', # [%grsi_num%]
       tab=>'c1',
       frontend=>{ajax=>{name=>'calc_dat_pov_next'}},
     },
@@ -284,7 +314,7 @@ $form={
       filter_on=>1
     },
     {
-      name => 'zav_num',
+      name => 'zav_num', # 
       description => 'Заводской номер',
       type => 'text',
       regexp_rules=>[
@@ -347,7 +377,7 @@ $form={
           my $data=shift; my $i=0;
           my $list=[];
           foreach my $d (@{$data}){
-            print Dumper($d);
+            
             my @res=();
             foreach my $d2 (@{$d->{parents}}){
               
@@ -363,6 +393,13 @@ $form={
 
             push @res,"$d->{typeShort} $d->{name}";
             my $h=join(', ',@res);
+            # Encode::_utf8_on($h);
+            # {
+            #   use utf8;
+            #   $h=~s/^г Москва,\s+(г Москва)/$1/g;
+            # }
+            
+            #print "$h\n";
             push @{$list},{header=>$h};
           }
           return $list;

@@ -34,7 +34,7 @@ $form={
             description=>'Wysiwyg',
             type=>'wysiwyg',
             name=>'wysiwyg',
-            
+            not_filter=>1,
             tab=>'wysiwyg'
         },
         {

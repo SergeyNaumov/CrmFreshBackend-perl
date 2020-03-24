@@ -123,7 +123,16 @@ sub save_upload{
           my $to_path=qq{$args{to}/$filename};
           push @{$return_resize_info},{fullname=>$to_path, name=>$args{filename}};
 
-
+          # print Dumper({
+          #     from=>"$full_path",
+          #     to=>$to_path,
+          #     width=>"$width",
+          #     height=>"$height",
+          #     grayscale=>$r->{grayscale}?$r->{grayscale}:'',
+          #     composite_file=>$r->{composite_file}?$r->{composite_file}:'',
+          #     quality=>$r->{quality}?$r->{quality}:''
+          # });
+          
           resize(
               from=>"$full_path",
               to=>$to_path,
