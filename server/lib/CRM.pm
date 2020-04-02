@@ -32,15 +32,40 @@ sub get_startpage{
     my $s=$Work::engine;
     #$s->pre($s->{db})->end; return;
     my $errors=[];
-    my $left_menu=$s->{db}->query(
-         query=>'SELECT * from manager_menu where parent_id is null order by sort',
-         errors=>$errors,
-         tree_use=>1
-    );
+    my $left_menu;
+    my ($manager_menu_table);
+    if($s->{config}->{use_project}){
+      $manager_menu_table='project_manager_menu'
+    }
+    else{
+      $manager_menu_table='manager_menu'
+    }
+    if($s->{config}->{menu}){
+      $left_menu=$s->{config}->{menu};
+    }
+    else{
 
+      $left_menu=$s->{db}->query(
+        query=>'SELECT * from '.$manager_menu_table.' where parent_id is null order by sort',
+        errors=>$errors,
+        tree_use=>1
+      );
+    }
+
+    
     my $cur_year=cur_year();
     $s->{config}->{copyright}=~s/\{cur_year\}/$cur_year/g;
-    my $manager=$s->{db}->query(query=>'select * from manager where login=?',values=>[$s->{login}],onerow=>1);
+    my $manager;
+    if($s->{config}->{use_project}){
+      $manager=$s->{db}->query(
+        query=>'select * from project_manager where project_id=? and login=?',
+        values=>[$s->{project}->{id}, $s->{login}],onerow=>1
+      );
+    }
+    else{
+      $manager=$s->{db}->query(query=>'select * from manager where login=?',values=>[$s->{login}],onerow=>1);
+    }
+    
     delete $manager->{password};
     return $s->to_json(
         {
@@ -109,6 +134,19 @@ sub delete_element{
                 event=>$f->{before_delete},description=>'field: $f->{name} event: before_delete',form=>$form
             );
         }
+      }
+
+      if($form->{work_table_foreign_key} && $form->{work_table_foreign_key_value}){
+        unless(
+          $form->{db}->query(
+            query=>"select count(*) from $form->{work_table} WHERE $form->{work_table_id}=? and $form->{work_table_foreign_key}=?",
+            values=>[$form->{id},$form->{work_table_foreign_key_value}],
+            onevalue=>1
+          )
+        ){
+          push @{$form->{errors}},'действие запрещено. запрещённый foreign_key. обратитесь к разработчику'
+        }
+
       }
       if(!errors($form)){
         $form->{db}->query(

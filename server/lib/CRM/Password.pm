@@ -1,6 +1,7 @@
 use utf8;
 use strict;
 use Digest::SHA qw(sha256_hex);
+
 package CRM::Password;
 # sub one_to_m_init{
 #   my %arg=@_;
@@ -99,8 +100,12 @@ sub process{
 
     if(!CRM::errors($form)){ # отправляем пароль указанным методом
       my $method_send=$field->{methods_send}->[$R->{method_send}];
+      
+      
       if($method_send && exists($method_send->{code}) && ref($method_send->{code}) eq 'CODE'){
         &{$method_send->{code}}($R->{new_password});
+      }
+      else{
       }
     }
 

@@ -138,7 +138,9 @@ sub save_form{
         if(is_wt_field($f)   ){ # значения для work_table
             # проверки, преобразования перед сохранением
             
-
+            if($f->{type}=~m/^(select_values|select_from_table)$/ && !$v){
+                next;
+            }
             if($f->{type} eq 'date'){
                 unless($v=~m/^\d{4}-\d{2}-\d{2}/){
                     if($form->{engine} eq 'mysql-strong' || $f->{empty_value} eq 'null'){
@@ -176,14 +178,18 @@ sub save_form{
         }
 
     }
-    #print Dumper($save_hash);
+    
 
     if(scalar keys(%{$save_hash}) ){
         if($form->{id}){
-            #print "Debug!\n";
+            my $where="$form->{work_table_id} = $form->{id}";
+            if($form->{work_table_foreign_key} && $form->{work_table_foreign_key_value}){
+                $where.=" AND $form->{work_table_foreign_key}=$form->{work_table_foreign_key_value}"
+            }
+
             $form->{db}->save(
                 table=>$form->{work_table},
-                where=>"$form->{work_table_id} = $form->{id}",
+                where=>$where,
                 update=>1,
                 data=>$save_hash,
                 errors=>$form->{errors},
@@ -192,6 +198,9 @@ sub save_form{
             );
         }
         else{
+            if($form->{work_table_foreign_key} && $form->{work_table_foreign_key_value}){
+                $save_hash->{$form->{work_table_foreign_key}}=$form->{work_table_foreign_key_value};
+            }
             my $id=$form->{db}->save(
                 table=>$form->{work_table},
                 data=>$save_hash,

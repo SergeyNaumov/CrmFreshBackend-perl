@@ -89,17 +89,22 @@ sub read_conf{
     $form->{work_table}=$config if(!$form->{work_table});
     $form->{work_table_id}='id' if(!$form->{work_table_id});
     
-    $form->{manager}=get_permissions_for(
-      login=>get_cur_role(
-        login=>$s->{login},
-        config=>$config,
-        's'=>$s,
-        errors=>$form->{errors}
-      )
+    
+    my $login=get_cur_role(
+          login=>$s->{login},
+          config=>$config,
+          's'=>$s,
+          errors=>$form->{errors}
     );
+      
+    if($s->{config}->{use_project}){
+        $form->{manager}=project_get_permissions_for(login=>$login);
+    }
+    else{
+        $form->{manager}=get_permissions_for(login=>$login);
+    }
+    
 
-    #push @{$form->{errors}},$form->{manager}->{login};
-#    print "login: $form->{manager}->{login}\n";
     $form->{self}=sub{return $s};
     
     set_default_attributes($form); # Routine
@@ -193,15 +198,91 @@ sub get_permissions_for{
 
     return $manager;
 }
+# для мультипроектов
+sub project_get_permissions_for{
+    my %arg=@_; my $s=$Work::engine;
+    my $connect=$s->{db};
+    #print Dumper({project_get_permissions_for=>\%arg});
+    
+    my $manager=$connect->query(
+      query=>q{
+        SELECT 
+          m.*,
+          if(m.id = ow.id,1,0) is_owner,
+          mg.path group_path,
+          concat_ws('/',mg.path,mg.id) full_group_path
+        FROM
+          project_manager m
+          LEFT JOIN project_manager_group mg ON (m.group_id = mg.id)
+          LEFT JOIN project_manager ow ON (mg.owner_id = ow.id) 
+        WHERE m.login = ? and m.project_id=?
+      },
+      values=>[$arg{login},$s->{project}->{id}],
+      onerow=>1,
+      log=>$arg{form}->{log}
+    );
 
+    # permissions => permissions_for_project
+    # manager_permissions => project_manager_permissions
+    # manager_group_permissions => project_manager_group_permissions
+    delete $manager->{password};
+    # Собираем права менеджера:
+    my $permissions_list=
+     $connect->query(
+      query=>q{SELECT p.id, p.pname from permissions_for_project p, project_manager_permissions mp where p.id = mp.permissions_id and mp.manager_id = ?},
+      values=>[$manager->{id}]
+    );
+    $manager->{permissions}={};
+    foreach my $p (@{$permissions_list}){
+      $manager->{permissions}->{$p->{pname}}=$p->{id};
+    }
+
+    # права группы, в которой непосредственно нахдится менеджер также ему присваиваются
+    if($manager->{group_id}){
+        my $gr_perm_list=$connect->query(
+          query=>q{
+              SELECT
+                p.id, p.pname
+              from
+                permissions_for_project p, project_manager_group_permissions mgp
+              where
+                p.id = mgp.permissions_id and mgp.group_id = ?
+          },
+          values=>[$manager->{group_id}]
+        );
+
+        foreach my $p (@{$gr_perm_list}){
+          $manager->{permissions}->{$p->{pname}}=$p->{id};
+        }
+    }
+
+    # Для каждого пользователя можно разделить свою файловую директорию
+    $manager->{files_dir}='./files';
+    $manager->{files_dir_web}='/files';
+    #print Dumper($manager);
+    $manager->{CHILD_GROUPS}=child_groups(group_id=>[$manager->{group_id}+0],db=>$connect);
+    $manager->{CHILD_GROUPS_HASH}={};
+    foreach my $g_id (@{$manager->{CHILD_GROUPS}}){
+      $manager->{CHILD_GROUPS_HASH}->{$g_id}=1;
+    }
+
+    return $manager;
+}
 sub child_groups{
   my %arg=@_;
-
+  my $s=$Work::engine;
   my $group_id=$arg{group_id}; my $db=$arg{db};
   return [] unless(scalar(@{$group_id}));
   my @list=($group_id);
-    
-  my $g_list=$db->query(query=>"SELECT id from manager_group where parent_id IN (".join(',',@{$group_id}).')');
+  my $group_table;
+  if($s->{config}->{use_project}){
+    $group_table='project_manager_group';
+
+  }
+  else{
+    $group_table='manager_group';
+  }
+  my $g_list=$db->query(query=>"SELECT id from $group_table where parent_id IN (".join(',',@{$group_id}).')');
   
   #push @list,$arg{group_id}+0;
   foreach my $g1 (@{$g_list}){
@@ -214,24 +295,35 @@ sub child_groups{
   return $group_id;
 }
 sub get_cur_role {
-  my %arg=@_;
+  my %arg=@_; my $s=$arg{'s'};
+
   if($arg{config} eq 'manager'){ # в инструменте manager роли орининальные
     return $arg{login};
   }
+  my ($manager_table,$manager_role_table);
+  if($s->{config}->{use_project}){
+    $manager_role_table='project_manager_role';
+    $manager_table='project_manager';
+  }
+  else{
+    $manager_role_table='manager_role';
+    $manager_table='manager';
+  }
   my $r=$arg{'s'}->{db}->query(
-    query=>q{
+    query=>qq{
       SELECT
         m2.login
       FROM
-        manager m
-        JOIN manager_role mr ON (m.id = mr.manager_id)
-        JOIN manager m2  ON (m2.id = mr.role AND m.current_role = m2.id)
+        $manager_table m
+        JOIN $manager_role_table mr ON (m.id = mr.manager_id)
+        JOIN $manager_table m2  ON (m2.id = mr.role AND m.current_role = m2.id)
       WHERE m.login=?
     },
     values=>[$arg{login}],
     onevalue=>1,
     errors=>$arg{errors}
   );
-  return ($r?$r:$arg{login})
+  my $R=($r?$r:$arg{login});
+  return $R;
 }
 return 1;

@@ -406,7 +406,13 @@ sub process{
                 event=>$field->{before_insert_code},
                 description=>'before insert code 1_to_m for '.$field->{name},
                 form=>$form,
-                arg=>$field
+                arg=>[$field,$data]
+              );
+              CRM::run_event(
+                event=>$field->{before_save_code},
+                description=>'before save code 1_to_m for '.$field->{name},
+                form=>$form,
+                arg=>[$field,$data]
               );
               unless( scalar (@{$form->{errors}}) ){
                   $data->{$field->{table_id}}=$form->{db}->save(
@@ -417,7 +423,13 @@ sub process{
                     event=>$field->{after_insert_code},
                     description=>'after insert code 1_to_m for '.$field->{name},
                     form=>$form,
-                    arg=>$field
+                    arg=>[$field,$data]
+                  );
+                  CRM::run_event(
+                    event=>$field->{after_save_code},
+                    description=>'after save code 1_to_m for '.$field->{name},
+                    form=>$form,
+                    arg=>[$field,$data]
                   );
               }
 
@@ -429,7 +441,13 @@ sub process{
                 event=>$field->{before_update_code},
                 description=>'before update code 1_to_m for '.$field->{name},
                 form=>$form,
-                arg=>$field
+                arg=>[$field,$data]
+              );
+              CRM::run_event(
+                event=>$field->{before_save_code},
+                description=>'before save code 1_to_m for '.$field->{name},
+                form=>$form,
+                arg=>[$field,$data]
               );
               unless( scalar (@{$form->{errors}}) ){
                   $form->{db}->save(
@@ -453,7 +471,15 @@ sub process{
                     event=>$field->{after_update_code},
                     description=>'after update code 1_to_m for '.$field->{name},
                     form=>$form,
-                    arg=>$field
+                    arg=>[$field,$data],
+                    
+                  );
+                  CRM::run_event(
+                    event=>$field->{after_save_code},
+                    description=>'after save code 1_to_m for '.$field->{name},
+                    form=>$form,
+                    arg=>[$field,$data]
+
                   );
               }
             }

@@ -2,6 +2,7 @@ use utf8;
 use strict;
 use MIME::Base64;
 use Image::Magick; 
+use File::Path qw(make_path);
 =cut
 Работа с файлами: сохранение из base64, ресайз
 =cut
@@ -249,7 +250,8 @@ sub save_base64{
         
         # Создание каталога для файла (если его нет)
         unless(-d $field->{filedir}){
-            mkdir($field->{filedir}) || die($!);
+            print "mkdir: $field->{filedir}\n";
+            make_path($field->{filedir}) || die($!);
         }
 
         my ($mime,$base64)=($1,$2);

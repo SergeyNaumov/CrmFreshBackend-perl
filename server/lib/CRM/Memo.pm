@@ -84,10 +84,10 @@ sub delete_from_memo{
       values=>[$arg{memo_id},$form->{id}],
     );
   }
-  $s->print_json(
+  $s->print_json({
     success=>scalar(@{$form->{errors}})?0:1,
     errors=>$form->{errors}
-  )->end;
+  })->end;
 }
 sub update_memo{
   my %arg=@_;

@@ -27,15 +27,12 @@ sub remove_form_field{
 
 sub select_managers_ids_from_perm{
   my $form=shift; my $perm=shift; my $s=$Work::engine;
-  #my $sth=$s->{db}->prepare( select_from_table_perm($perm) );
-  #$sth->execute();
   return [
         map {$_->{id} }
         @{
             $s->{db}->query(query=>select_from_table_perm($perm))
         }
-    ];
-          
+  ];
 }
 sub select_managers_ids_from_perm{
   my $form=shift; my $perm=shift; my $s=$Work::engine;
@@ -49,22 +46,44 @@ sub select_managers_ids_from_perm{
 ];
 }
 sub select_from_table_perm{
-  my $perm=shift;
-  return 'select '.
-            'm.id,m.name '.
-          'FROM '.
-            'manager m '.
-            'join manager_permissions mp ON (mp.manager_id=m.id) '.
-            'join permissions p ON (p.id=mp.permissions_id) '.
-          q{WHERE pname='}.$perm.q{' }.
-          'UNION '.
-          'select '.
-            'm.id,m.name '.
-          'FROM '.
-            'manager m '.
-            'join manager_group_permissions mgp ON (mgp.group_id=m.group_id) '.
-            'join permissions p ON (p.id=mgp.permissions_id) '.
-          q{WHERE pname='}.$perm.q{'}
+  my $perm=shift; my $s=$Work::engine;
+  my ($manager_table);
+  if($s->{config}->{use_project}){
+      return 'select '.
+                'm.id,m.name '.
+              'FROM '.
+                'project_manager m '.
+                'join project_manager_permissions mp ON (mp.manager_id=m.id) '.
+                'join permissions_for_project p ON (p.id=mp.permissions_id) '.
+              'WHERE m.project_id='.$s->{project}->{id}.q{ AND pname='}.$perm.q{' }.
+              'UNION '.
+              'select '.
+                'm.id,m.name '.
+              'FROM '.
+                'project_manager m '.
+                'join project_manager_group_permissions mgp ON (mgp.group_id=m.group_id) '.
+                'join permissions_for_project p ON (p.id=mgp.permissions_id) '.
+              'WHERE m.project_id='.$s->{project}->{id}.q{ AND pname='}.$perm.q{'}
+  }
+  else{
+      return 'select '.
+                'm.id,m.name '.
+              'FROM '.
+                'manager m '.
+                'join manager_permissions mp ON (mp.manager_id=m.id) '.
+                'join permissions p ON (p.id=mp.permissions_id) '.
+              q{WHERE pname='}.$perm.q{' }.
+              'UNION '.
+              'select '.
+                'm.id,m.name '.
+              'FROM '.
+                'manager m '.
+                'join manager_group_permissions mgp ON (mgp.group_id=m.group_id) '.
+                'join permissions p ON (p.id=mgp.permissions_id) '.
+              q{WHERE pname='}.$perm.q{'}
+  }
+
+
 }
 
 sub to_translit{

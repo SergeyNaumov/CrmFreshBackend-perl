@@ -538,6 +538,13 @@ sub get_search_where{
     my $alias_from_table; my $table_from_alias;
     my $WHERE=[];
     my $headers=[];
+    if($form->{add_where}){
+        push @{$WHERE},$form->{add_where};
+    }
+    if($form->{work_table_foreign_key} && $form->{work_table_foreign_key_value}){
+        push @{$WHERE},"wt.$form->{work_table_foreign_key}=$form->{work_table_foreign_key_value}"
+    }
+
     $form->{SEARCH_RESULT}->{query_fields}=[];
     unless( scalar(@{$query}) ){
         if($form->{default_find_filter}){

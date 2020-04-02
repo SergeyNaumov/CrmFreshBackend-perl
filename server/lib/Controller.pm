@@ -21,10 +21,8 @@ use CRM::Const;
 use Controller::Doc;
 use lib './lib/extend';
 
-#use CRM::FontAwesome;
+
 my $redirect='';
-# Документация по CRM
-# https://docs.google.com/document/d/15HZe0FP7uXhwViaC6QQ3FL-45rinyH1Z9ApiItfp7S8/edit#heading=h.u72z2f6wm8ll
 sub new{
   my $rules=[];
   my $rules_main=get_rules();
@@ -58,15 +56,46 @@ sub new{
 }
 
 sub get_rules{
-  return [
+    [
       {
         url=>'.*',
         code=>sub{
           my $s=shift;
           $s->{login}=undef;
-          #push @{$s->{APP}->{HEADERS}},['Access-Control-Allow-Origin','*'];
+          
           $s->{db_r}=$s->{connects}->{crm_read};
           $s->{db}=$s->{connects}->{crm_write};
+          
+          if($s->{config}->{use_project}){
+            my $domain=$s->{vars}->{env}->{HTTP_HOST};
+            $s->{project}=$s->{db_r}->query(
+              query=>'SELECT p.* FROM project p  WHERE p.domain=?',
+              values=>[$domain],
+              onerow=>1
+            );
+            unless($s->{project}){
+              $s->print_json({errors=>"домен $domain не найден!"})->end;
+              return;
+            }
+            #print Dumper($s->{project});
+          }
+
+        }
+      },
+      {
+        url=>'^\/logo\.(.*)$',
+        code=>sub{
+          my $s=shift;
+          $s->{stream_out}=1;
+          push @{$s->{APP}->{HEADERS}},("Content-Type","image/png");
+          
+          if($s->{config}->{use_project}){
+            $s->{stream_file}='../logo.png'
+          }
+          else{
+            $s->{stream_file}='../logo.png'
+          }
+          $s->end;
         }
       },
       { # закрываем сессию
@@ -84,26 +113,41 @@ sub get_rules{
           my $R=$s->request_content(from_json=>1);
           my $request={success=>0};
           if($R){
-              $request=CRM::Session::create(
-                's'=>$s,
-                connect=>$s->{db},
-                session_table=>'session',
-                auth_table=>'manager',
-                auth_id_field=>'id',
-                auth_log_field=>'login',
-                auth_pas_field=>'password',
-                login=>"$R->{login}",
-                password=>"$R->{password}",
-                ip=>"$s->{vars}->{env}->{HTTP_X_REAL_IP}",
-                encrypt_method=>'mysql_encrypt',
+              if($s->{config}->{use_project}){
+                    $request=CRM::Session::project_create(
+                      's'=>$s,
+                      connect=>$s->{db},
+                      login=>"$R->{login}",
+                      password=>"$R->{password}",
+                      ip=>"$s->{vars}->{env}->{HTTP_X_REAL_IP}",
+                      encrypt_method=>'mysql_encrypt',
+                      
+                      # ограничения по логину
+                      max_fails_login=>3, # 3 неудачных попытки залогиниться под логином
+                      max_fails_login_interval=>3600, # за 3600 секунд (час)
+                      # ограничения по ip
+                      max_fails_ip=>20,
+                      max_fails_ip_interval=>3600
+                  );
+              }
+              else{
+                    $request=CRM::Session::create(
+                      's'=>$s,
+                      connect=>$s->{db},
+                      login=>"$R->{login}",
+                      password=>"$R->{password}",
+                      ip=>"$s->{vars}->{env}->{HTTP_X_REAL_IP}",
+                      encrypt_method=>'mysql_encrypt',
+                      
+                      # ограничения по логину
+                      max_fails_login=>3, # 3 неудачных попытки залогиниться под логином
+                      max_fails_login_interval=>3600, # за 3600 секунд (час)
+                      # ограничения по ip
+                      max_fails_ip=>20,
+                      max_fails_ip_interval=>3600
+                  );
+              }
 
-                # ограничения по логину
-                max_fails_login=>3, # 3 неудачных попытки залогиниться под логином
-                max_fails_login_interval=>3600, # за 3600 секунд (час)
-                # ограничения по ip
-                max_fails_ip=>20,
-                max_fails_ip_interval=>3600
-            );
             
             if(ref($request) ne 'HASH'){ # если это не хэш -- значит это ошибка
               $request={success=>0,errors=>[$request]};
@@ -117,8 +161,8 @@ sub get_rules{
         code=>sub{
           my $s=shift;
           
-          my $result=CRM::Session::start('s'=>$s,connect=>$s->{db},encrypt_method=>'mysql_encrypt');
-
+          my $result;
+          $result=CRM::Session::start('s'=>$s,connect=>$s->{db},encrypt_method=>'mysql_encrypt');
 
           my $login;
           $login=$s->{login}=$result->{login};
@@ -467,7 +511,16 @@ sub get_rules{
           CRM::ParserExcel::process('s'=>$s,config=>$1);
         }
       },
-
+      # load_document (для документооборота)
+      {
+        url=>'^\/load_document(\/(.+))?$',
+        code=>sub{
+          my $s=shift;
+          require CRM::LoadDocument;
+          CRM::LoadDocument::process($s,$1);
+          $s->end;
+        }
+      },
       # KLADR
       {
         url=>'^\/extend\/KLADR',
@@ -477,41 +530,16 @@ sub get_rules{
           extend::KLADR::go($s)
         }
       },
+      {
+        url=>'^(.+)$',
+        code=>sub{
 
-      # { # 1_to_m: delete
-      #   url=>'^\/1_to_m\/delete\/([^\/]+)\/([^\/]+)\/(\d+)\/(\d+)$',
-      #   code=>sub{
-      #     my $s=shift;
-      #     my ($config,$field_name,$id,$one_to_m_id)=($1,$2,$3,$4);
-      #     CRM::process_1_to_m(
-      #       's'=>$s,action=>'delete',config=>$config,field_name=>$field_name,id=>$id,
-      #       one_to_m_id=>$one_to_m_id,
-      #       script=>'1_to_m'
-      #     );
-      #   }
-      # },
-      # { # 1_to_m: upload file
-      #   url=>'^\/1_to_m\/upload\/([^\/]+)\/([^\/]+)\/(\d+)\/(\d+)$',
-      #   code=>sub{
-      #     my $s=shift;
-      #     my ($config,$field_name,$id,$one_to_m_id)=($1,$2,$3,$4);
-      #     CRM::process_1_to_m(
-      #       's'=>$s,action=>'delete',config=>$config,field_name=>$field_name,id=>$id,
-      #       one_to_m_id=>$one_to_m_id,
-      #       script=>'1_to_m'
-      #     );
-      #   }
-      # }
-      # { # /get/user/10226
-      #   url=>'^\/get\/(.+?)\/(\d+)$',
-      #   code=>sub{
-      #     my $s=shift;
-      #     my $config=$1; my $id=shift;
-      #     my $form=CRM::init($config);
-      #     CRM::Save($form);
-      #   }
-      # }
-
+          my $s=shift;
+          $s->print("unknown url: $1")->end;
+        }
+      }
     ]
 }
+
+
 return 1;
