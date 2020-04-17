@@ -166,8 +166,12 @@ sub get_rules{
 
           my $login;
           $login=$s->{login}=$result->{login};
-          if(`hostname` =~m{^(sv-home|sv-digital)}){ # для локальной отладки пароль не проверяем
+          if(`hostname` =~m{^(sv-HP-EliteBook-2570p|sv-home|sv-digital)}){ # для локальной отладки пароль не проверяем
             $s->{login}='admin'; 
+            $s->{manager}={
+              id=>1,
+              login=>'admin'
+            }
           }
 
           unless($s->{login}){
@@ -188,6 +192,56 @@ sub get_rules{
           my $s=shift;
           $s->print(CRM::get_startpage('s'=>$s))->end;
           #print Dumper()
+        }
+      },
+      {
+        url=>'^\/mainpage$',
+        code=>sub{
+          my $s=shift;
+          my $curdate=CRM::cur_date();
+          if($curdate=~m/^(\d{4})-(\d{2})-(\d{2})$/){
+            $curdate="$3.$2.$1"
+          }
+          if($s->{project}){
+              $s->print_json({
+                curdate=>$curdate,
+                manager=>$s->{db}->query(
+                  query=>'SELECT id,login,name,position, concat("/edit-form/project_manager/",id) link from project_manager where project_id=? and id=?',
+                  values=>[$s->{project}->{id},$s->{manager}->{id}],
+                  onerow=>1,
+                ),
+                news_list=>$s->{db}->query(
+                  query=>'SELECT * from project_crm_news WHERE project_id=? order by registered desc limit 5',
+                  values=>[$s->{project}->{id}]
+                )
+              })
+          }
+          else{
+              
+              $s->print_json(
+                {
+                  curdate=>CRM::cur_date(),
+                  news_list=>[{
+                    header=>"Роструд разъяснил, как будут выплачены зарплаты в нерабочем апреле",
+                    
+                    
+                    registered=>"2020-04-14",
+                    body=>"Все зарплаты за нерабочий из-за распространения коронавируса апрель россияне должны получить в полном объеме, сообщается на Telegram-канале стопкоронавирус.рф.
+                      «Размер сохраненной заработной платы должен соответствовать тому, который работник получил бы, если бы отработал эти дни полностью (отработал норму рабочего времени при повременной оплате, выполнил норму труда при сдельной оплате)», – говорится в сообщении Роструда, передает Telegram-канал стопкоронавирус.рф.
+                      Так, работодатель не вправе, ссылаясь на форс-мажор, отказаться выплачивать зарплату. В то же время работнику может не выплачиваться зарплата, если речь идет о временной нетрудоспособности, отстранении от работы по вине работника, либо о длительном прогуле. Во всех других случаях – изменение режима труда, отпуска, простой – вознаграждение в том или ином размере выплачивается.
+                      Кроме того, Роструд уточнил, что для работников организаций, на которых распространяется указ о нерабочих днях, сохраняемый размер заработной платы не изменяется.
+                      "
+                  }],
+                  manager=>$s->{db}->query(
+                    query=>'SELECT id,login,name,position, concat("/edit-form/manager/",id) link from manager where id=?',
+                    values=>[$s->{manager}->{id}],
+                    onerow=>1,
+                  ),
+                }
+              )
+          }
+          $s->end;
+
         }
       },
       {

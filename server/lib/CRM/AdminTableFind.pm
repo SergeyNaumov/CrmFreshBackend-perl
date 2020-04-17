@@ -235,16 +235,17 @@ sub admin_table_find{ # Поиск результатов
                             }   
                         }
                         else{
-
-                            if($r->{$tbl.'__'.$field->{header_field}}){
-                                #print "tbl: $field->{tablename}\n";
+                            if($field->{db_name}=~m/^func:/){
+                                $value=$r->{$field->{name}};
+                            }
+                            elsif($r->{$tbl.'__'.$field->{header_field}}){
+                                
                                 $value=$r->{$tbl.'__'.$field->{header_field}}
                             }
                             else{
                                 $value='-';
                             }
-
-                        }                
+                        }
                     }
                     elsif($field->{type_orig}=~m{^(filter_extend_)?select_values$}){
                         if($field->{make_change_in_search}){
@@ -523,6 +524,13 @@ sub get_search_tables{
 
 
         }
+
+    }
+    foreach my $f (@{$form->{fields}}){
+        if($f->{db_name}=~m/^func::?(.+)$/){
+            push @{$form->{query_search}->{SELECT_FIELDS}},
+            qq{$1 $f->{name}}
+        }
     }
     # не забываем дёрнуть db_name с func::
 
@@ -538,13 +546,6 @@ sub get_search_where{
     my $alias_from_table; my $table_from_alias;
     my $WHERE=[];
     my $headers=[];
-    if($form->{add_where}){
-        push @{$WHERE},$form->{add_where};
-    }
-    if($form->{work_table_foreign_key} && $form->{work_table_foreign_key_value}){
-        push @{$WHERE},"wt.$form->{work_table_foreign_key}=$form->{work_table_foreign_key_value}"
-    }
-
     $form->{SEARCH_RESULT}->{query_fields}=[];
     unless( scalar(@{$query}) ){
         if($form->{default_find_filter}){
@@ -554,10 +555,6 @@ sub get_search_where{
             foreach my $name (@{$form->{default_find_filter}}){
                 if(my $f=$form->{fields_hash}->{$name}){
                     push @{$form->{SEARCH_RESULT}->{query_fields}},$f;
-                    #my $header={h=>$f->{description},n=>$name,make_sort=>(!$form->{not_order} && !$f->{not_order})};
-                    #if($form->{priority_sort} && $form->{priority_sort}->[0] eq $name){
-                    #    $header->{sorted}=$form->{priority_sort}->[1]
-                    #}
                     push @{$query},[$name,''];
                 }
             }
@@ -570,7 +567,7 @@ sub get_search_where{
         $form->{query_hash}->{$name}=$values;
         # собираем сразу заголовки будущей таблицы
         push @{$form->{SEARCH_RESULT}->{query_fields}},$f;
-        my $header={h=>$f->{description},n=>$name,make_sort=>(!$form->{not_order} && !$f->{not_order})};
+        my $header={h=>$f->{description},n=>$name,make_sort=>(!$form->{not_order})};
         if($form->{priority_sort} && $form->{priority_sort}->[0] eq $name){
             $header->{sorted}=$form->{priority_sort}->[1]
         }
@@ -586,18 +583,26 @@ sub get_search_where{
                 
                 #print Dumper($form->{query_search}->{SELECT_FIELDS});
         }
-        elsif($f->{type}!~m(^(1_to_m|memo)$) && !$f->{not_order}){
+        elsif($f->{type}!~m{^(1_to_m|memo)$} && !$f->{not_order}){
             #print "type: $f->{type} ($f->{name})\n";
             my $o; my $operable_fld;
-           # if($f->{type} eq 'multiconnect'){
-                #$o="$f->{tablename}.$f->{relation_table_header}";
-            #}
+            
             if($f->{type}=~m{^(filter_extend_)?(date|ditetime)$}){
                 $operable_fld="$table.$db_name";
                 $o="$operable_fld desc"
             }
             elsif($f->{type_orig}=~m/^(filter_extend_)?(select_from_table)$/){
-                $operable_fld="$table.$f->{header_field}";
+                if($f->{db_name}=~m/^func::?(.+)/){
+                    $operable_fld=$1;
+                }
+                elsif($f->{header_field}=~m/^func::?(.+)$/){
+                    $operable_fld=$f->{header_field};
+                }
+                else{
+                    $operable_fld="$table.$f->{header_field}";
+                }
+                #print "O-0: $operable_fld\n";
+
                 $o="$operable_fld";
                 
             }
@@ -606,11 +611,23 @@ sub get_search_where{
                 $o=$operable_fld;
             }
             else{
-                $operable_fld="$table.$db_name";
+
+                if($db_name=~m/^func::?(.+)$/){
+                    #$o=$1;
+                    $operable_fld=$1;
+                }
+                else{
+                    $operable_fld="$table.$db_name";
+                }
+
+                
+
                 $o=$operable_fld;
 
             }
-            #print "o: $o ($f->{type}) ; $operable_fld ; $o\n";
+            
+            
+
 
             if($form->{priority_sort}){
                 if($form->{priority_sort}->[0] eq $name){
@@ -618,6 +635,7 @@ sub get_search_where{
                 }
             }
             else{
+
                 push @{$form->{query_search}->{ORDER}},$o;
             }
             
@@ -634,7 +652,13 @@ sub get_search_where{
             if(my $v=$values->[0]){
                 $v=$form->{db}->{connect}->quote($v);
                 $v=~s/^'/%/; $v=~s/'$/%/;
-                push @{$WHERE},qq{ ($table.$db_name like "$v") };
+                if($db_name=~m/^func::?(.+)$/){
+                    push @{$WHERE},qq{ ($db_name like "$v") };
+                }
+                else{
+                    push @{$WHERE},qq{ ($table.$db_name like "$v") };
+                }
+                
             }
             
         }

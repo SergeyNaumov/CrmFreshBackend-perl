@@ -106,8 +106,9 @@ if($form->{action} eq 'add_branch_plain'){
                     $data->{$form->{work_table_foreign_key}}=$form->{work_table_foreign_key_value};
                 }
                 
-                print "!!!!EVENTS!\n";
+                #print "!!!!EVENTS!\n";
                 # EVENTS!!!!
+                $form->{new_values}=$data;
                 CRM::run_event(event=>$form->{events}->{before_insert},description=>'events.before_insert',form=>$form);
                 CRM::run_event(event=>$form->{events}->{before_save},description=>'events.before_save',form=>$form);
                 my $vopr= join ",",(split //,("?"x ($#fields+1)));

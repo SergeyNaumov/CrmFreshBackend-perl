@@ -39,8 +39,8 @@ sub project_create{ # создание сессии для проекта
     if($arg{where}){
         $add_where=qq{ AND $arg{where}};
     }
-    use Data::Dumper;
-    print Dumper($s->{project});
+    #use Data::Dumper;
+    #print Dumper($s->{project});
     # проверяем, сколько было попыток зайти с данного логина
     if($arg{max_fails_login}=~m{^\d+$} && $arg{max_fails_login_interval}=~m{^\d+$}){
         my $fails=$arg{connect}->query(
@@ -208,7 +208,7 @@ sub create{ # создание сессии
             onevalue=>1
         );
     }
-
+    #print "auth_id: $auth_id\n\n";
     if($auth_id){ # залогинились
         $s->{manager}={
             id=>$auth_id,
@@ -268,6 +268,7 @@ sub start{
             onevalue=>1,
             errors=>$errors
     );
+
     if($ok){
         my $manager=$arg{connect}->query(query=>"select * from $manager_table where id=?",values=>[$user_id],onerow=>1,errors=>$errors);
         delete($manager->{password});
@@ -275,6 +276,7 @@ sub start{
         unless($manager){
             $manager={login=>''}
         }
+        $s->{manager}={login=>$manager->{login},id=>$manager->{id}};
         return {login=>$manager->{login},errors=>$errors};
     }
     return {login=>'',errors=>$errors};

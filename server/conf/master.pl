@@ -6,7 +6,7 @@ $form={
 	make_delete => '0',
   not_create=>1,
   read_only=>1,
-  #explain=>1,
+  explain=>1,
 	tree_use => '0',
 	events=>{
 		permissions=>[
@@ -83,6 +83,10 @@ $form={
       tablename=>'mm',
       header_field=>'header',
       value_field=>'id',
+      before_code=>sub{
+        my $e=shift;
+        #pre($e);
+      },
       regexp_rules=>[
         '/^\d+$/','обязательно выберите главного мастера'
       ],

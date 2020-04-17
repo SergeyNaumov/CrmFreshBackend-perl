@@ -46,7 +46,7 @@
     my ($number_today,$dat)=($item->{number_today},$item->{dat});
     my $dogovor_number=qq{$company_role}.'-'.sprintf("%03d",$number_today).'/'.$dat;
 
-    print "number: $dogovor_number\n";
+    #print "number: $dogovor_number\n";
     return ($dogovor_number,$number_today);
   },
 
