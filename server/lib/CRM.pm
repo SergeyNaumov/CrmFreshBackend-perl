@@ -58,12 +58,12 @@ sub get_startpage{
     my $manager;
     if($s->{config}->{use_project}){
       $manager=$s->{db}->query(
-        query=>'select * from project_manager where project_id=? and login=?',
+        query=>'select *,concat("/edit_form/project_manager/",id) link from project_manager where project_id=? and login=?',
         values=>[$s->{project}->{id}, $s->{login}],onerow=>1
       );
     }
     else{
-      $manager=$s->{db}->query(query=>'select * from manager where login=?',values=>[$s->{login}],onerow=>1);
+      $manager=$s->{db}->query(query=>'select *,concat("/edit_form/manager/",id) link from manager where login=?',values=>[$s->{login}],onerow=>1);
     }
     
     delete $manager->{password};

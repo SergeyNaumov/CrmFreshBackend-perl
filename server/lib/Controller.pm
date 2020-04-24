@@ -211,7 +211,7 @@ sub get_rules{
                   onerow=>1,
                 ),
                 news_list=>$s->{db}->query(
-                  query=>'SELECT * from project_crm_news WHERE project_id=? order by registered desc limit 5',
+                  query=>q{SELECT header,DATE_FORMAT(a.registered, '%e.%m.%y') registered,body from project_crm_news WHERE project_id=? order by registered desc limit 5},
                   values=>[$s->{project}->{id}]
                 )
               })
@@ -221,17 +221,9 @@ sub get_rules{
               $s->print_json(
                 {
                   curdate=>CRM::cur_date(),
-                  news_list=>[{
-                    header=>"Роструд разъяснил, как будут выплачены зарплаты в нерабочем апреле",
-                    
-                    
-                    registered=>"2020-04-14",
-                    body=>"Все зарплаты за нерабочий из-за распространения коронавируса апрель россияне должны получить в полном объеме, сообщается на Telegram-канале стопкоронавирус.рф.
-                      «Размер сохраненной заработной платы должен соответствовать тому, который работник получил бы, если бы отработал эти дни полностью (отработал норму рабочего времени при повременной оплате, выполнил норму труда при сдельной оплате)», – говорится в сообщении Роструда, передает Telegram-канал стопкоронавирус.рф.
-                      Так, работодатель не вправе, ссылаясь на форс-мажор, отказаться выплачивать зарплату. В то же время работнику может не выплачиваться зарплата, если речь идет о временной нетрудоспособности, отстранении от работы по вине работника, либо о длительном прогуле. Во всех других случаях – изменение режима труда, отпуска, простой – вознаграждение в том или ином размере выплачивается.
-                      Кроме того, Роструд уточнил, что для работников организаций, на которых распространяется указ о нерабочих днях, сохраняемый размер заработной платы не изменяется.
-                      "
-                  }],
+                   news_list=>$s->{db}->query(
+                    query=>q{SELECT header,DATE_FORMAT(registered, '%e.%m.%y') registered, body from crm_news order by registered desc limit 5},
+                  ),
                   manager=>$s->{db}->query(
                     query=>'SELECT id,login,name,position, concat("/edit-form/manager/",id) link from manager where id=?',
                     values=>[$s->{manager}->{id}],
