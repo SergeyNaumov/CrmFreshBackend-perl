@@ -51,15 +51,17 @@ $form={
             admin-table<br>
             admin-tree<br>
             const<br>
-            parser-excel
+            parser-excel<br>
+
           </div>
         },
-        # values=>[
-        #   {v=>'admin-table',d=>'admin-table'},
-        #   {v=>'admin-tree',d=>'admin-tree'},
-        #   {v=>'const',d=>'const'},
-        #   {v=>'parser-excel',d=>'parser-excel'},
-        # ],
+        values=>[
+          {v=>'admin-table',d=>'admin-table'},
+          {v=>'admin-tree',d=>'admin-tree'},
+          {v=>'const',d=>'const'},
+          {v=>'parser-excel',d=>'parser-excel'},
+          {v=>'documentation',d=>'documentation'},
+        ],
         tab=>'main'
       },
       {

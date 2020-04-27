@@ -36,7 +36,15 @@ sub process{
 
 
     my $field=$form->{fields_hash}->{$name};
-
+    my $docpack_foreign_key;
+    
+    if($field->{docpack_foreign_key}=~m/^[a-zA-Z0-9_]+$/){
+        $docpack_foreign_key=$field->{docpack_foreign_key}
+    }
+    else{
+        $docpack_foreign_key='user_id'
+    }
+    
     if($action eq 'list'){
         # пакеты документов
         my $list;
@@ -77,7 +85,7 @@ sub process{
                         LEFT JOIN ur_lico_access_only a ON (a.ur_lico_id=ul.id and a.manager_id=?) 
                         LEFT JOIN manager m ON (m.id=dp.manager_id)
                     WHERE
-                        dp.user_id=? 
+                        dp.}.$docpack_foreign_key.q{=? 
                     ORDER BY dp.id desc
                 },
                 values=>[$form->{manager}->{id},$form->{id}],
@@ -125,7 +133,7 @@ sub process{
         return ;
     }
     elsif($action eq 'get_bills'){
-        my $list=get_bills($s,$form,$R);
+        my $list=get_bills($s,$form,$R,$docpack_foreign_key);
         print_response($s,$form,list=>$list); 
 
     }
@@ -166,7 +174,7 @@ sub process{
                 table=>'bill',
                 data=>$data,
             );
-            my $list=get_bills($s,$form,$R);
+            my $list=get_bills($s,$form,$R,$docpack_foreign_key);
             $form->{db}->{connect}->commit;
             $form->{db}->{connect}->{AutoCommit}=1;
         }
@@ -199,8 +207,7 @@ sub process{
             $tarif_list=$form->{db}->query(query=>'select id v,header d from tarif where enabled=1 order by header');
             if($need_manager){
                 $manager_list=$form->{db}->query(
-                    query=>'select id v,name d from manager where project_id=? and enabled=1 order by name',
-                    values=>[$s->{project}->{id}]
+                    query=>'select id v,name d from manager where enabled=1 order by name',
                 );
             }
         }
@@ -233,14 +240,16 @@ sub process{
             }
             else{
                 my $data={
-                        user_id=>$form->{id},
+                        "$docpack_foreign_key"=>$form->{id},
                         tarif_id=>$R->{tarif_id},
                         ur_lico_id=>$R->{ur_lico_id},
                         manager_id=>$manager_id,
                         registered=>'func::now()'
                 };
-                if($s->{config}->{use_project}){
-                    delete($data->{user_id});
+                unless($s->{config}->{use_project}){
+                    $data->{$docpack_foreign_key}=$form->{id}
+                }
+                else{
                     $data->{client_id}=$form->{id},
                     $data->{project_id}=$form->{project}->{id},
 
@@ -320,7 +329,7 @@ sub need_manager_field{
     return ($form->{manager}->{login} eq 'admin' || $form->{manager}->{permissions}->{admin_paids})
 }
 sub get_bills{ # список счетов
-    my ($s,$form,$R)=@_;
+    my ($s,$form,$R,$docpack_foreign_key)=@_;
     my $list=[];
     if($R->{dogovor_id}=~m/^\d+$/){
 
@@ -348,7 +357,7 @@ sub get_bills{ # список счетов
                         docpack dp
                         JOIN bill b ON b.docpack_id=dp.id
                     where
-                        dp.user_id=? and b.docpack_id=?
+                        dp.}.$docpack_foreign_key.q{=? and b.docpack_id=?
                     order by b.id desc
                 },
                 values=>[$form->{id},$R->{dogovor_id}]

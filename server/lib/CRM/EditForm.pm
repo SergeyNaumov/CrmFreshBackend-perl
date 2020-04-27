@@ -45,13 +45,19 @@ sub processEditForm{
             run_event(event=>$form->{events}->{after_save},description=>'events.after_save',form=>$form) if(!errors($form));
             
         }
-        
-        $s->print_json({
+        my $response={
             success=>errors($form)?0:1,
             errors=>$form->{errors},
             log=>$form->{log},
             id=>"$form->{id}"
-        });
+        };
+        #if(!errors($form)){
+        #    $form=CRM::read_conf(%arg);
+        #    process_edit_form_fields($form);
+        #    $response->{fields}=$s->clean_json($form->{edit_form_fields});
+        #}
+
+        $s->print_json($response);
     }
     elsif($form->{action} eq 'delete_file'){
         DeleteFile(form=>$form,'s'=>$s);
@@ -66,39 +72,9 @@ sub processEditForm{
                 $form->{read_only}=1;
             }
         }
+        process_edit_form_fields($form);
 
 
-        foreach my $f (@{$form->{edit_form_fields}}){
-            # убираем то, что пользователю видеть ни к чему
-            if($f->{type} eq 'password'){
-                delete($f->{encrypt_method}) if(exists $f->{encrypt_method});
-                if($f->{methods_send} && ref($f->{methods_send}) eq 'ARRAY'){
-                    foreach my $m (@{$f->{methods_send}}){
-                        delete $m->{code}
-                    }
-                }
-
-            }
-            elsif($f->{type} eq 'file' && $f->{value}){
-                my $v=$f->{value};
-                my ($filename_without_ext,$ext);
-                if($v=~m/^(.+)\.([^\.]+)$/){
-                    ($filename_without_ext,$ext)=($1,$2);
-                }
-                if($f->{resize}){
-                    foreach my $r (@{$f->{resize}}){
-                        my $file=$r->{file};
-                        $file=~s/<%filename_without_ext%>/$filename_without_ext/g;
-                        $file=~s/<%ext%>/$ext/g;
-                        $r->{loaded}=$f->{filedir}.'/'.$file;
-                        $r->{loaded}=~s/^\.\//\//;
-                    }
-                }
-            }
-            #elsif($f->{type} eq 'select_from_table'){
-            #    $f->{values}=get_values_for_select_from_table($f,$form,$s);
-            #}
-        }
         $s->print_json({
                     title=>$form->{title},
                     success=>scalar(@{$form->{errors}})?0:1,
@@ -118,7 +94,40 @@ sub processEditForm{
 
 }
 
+sub process_edit_form_fields{
+    my $form=shift;
+    foreach my $f (@{$form->{edit_form_fields}}){
+        # убираем то, что пользователю видеть ни к чему
+        if($f->{type} eq 'password'){
+            delete($f->{encrypt_method}) if(exists $f->{encrypt_method});
+            if($f->{methods_send} && ref($f->{methods_send}) eq 'ARRAY'){
+                foreach my $m (@{$f->{methods_send}}){
+                    delete $m->{code}
+                }
+            }
 
+        }
+        elsif($f->{type} eq 'file' && $f->{value}){
+            my $v=$f->{value};
+            my ($filename_without_ext,$ext);
+            if($v=~m/^(.+)\.([^\.]+)$/){
+                ($filename_without_ext,$ext)=($1,$2);
+            }
+            if($f->{resize}){
+                foreach my $r (@{$f->{resize}}){
+                    my $file=$r->{file};
+                    $file=~s/<%filename_without_ext%>/$filename_without_ext/g;
+                    $file=~s/<%ext%>/$ext/g;
+                    $r->{loaded}=$f->{filedir}.'/'.$file;
+                    $r->{loaded}=~s/^\.\//\//;
+                }
+            }
+        }
+        #elsif($f->{type} eq 'select_from_table'){
+        #    $f->{values}=get_values_for_select_from_table($f,$form,$s);
+        #}
+    }
+}
 sub save_form{
     my %arg=@_;
     my $form=$arg{form}; my $s=$arg{'s'};

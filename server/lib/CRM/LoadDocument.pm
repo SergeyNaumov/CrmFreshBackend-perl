@@ -16,9 +16,16 @@ $Data::Dumper::Useperl = 1;
 }
 # хак для Data::Dumper + utf8
 
+my $user_table='user'; 
+my $docpack_foreign_key='user_id'; 
 my ($db,$s,$const,$env,$errors);
 sub process{
     $s=shift; my $request_filename=shift; $db=$s->{db_r}; $env=$s->{vars}->{env}; $errors=[];
+    if(exists $s->{config}->{docpack}){
+      $user_table=$s->{config}->{docpack}->{user_table} if($s->{config}->{docpack}->{user_table});
+      $docpack_foreign_key=$s->{config}->{docpack}->{docpack_foreign_key} if($s->{config}->{docpack}->{docpack_foreign_key});
+    }
+    print Dumper({user_table=>$user_table});
     my $filename_prefix;
     if($s->{config}->{use_project}){
       $const={
@@ -83,7 +90,7 @@ sub process{
       }
       else{
         $data=
-            $db->query(query=>q{
+            $db->query(query=>qq{
               SELECT
                 if(requis.inn is not null, requis.inn,u.inn) inn, 
                 if(requis.firm is not null, requis.firm,u.firm) firm,
@@ -108,9 +115,9 @@ sub process{
                 DATE_FORMAT(dogovor.registered, '%e %M %Y') dogovor_from, DATE_FORMAT(bill.registered, '%e %M %Y') bill_from,
                 bill.payment_order, bill.registered bill_registered, bill.service_name bill_service_name
               FROM
-                user u 
+                $user_table u 
                 LEFT JOIN manager m ON (u.manager_id =m.id)
-                JOIN docpack dp ON dp.user_id = u.id
+                JOIN docpack dp ON dp.$docpack_foreign_key = u.id
                 LEFT JOIN dogovor  ON (dp.id=dogovor.docpack_id)
                 LEFT JOIN bill ON (dp.id=bill.docpack_id)
                 LEFT JOIN buhgalter_card_requisits requis ON (bill.requisits_id=requis.id)
@@ -177,7 +184,7 @@ sub process{
       }
       else{
              $data=
-              $db->query(query=>q{
+              $db->query(query=>qq{
                 SELECT
                   requis.*,
                   m.name manager_name,
@@ -201,9 +208,9 @@ sub process{
                   round(act.summ - (act.summ/ if(YEAR(act.registered)<2019,1.18,1.20) ),2) act_summ_nds, bill.payment_order,bill.paid_date paid_date,
                   bill.service_name bill_service_name
                 FROM
-                  user u 
+                  $user_table u 
                   LEFT JOIN manager m ON (u.manager_id =m.id)
-                  JOIN docpack dp ON dp.user_id = u.id
+                  JOIN docpack dp ON dp.$docpack_foreign_key = u.id
                   JOIN dogovor  ON (dp.id=dogovor.docpack_id)
                   JOIN bill ON (dp.id=bill.docpack_id)
                   JOIN buhgalter_card_requisits requis ON (bill.requisits_id=requis.id)
@@ -265,7 +272,7 @@ sub process{
       }
       else{
             $data=
-                $db->query(query=>q{
+                $db->query(query=>qq{
                   SELECT
                     u.*,
                     m.name manager_name,
@@ -288,9 +295,9 @@ sub process{
                     round(bill.summ - (bill.summ/  if(YEAR(bill.registered)<2019,1.18,1.20)  ),2) act_summ_nds, bill.summ act_summ,
                     bill.payment_order
                   FROM
-                    user u 
+                    $user_table u 
                     LEFT JOIN manager m ON (u.manager_id =m.id)
-                    JOIN docpack dp ON dp.user_id = u.id
+                    JOIN docpack dp ON dp.$docpack_foreign_key = u.id
                     JOIN dogovor  ON (dp.id=dogovor.docpack_id)
                     JOIN bill ON (dp.id=bill.docpack_id)
                     JOIN avance_fact ON (avance_fact.bill_id=bill.id)
@@ -340,7 +347,7 @@ sub process{
       }
       else{
           $data=
-          $db->query(query=>q{
+          $db->query(query=>qq{
             SELECT
               u.*,
               m.name manager_name,
@@ -357,36 +364,53 @@ sub process{
               ur_lico.gen_dir_f_in ur_lico_gen_dir_f_in, dogovor.number dogovor_number, 
               DATE_FORMAT(dogovor.registered, '%e %M %Y') dogovor_from, dogovor.registered dogovor_registered, dp.ur_lico_id
             FROM
-              user u 
+              $user_table u 
               LEFT JOIN manager m ON (u.manager_id =m.id)
-              JOIN docpack dp ON dp.user_id = u.id
+              JOIN docpack dp ON dp.$docpack_foreign_key = u.id
               LEFT JOIN dogovor  ON (dp.id=dogovor.docpack_id)
               LEFT JOIN tarif t ON (t.id = dp.tarif_id)
               LEFT JOIN blank_document b_dog ON (b_dog.id = t.blank_dogovor_id)
               LEFT JOIN ur_lico ON (ur_lico.id=dp.ur_lico_id)
             WHERE dp.id = ?
           },values=>[$id],onerow=>1);
+          
       }
 
 
     }
 
 
-
+    my $error_page='';
     $data->{firm}=~s{&}{&amp;}g; # OO не любит амперсанты в названии
     #check_old_rekvisits($type,$data);
 
     if($type eq 'dogovor'){
       $filename_prefix='dogovor_'.$data->{dogovor_number};
       $const->{template}=$data->{dogovor_blank};
-
+      unless($data->{dogovor_blank}){
+        $error_page=qq{
+          Ошибка! в карточке <a href="/edit_form/tarif/$data->{tarif_id}" target="_blank">тарифа</a> не выбран бланк для договора!
+        }
+      }
     }
     elsif($type eq 'bill'){
       $filename_prefix='bill_'.$data->{bill_number};
       $filename_prefix=~s/\//-/g;
       $filename_prefix=~s/B/S/g;
-      print Dumper($data);
+      
       $const->{template}=$data->{bill_blank};
+      if(!$data->{bill_blank}){
+        $error_page=qq{Ошибка! в карточке <a href="/edit_form/tarif/$data->{tarif_id}" target="_blank">тарифа</a> не выбран бланк для счёта!}
+      }
+
+      unless(-f "$const->{template_path}/$const->{template}"){
+        $error_page=qq{
+          Ошибка! указанный в карточке <a href="/edit_form/tarif/$data->{tarif_id}" target="_blank">тарифа</a>
+          бланк для счёта не найден на сервере<br/>
+          директория: $const->{template_path}<br/>
+          наименование файла: $const->{template}<br/>
+        }
+      }
     }
     elsif($type eq 'paid'){
       if($s->param('debug')){
@@ -394,11 +418,12 @@ sub process{
         #pre($data); exit;
       }
       $filename_prefix='paid_document_for_bill_'.$data->{act_number};
-      if($s->{config}->{use_project}){
+      if($s->{config}->{use_project} || -f './files/system/payment.odt'){
         $const->{template_path}='./files/system';
         $const->{template}='payment.odt';
       }
       else{
+
         $const->{template}=$db->get(
           select_fields=>'value',
           table=>'crm_const',
@@ -408,20 +433,8 @@ sub process{
       }
 
       unless($const->{template}){
-        
-        $s->print(q{
-          <html>
-            <head>
-              <style>body {margin: 100px; text-align: center;}</style>
-            </head>
-            <body>
-              <p>
-                Бланк для платёжки не найден! загрузите его в константы системы или обратитесь к разработчику!<br>
-                <a href='' onclick="history.back()">назад</a>
-              </p>
-            </body>
-          </html>
-        })->end
+        $error_page=qq{Бланк для платёжки не найден! загрузите его в константы системы или обратитесь к разработчику!<br>};
+
         
       }
     }
@@ -453,7 +466,22 @@ sub process{
       return;
     }
 
-
+    if($error_page){
+            $s->print(qq{
+              <html>
+                <head>
+                  <style>body {margin: 100px; text-align: center;}</style>
+                </head>
+                <body>
+                  <p>
+                    $error_page
+                    <a href='' onclick="history.back()">назад</a>
+                  </p>
+                </body>
+              </html>
+            })->end;
+            return;
+    }
     if($data->{registered}=~m/^(\d+)-(\d+)-(\d+)/){
       ($data->{from_d},$data->{from_m},$data->{from_y})=($3,get_mon_name($2),$1);
       $data->{registered_num}=qq{$3.$2.$1};
@@ -538,7 +566,7 @@ sub process{
     foreach my $k (keys %{$data}){
           Encode::_utf8_off($data->{$k});
     }
-    print Dumper({const=>$const});
+    
     my $tmp_dir;
     if($s->{config}->{use_project}){
       $tmp_dir='./tmp/project_'.$s->{project}->{id}.'__'.$s->{manager}->{login};

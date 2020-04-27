@@ -16,6 +16,7 @@ use CRM::Autocomplete;
 use CRM::Ajax;
 use CRM::Events;
 use CRM::Const;
+use CRM::Documentation;
 
 # документы для конкретного проекта
 use Controller::Doc;
@@ -194,7 +195,7 @@ sub get_rules{
           #print Dumper()
         }
       },
-      {
+      { # mainpage
         url=>'^\/mainpage$',
         code=>sub{
           my $s=shift;
@@ -220,12 +221,12 @@ sub get_rules{
               
               $s->print_json(
                 {
-                  curdate=>CRM::cur_date(),
-                   news_list=>$s->{db}->query(
+                  curdate=>$curdate,
+                  news_list=>$s->{db}->query(
                     query=>q{SELECT header,DATE_FORMAT(registered, '%e.%m.%y') registered, body from crm_news order by registered desc limit 5},
                   ),
                   manager=>$s->{db}->query(
-                    query=>'SELECT id,login,name,position, concat("/edit-form/manager/",id) link from manager where id=?',
+                query=>'SELECT id,login,name,position, concat("/edit-form/manager/",id) link from manager where id=?',
                     values=>[$s->{manager}->{id}],
                     onerow=>1,
                   ),
@@ -236,10 +237,17 @@ sub get_rules{
 
         }
       },
-      {
+      { 
         url=>'/get-events',
         code=>sub{
           CRM::Events::process(shift);
+        }
+      },
+      {
+        url=>'^\/documentation\/([^\/]+)$',
+        code=>sub{
+          my $s=shift; my $config=$1;
+          CRM::Documentation::go($s,$config);
         }
       },
       { # список фильтров для admin_table
@@ -425,11 +433,8 @@ sub get_rules{
             field_name=>$2,
             child_field_name=>$3,
             id=>$4
-            
-            
           );
         }
-
       },
       # 1_to_m: sort
       {

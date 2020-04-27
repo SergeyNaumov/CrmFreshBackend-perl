@@ -20,9 +20,14 @@ sub get{
               engine=>'mysql'
           }
       },
+      docpack=>{
+        user_table=>'user',
+        docpack_foreign_key=>'user_id'
+      },
       const=>{
           project_id=>''
       },
+
       events=>[
           'quiz'
       ]
