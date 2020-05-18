@@ -335,6 +335,7 @@ $form={
           type=>'file',
           filedir=>'./files/article_galery2',
           name=>'photo',
+          max_size=>1000000,
           preview=>'50x0',
           resize=>[
             {
@@ -450,6 +451,7 @@ $form={
       filter_on=>1,
       default_off=>1,
       full_str=>1,
+      not_clear=>1,
       before_code=>sub{
         my $e=shift;
         

@@ -34,27 +34,6 @@ sub get_startpage{
     my $errors=[];
     my $left_menu;
     my ($manager_menu_table);
-    if($s->{config}->{use_project}){
-      $manager_menu_table='project_manager_menu'
-    }
-    else{
-      $manager_menu_table='manager_menu'
-    }
-    if($s->{config}->{menu}){
-      $left_menu=$s->{config}->{menu};
-    }
-    else{
-
-      $left_menu=$s->{db}->query(
-        query=>'SELECT * from '.$manager_menu_table.' where parent_id is null order by sort',
-        errors=>$errors,
-        tree_use=>1
-      );
-    }
-
-    
-    my $cur_year=cur_year();
-    $s->{config}->{copyright}=~s/\{cur_year\}/$cur_year/g;
     my $manager;
     if($s->{config}->{use_project}){
       $manager=$s->{db}->query(
@@ -64,7 +43,60 @@ sub get_startpage{
     }
     else{
       $manager=$s->{db}->query(query=>'select *,concat("/edit_form/manager/",id) link from manager where login=?',values=>[$s->{login}],onerow=>1);
+      $manager->{permissions}=$s->{db}->query(query=>'SELECT permissions_id from manager_permissions where manager_id=?',values=>[$manager->{id}],massive=>1);
     }
+
+    if($s->{config}->{use_project}){
+      $manager_menu_table='project_manager_menu';
+      $left_menu=$s->{db}->query(
+        query=>'SELECT * from '.$manager_menu_table.' where parent_id is null order by sort',
+        errors=>$errors,
+        tree_use=>1
+      );
+    }
+    else{
+
+      my $perm_str='0';
+      if( scalar(@{$manager->{permissions}}) ){
+        $perm_str=join(',',@{$manager->{permissions}})
+      }
+      $left_menu=$s->{db}->query(
+        query=>q{
+          SELECT
+            mm.*,group_concat(concat(mmp.permission_id,':',denied) SEPARATOR ';') perm
+          from
+            manager_menu mm
+            LEFT JOIN manager_menu_permissions mmp ON mmp.menu_id=mm.id
+          where
+            mm.parent_id is null AND  
+            (
+              mmp.id is null
+                OR 
+              (mmp.denied=0 and mmp.permission_id in (}.$perm_str.q{) )
+                OR
+              (mmp.denied=1 and mmp.permission_id not in (}.$perm_str.q{) ) 
+            )
+          GROUP BY mm.id
+          ORDER BY mm.sort
+        },
+        errors=>$errors,
+        tree_use=>1
+      );
+
+      my $manager_menu_permissions
+    }
+    if($s->{config}->{menu}){
+      $left_menu=$s->{config}->{menu};
+    }
+    else{
+
+
+    }
+
+    
+    my $cur_year=cur_year();
+    $s->{config}->{copyright}=~s/\{cur_year\}/$cur_year/g;
+
     
     delete $manager->{password};
     return $s->to_json(

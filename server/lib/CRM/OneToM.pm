@@ -366,7 +366,7 @@ sub process{
           my $value=$R->{value};
           my $id=$R->{cur_id};
           
-          if(scalar @{$child_field->{regexp_rules}} ){ # проверка
+          if( $child_field->{regexp_rules} && ref($child_field->{regexp_rules}) eq 'ARRAY' && (scalar @{$child_field->{regexp_rules}} ) ){ # проверка
             my $j=0;
             while($j < scalar @{$child_field->{regexp_rules}}){
               my $regexp=$child_field->{regexp_rules}->[$j];

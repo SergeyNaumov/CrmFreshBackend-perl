@@ -147,7 +147,7 @@ sub save_form{
         if(is_wt_field($f)   ){ # значения для work_table
             # проверки, преобразования перед сохранением
             
-            if($f->{type}=~m/^(select_values|select_from_table)$/ && !$v){
+            if($f->{type}=~m/^(select_values|select_from_table)$/ && !$v && $v ne '0'){
                 next;
             }
             if($f->{type} eq 'date'){
