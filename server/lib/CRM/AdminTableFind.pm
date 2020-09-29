@@ -308,12 +308,14 @@ sub admin_table_find{ # Поиск результатов
         $form->{SEARCH_RESULT}->{output}=$output; 
         $form->{explain_query}='' unless($form->{explain_query});
         $form->{out_before_search}=[] unless($form->{out_before_search});
+        $form->{out_after_search}=[] unless($form->{out_after_search});
         $s->print_json(
             $s->clean_json({
                 success=>errors($form)?0:1,
                 results=>$form->{SEARCH_RESULT},
                 errors=>$form->{errors},
                 out_before_search=>$form->{out_before_search},
+                out_after_search=>$form->{out_after_search},
                 explain_query=>$form->{explain_query}
             })
         )->end;
