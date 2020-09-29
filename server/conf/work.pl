@@ -80,7 +80,7 @@ $form={
       my $result=[];
       
       my $master=$form->{db}->query(
-        query=>'SELECT id from master where tnumber=?',
+        query=>'SELECT id from main_master where tnumber=?',
         values=>[$v->{num_sv2}], onerow=>1
       );
       if($master){
@@ -382,12 +382,13 @@ $form={
             foreach my $d2 (@{$d->{parents}}){
               
               # пропускаем регион "Москва", если у нас город "Москва"
+              if($d2->{name} eq 'Москва' && $d2->{contentType} ne 'city'){
+                next
+              }
               if($d2->{zip} eq '123182' && $d2->{contentType} eq 'city'){
                 pop @res;
               }
-              if($d2->{zip} eq '123182' && $d2->{contentType} eq 'cityOwner'){
-                next;
-              }
+
               push @res,"$d2->{typeShort} $d2->{name}"
             }
 

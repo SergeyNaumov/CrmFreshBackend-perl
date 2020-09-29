@@ -145,6 +145,8 @@ sub UploadFile{
                         height=>"$height",
                         grayscale=>$r->{grayscale}?$r->{grayscale}:'',
                         composite_file=>$r->{composite_file}?$r->{composite_file}:'',
+                        composite_gravity=>$r->{composite_gravity}?$r->{composite_gravity}:'',
+                        composite_resize=>$r->{composite_resize}?$r->{composite_resize}:'',
                         quality=>$r->{quality}?$r->{quality}:''
                     );
                 }
@@ -216,7 +218,8 @@ sub resize{
         if($arg{composite_resize}){
             $layer->Resize(geometry=>$arg{composite_resize});
         }
-        $image->Composite(image=>$layer,gravity=>'SouthEast',x=>10,y=>10); # compose=>'Atop',x=>10, y=>20
+        $arg{composite_gravity}='center' unless($arg{composite_gravity});
+        $image->Composite(image=>$layer,gravity=>$arg{composite_gravity}); # ,x=>10,y=>10 compose=>'Atop',x=>10, y=>20
 
         $layer=undef;
     }
