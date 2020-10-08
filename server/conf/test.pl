@@ -37,17 +37,33 @@ $form={
     ],
     fields=>[ 
 
-       {
-            description=>'Wysiwyg',
-            type=>'wysiwyg',
-            name=>'wysiwyg',
-            not_filter=>1,
-            tab=>'wysiwyg'
-        },
+       # {
+       #      description=>'Wysiwyg',
+       #      type=>'wysiwyg',
+       #      name=>'wysiwyg',
+       #      not_filter=>1,
+       #      tab=>'wysiwyg'
+       #  },
+        # {
+        #     description=>'Текстовое поле',
+        #     type=>'text',
+        #     name=>'header',
+        #     change_in_search=>1,
+        #     tab=>'plain'
+        # },
         {
-            description=>'Текстовое поле',
+            description=>'Адрес',
             type=>'text',
-            name=>'header',
+
+            name=>'address',
+            subtype=>'dadata_address',
+            dadata=>{
+                API_KEY=>'0504bf475461ecb2b0223936a54ea814d2fc59d2',
+                SECRET_KEY=>'60df5c61174703321131e32104288e324733a2f5',
+
+            },
+            prefix_list_header=>'Укажите регион',
+            prefix_list=>['Москва','Московская Область','Калужская Область'],
             change_in_search=>1,
             tab=>'plain'
         },
@@ -59,18 +75,18 @@ $form={
         #     full_str=>1,
         #     tab=>'plain'
         # },
-        {
-            description=>'checkbox',
-            type=>'checkbox',
-            name=>'checkbox',
-            tab=>'plain'
-        },
-        {
-            description=>'switch',
-            type=>'switch',
-            name=>'switch',
-            tab=>'plain'
-        },
+        # {
+        #     description=>'checkbox',
+        #     type=>'checkbox',
+        #     name=>'checkbox',
+        #     tab=>'plain'
+        # },
+        # {
+        #     description=>'switch',
+        #     type=>'switch',
+        #     name=>'switch',
+        #     tab=>'plain'
+        # },
         {
             description=>'Дата',
             type=>'date',

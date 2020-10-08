@@ -581,6 +581,15 @@ sub get_rules{
           extend::KLADR::go($s)
         }
       },
+      # DADATA
+      {
+        url=>'^\/extend\/DADATA',
+        code=>sub{
+          my $s=shift;
+          require extend::DADATA;
+          extend::DADATA::go($s)
+        }
+      },
       {
         url=>'^(.+)$',
         code=>sub{
