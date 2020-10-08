@@ -216,33 +216,34 @@ sub get_values_for_select_from_table{ # получаем список значе
   else{
       $query.=' ORDER BY '.($f->{tree_use}?'parent_id':$f->{header_field});
   }
-  #print "q: $query\n";
-  my $list=$form->{db}->query(query=>$query,errors=>$form->{errors});
-  unshift @{$list}, {v=>0,d=>'не выбрано'};
-  if($f->{tree_use}){
-    my $tree_list=[];
-    my $hash={};
-    foreach my $l (@{$list}){
-      $hash->{$l->{v}}=$l;
-      if(!$l->{parent_id}){
-        push @{$tree_list},$l;
-      }
-      else{
-        push @{ $hash->{$l->{parent_id}}->{children} },$l
-      }
-    }
-    $list=[];
-    #print Dumper($tree_list);
-    tree_to_list($tree_list,$list,0);
-    #print Dumper($list);
-    #$list=$tree_list;
+  my $list;
+  if($f->{list}){
+    $list=$f->{list}
   }
   else{
-    # foreach my $v (@{$list}){
-    #   if($v=~m{^\d+$}){$v->{v}=$v->{v}+0;}
-    # }
-    #use Data::Dumper;print Dumper($list);
+    $list=$form->{db}->query(query=>$query,errors=>$form->{errors});
+    unshift @{$list}, {v=>0,d=>'не выбрано'};
+    if($f->{tree_use}){
+      my $tree_list=[];
+      my $hash={};
+      foreach my $l (@{$list}){
+        $hash->{$l->{v}}=$l;
+        if(!$l->{parent_id}){
+          push @{$tree_list},$l;
+        }
+        else{
+          push @{ $hash->{$l->{parent_id}}->{children} },$l
+        }
+      }
+      $list=[];
+      #print Dumper($tree_list);
+      tree_to_list($tree_list,$list,0);
+      #print Dumper($list);
+      #$list=$tree_list;
+    }
   }
+
+
   return $list
 }
 sub tree_to_list{

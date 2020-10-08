@@ -38,7 +38,7 @@ my $after_search=sub{
     my $s=$arg{s}; my $form=$arg{form};
     my $filepath='files/tmp';
     my $filename=$form->{config}.'_'. $form->{manager}->{login}.'.csv';
-
+    #print Dumper(\%arg);
     unless(-e ){
         mkdir $filepath
     }
@@ -54,19 +54,20 @@ my $after_search=sub{
     clean_dir('./files/tmp');
 
     my $data={
-        list=>[
-            {
-                dat_pov=>'2019-01-01',
-                type_wather=>'Type counterZZ2',
-                zav_num=>int(rand()),
-                type_wather=>'ХВС',
-                result=>'годен',
-                owner=>'Иванов Иван Иванович',
-                number=>'8378728772', # номер свидетельства
-                master_fio=>'Болотов Владимир Алексеевич',
-            },
+        list=>$arg{result}
+        # list=>[
+        #     {
+        #         dat_pov=>'2019-01-01',
+        #         type_wather=>'Type counterZZ2',
+        #         zav_num=>int(rand()),
+        #         type_wather=>'ХВС',
+        #         result=>'годен',
+        #         owner=>'Иванов Иван Иванович',
+        #         number=>'8378728772', # номер свидетельства
+        #         master_fio=>'Болотов Владимир Алексеевич',
+        #     },
 
-        ]
+        # ]
     };
     foreach my $l (@{$data->{list}}){
         foreach my $k ( keys %{$l} ){
