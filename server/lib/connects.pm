@@ -14,6 +14,12 @@ sub get{
       host=>'localhost',
       dbname=>'crm'
     },
+    {
+      name=>'toyota',
+      user=>'toyota',
+      host=>'localhost',
+      dbname=>'toyota'
+    },
   ];
 };
 return 1;
