@@ -1,0 +1,33 @@
+<style>
+    .etalon_table {
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    .etalon_table td {border: 1px solid gray; text-align: center; padding: 5px 2px;}
+</style>
+[%IF dp.0 && dp.1%]
+    [%IF dp.0==dp.1%]
+        <p> Дата поверки: [%dp.0%]</p>
+    [%ELSE%]
+        <p> Дата поверки: [%dp.0%] - [%dp.1%]</p>
+    [%END%]
+[%ELSIF dp.0 && !dp.1%]
+    <p>Дата поверки с [%dp.0%]</p>
+[%ELSIF !dp.0 && dp.1%]
+    <p>Дата поверки до [%dp.1%]</p>
+[%END%]
+
+
+
+<table class="etalon_table">
+    <tr>
+        <td>Эталон</td>
+        <td>Кол-во поверок</td>
+    </tr>
+    [%FOREACH l IN LIST%]
+    <tr>
+        <td>[%l.tnumber%]</td>
+        <td>[%l.cnt%]</td>
+    </tr>
+    [%END%]
+</table>

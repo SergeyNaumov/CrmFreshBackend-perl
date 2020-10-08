@@ -1,0 +1,30 @@
+<div>
+    <input type='hidden' id='data-ids' value="[%ids%]">
+    <style>
+        .progress_make_archive {border: 1px solid gray; margin: 10px; padding: 10px; display: none;}
+    </style>
+    <div class="progress_make_archive" id="progress_make_archive"></div>
+    <a href="" id="get_arch_button" data-ids="" 
+onclick="
+    if( !document['script_create_archive_protocols_set']){
+        console.log('create tag script')
+        let script = document.createElement('script');
+        script.onload = function() {
+            process_archive(ids)
+        };
+        script.src = '/crm-js/protocols_arch_button.js?ns=2';
+        document.getElementsByTagName('head')[0].appendChild(script);
+        document['script_create_archive_protocols_set']=true
+    }
+    else{
+        console.log('tag script already created')
+    }
+
+
+    let ids=document.getElementById('data-ids').value;
+
+    return false;
+"
+target="_blank">архив</a>
+
+</div>

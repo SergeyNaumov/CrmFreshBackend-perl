@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<gost:application xmlns:gost="urn://fgis-arshin.gost.ru/module-verifications/import/2020-04-14">
+
+
+[%FOREACH r IN LIST%]
+
+<gost:result>
+    <gost:miInfo>
+        <gost:singleMI>
+            <gost:mitypeNumber>[%r.rs__num_gos%]</gost:mitypeNumber>
+            <gost:manufactureNum>[%r.wt__zav_num%]</gost:manufactureNum>[%#заполняется заводской номер счетчика%]
+            <gost:modification>[%r.modif__header%]</gost:modification>[%#модификация счетчика%]
+        </gost:singleMI>
+    </gost:miInfo>
+    <gost:signCipher>ДМЦ</gost:signCipher>[%#ДМЦ (всегда эти три буквы)%]
+    <gost:vrfDate>[%r.wt__dat_pov%]+03:00</gost:vrfDate>[%#заполняется дата поверки, в таком формате 2020-05-12+03:00%]
+    
+    [%IF r.wt__is_ok%]
+    <gost:validDate>[%r.wt__dat_pov_next%]+03:00</gost:validDate>[%#заполняется дата действительно до, 2021-05-11+03:00%]
+    <gost:applicable>
+        <gost:certNum>[%r.wt__num_label%]</gost:certNum>[%#заполняется номер свидетельства (тот же, что и у протокола)%]
+        <gost:signPass>false</gost:signPass>[%# (всегда это значение)%]
+        <gost:signMi>false</gost:signMi>[%# (всегда это значение)%]
+    </gost:applicable>
+    [%ELSE%]
+    <gost:inapplicable>
+        <gost:noticeNum>[%r.wt__num_label%]</gost:noticeNum> [%#заполняется номер извещения (тот же, что и у протокола)%]
+    </gost:inapplicable>
+    [%END%]
+
+    <gost:docTitle>[%r.rs__method%]</gost:docTitle>[%#заполняется методика поверки из таблицы?????%]
+    <gost:means>
+        <gost:mieta>
+            <gost:number>[%r.mm__elalon_reestr%]</gost:number>
+            [%#заполняется из справочника "Поверители" из столбца "Наим. эталона для реестра"%]
+        </gost:mieta>
+        [%IF 0%]    
+        [%IF r.mm__tnumber=='001' || r.mm__tnumber=='002'%] [%#годен%]
+        <gost:uve>
+            <gost:number>[%r.mm__elalon_reestr%]</gost:number>[%#заполняется из справочника "Поверители" из столбца "Наим. эталона для реестра"%]
+        </gost:uve>
+        [%ELSE # не годен %]
+        <gost:npe>
+            <gost:number>[%r.mm__elalon_reestr%]</gost:number>[%#заполняется из справочника "Поверители" из столбца "Наим. эталона для реестра"%]
+        </gost:npe>
+        [%END%]
+        [%END%]
+
+    </gost:means>
+    [%IF r.wt__is_ok%]
+    <gost:ranges>[%r.ranges%]</gost:ranges>[%# высчисляется на основе qmax (см. модуль)%]
+    [%END%]
+</gost:result>
+
+[%END%]
+
+</gost:application>
