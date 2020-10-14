@@ -3,20 +3,21 @@
 # 3. проверять regexp_rules на стороне клиента (select_from_table)
 
 $form={
-	title => 'Выполненные работы по выездной поверке',
-	work_table => 'work',
-	work_table_id => 'id',
-	make_delete => '0',
+  title => 'Выполненные работы по выездной поверке',
+  work_table => 'work',
+  work_table_id => 'id',
+  make_delete => '0',
   not_create=>1,
   width=>'800',
-	tree_use => '0',
+  tree_use => '0',
   #explain=>1,
   GROUP_BY=>'wt.id',
   run=>[%INCLUDE './conf/work.conf/run.pl'%],
   perpage=>300,
-	events=>{
-		permissions=>[%INCLUDE './conf/work.conf/permissions.pl'%],
+  events=>{
+    permissions=>[%INCLUDE './conf/work.conf/permissions.pl'%],
     before_save=>sub{
+      #pre(555);
         my $V=$form->{R}->{values};
         if(!$V->{reestr_si_modification_id} || $V->{reestr_si_modification_id}!~m/^\d+$/){
           push @{$form->{errors}},'Не выбрана модификация';
@@ -42,10 +43,16 @@ $form={
         # при добавлении новой работы, лиюл изменении DU пересчитываем qmax
 
     },
+    after_insert=>sub{
+      $form->{db}->query(
+        query=>'UPDATE work set manager_id=? where id=?',
+        values=>[$form->{manager}->{id},$form->{id}],
+      )
+    },
     after_save=>sub{
       my $du=$form->{R}->{values}->{dn};
       my $ranges=$form->{ov}->{ranges};
-      #print "after_save!\n";
+      #pre([$form->{R}->{values}->{dn},$form->{ov}->{dn}]);
       if(
           ($du==15 && ($ranges < 0.6 || $ranges > 1.0) ) || # ($ranges < 0.7 || $ranges > 1.1)
           ($du==20 && ($ranges < 0.7 || $ranges > 1.1) ) || # ($ranges < 0.9 || $ranges > 1.5)
@@ -53,9 +60,9 @@ $form={
         if($du){
           my $ranges;
           # Для Ду15:
-          # 0.3..1.1
+          # 0.6..1.0
           # Для Ду20:
-          # 0.05..1.5
+          # 0.7..1.1
           
           # qMax -- то же значение, что и ranges
 
@@ -172,6 +179,7 @@ $form={
     {table=>'reestr_si',alias=>'rs',link=>'wt.grsi_num=rs.id',left_join=>1},
     {table=>'reestr_si_modification',alias=>'modif',link=>'wt.reestr_si_modification_id=modif.id',left_join=>1},
     {table=>'main_master',alias=>'mm',link=>'wt.main_master_id=mm.id',left_join=>1},
+    {table=>'manager',alias=>'manager',link=>'wt.manager_id=manager.id',left_join=>1,for_fields=>['manager_id']}
     #{table=>'master',alias=>'m',link=>'m.tnumber=wt.num_sv2',left_join=>1}
   ],
   on_filters=>[
@@ -213,6 +221,24 @@ $form={
           return ''
         }
 
+      }
+    },
+    {
+      description=>'Оператор',
+      name=>'manager_id',
+      type=>'select_from_table',
+      tablename=>'manager',
+      table=>'manager',
+      header_field=>'name',
+      value_field=>'id',
+      regexp=>'^\d+$',
+      read_only=>1,
+      before_code=>sub{
+        my $e=shift;
+        if($form->{action} eq 'new'){
+          $e->{value}=$form->{manager}->{id}
+        }
+        
       }
     },
     {
@@ -504,80 +530,81 @@ $form={
       tab=>'c1',
       #filter_on=>1
     },
-    # {
-    #     description=>'Адрес',
-    #     type=>'text',
-
-    #     name=>'address',
-    #     subtype=>'dadata_address',
-    #     dadata=>{
-    #         API_KEY=>'0504bf475461ecb2b0223936a54ea814d2fc59d2',
-    #         SECRET_KEY=>'60df5c61174703321131e32104288e324733a2f5',
-
-    #     },
-    #     prefix_list_header=>'Укажите регион',
-    #     prefix_list=>['Москва','Московская обл','Калужская обл'],
-    #     change_in_search=>1,
-    #     regexp_rules=>[
-    #       '/^.+$/','заполните адрес'
-    #     ],
-    #     tab=>'c1',
-    # },
     {
-      name => 'address',
-      description => 'Адрес',
-      type => 'text',
-      subtype=>'kladr',
-      regexp_rules=>[
-        '/^.+$/','заполните адрес'
-      ],
-      tab=>'c1',
-      prefix_list_header=>'Укажите регион',
-      prefix_list=>['Москва','Московская обл','Калужская обл'],
-      kladr=>{
-        after_search=>sub{
-          my $data=shift; my $i=0;
-          my $list=[];
-          foreach my $d (@{$data}){
-            
-            my @res=();
-            foreach my $d2 (@{$d->{parents}}){
-              
-              # пропускаем регион "Москва", если у нас город "Москва"
-              if($d2->{name} eq 'Москва' && $d2->{contentType} ne 'city'){
-                next
-              }
-              if($d2->{zip} eq '123182' && $d2->{contentType} eq 'city'){
-                pop @res;
-              }
+        description=>'Адрес',
+        type=>'text',
 
-              push @res,"$d2->{typeShort} $d2->{name}"
-            }
+        name=>'address',
+        subtype=>'dadata_address',
+        dadata=>{
+            API_KEY=>'0504bf475461ecb2b0223936a54ea814d2fc59d2',
+            SECRET_KEY=>'60df5c61174703321131e32104288e324733a2f5',
 
-            push @res,"$d->{typeShort} $d->{name}";
-            my $h=join(', ',@res);
-            # Encode::_utf8_on($h);
-            # {
-            #   use utf8;
-            #   $h=~s/^г Москва,\s+(г Москва)/$1/g;
-            # }
-            
-            #print "$h\n";
-            push @{$list},{header=>$h};
-          }
-          return $list;
         },
-      },
+        prefix_list_header=>'Укажите регион',
+        prefix_list=>['Москва','Московская обл','Калужская обл'],
+        change_in_search=>1,
+        regexp_rules=>[
+          '/^.+$/','заполните адрес'
+        ],
+        tab=>'c1',
+    },
+    # {
+    #   name => 'address',
+    #   description => 'Адрес',
+    #   type => 'text',
+    #   subtype=>'kladr',
+    #   regexp_rules=>[
+    #     '/^.+$/','заполните адрес'
+    #   ],
+    #   tab=>'c1',
+    #   prefix_list_header=>'Укажите регион',
+    #   prefix_list=>['Москва','Московская обл','Калужская обл'],
+    #   kladr=>{
+    #     after_search=>sub{
+    #       my $data=shift; my $i=0;
+    #       my $list=[];
+    #       foreach my $d (@{$data}){
+            
+    #         my @res=();
+    #         foreach my $d2 (@{$d->{parents}}){
+              
+    #           # пропускаем регион "Москва", если у нас город "Москва"
+    #           if($d2->{name} eq 'Москва' && $d2->{contentType} ne 'city'){
+    #             next
+    #           }
+    #           if($d2->{zip} eq '123182' && $d2->{contentType} eq 'city'){
+    #             pop @res;
+    #           }
+
+    #           push @res,"$d2->{typeShort} $d2->{name}"
+    #         }
+
+    #         push @res,"$d->{typeShort} $d->{name}";
+    #         my $h=join(', ',@res);
+    #         # Encode::_utf8_on($h);
+    #         # {
+    #         #   use utf8;
+    #         #   $h=~s/^г Москва,\s+(г Москва)/$1/g;
+    #         # }
+            
+    #         #print "$h\n";
+    #         push @{$list},{header=>$h};
+    #       }
+    #       return $list;
+    #     },
+    #   },
 
       
-      #filter_on=>1
-    },
+    #   #filter_on=>1
+    # },
     {
       description=>'Заказчик',
       type=>'text',
       name=>'owner'
-    }
-	]
+    },
+
+  ]
 };
 
 

@@ -15,25 +15,28 @@ sub go{
   my $config=$R->{config};
   my $name=$R->{name};
   if($R->{action} eq 'onestring' && $R->{query}){
-    #Encode::_utf8_on($R->{query});
+    
     my $form=CRM::read_conf(config=>$config,script=>'/extend/DADATA');
     my $field=$form->{fields_hash}->{$name};
 
 
     my $response=$s->get_json(
       method=>'POST',
-      url=>'https://cleaner.dadata.ru/api/v1/clean/address',
-      json=>[$R->{query}],
+      url=>'https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address',
+      json=>{'query'=>$R->{query}},
       headers=>{
         'Content-Type'=>'application/json',
+        'Accept'=>'application/json',
         'Authorization' => "TOKEN $field->{dadata}->{API_KEY}",
-        'X-Secret' => $field->{dadata}->{SECRET_KEY}
+        #'X-Secret' => $field->{dadata}->{SECRET_KEY}
       }
     );
+    
     if($response->{success}){
       my $res=$s->from_json($response->{res});
-      foreach my $r (@{$res}){
-        push @{$list},{header=>$r->{result}};
+      #$s->pre($res)->end; return;
+      foreach my $r (@{$res->{suggestions}}){
+        push @{$list},{header=>$r->{value}};
       }
       
     }

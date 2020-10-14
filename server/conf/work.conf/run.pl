@@ -79,7 +79,7 @@
             else{
                 $result=[
                     'grsi_num',{error=>"Номер $v->{grsi_num} не найден в реестре СИ"},
-                    'reestr_si_modification_id',{values=>$modification_values}
+                    #'reestr_si_modification_id',{values=>$modification_values}
                 ]
             }
         }
