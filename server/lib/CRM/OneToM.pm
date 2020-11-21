@@ -74,7 +74,7 @@ sub process{
                   }
 
                   $file_info=$s->save_upload(
-                    var=>$child_field->{name},
+                    var=>'attach',
                     to=>$child_field->{filedir},
                     resize=>$child_field->{resize}
                   );
@@ -608,10 +608,10 @@ sub get_1_to_m_data{
       my $query="select * from $f->{table} $where $order";
       my $data=$form->{db}->query(query=>$query,errors=>$form->{log});
       $f->{values}=[];
-      my $element_fields={};
-      foreach my $cf (@{$f->{fields}}){
+      #my $element_fields={};
+      #foreach my $cf (@{$f->{fields}}){
           #$element->{fields}
-      }
+      #}
       my $values;
       foreach my $d (@{$data}){
           
@@ -634,7 +634,7 @@ sub normalize_value_row{
   foreach my $cf (@{$arg{field}->{fields}}){
       my $c_name=$cf->{name};
       my $fdir=$cf->{filedir}; $fdir=~s/^.\//\//;
-      if($cf->{type} eq 'file' && $d->{$cf->{name}}){
+      if($cf->{type} eq 'file' && $d->{$c_name}){
           if($d->{$c_name}=~m{^(.+);(.+)}){
             $d->{$c_name.'_filename'}=$2;
           }

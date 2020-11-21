@@ -37,20 +37,7 @@ $form={
     ],
     fields=>[ 
 
-       # {
-       #      description=>'Wysiwyg',
-       #      type=>'wysiwyg',
-       #      name=>'wysiwyg',
-       #      not_filter=>1,
-       #      tab=>'wysiwyg'
-       #  },
-        # {
-        #     description=>'Текстовое поле',
-        #     type=>'text',
-        #     name=>'header',
-        #     change_in_search=>1,
-        #     tab=>'plain'
-        # },
+
         {
             description=>'Адрес',
             type=>'text',
@@ -75,12 +62,13 @@ $form={
         #     full_str=>1,
         #     tab=>'plain'
         # },
-        # {
-        #     description=>'checkbox',
-        #     type=>'checkbox',
-        #     name=>'checkbox',
-        #     tab=>'plain'
-        # },
+        {
+            description=>'checkbox',
+            type=>'switch',
+            name=>'checkbox',
+            read_only=>1,
+            tab=>'plain'
+        },
         # {
         #     description=>'switch',
         #     type=>'switch',
@@ -149,27 +137,27 @@ $form={
             ],
             tab=>'plain'
         },
-        {
-          before_code=>sub{
-                  my $e=shift;                    
-                  #$e->{read_only}=1 unless($form->{manager}->{permissions}->{make_change_permissions});
-          },
-          description=>'Тэги',
-          type=>'multiconnect',
-          tree_table=>'tag',
-          name=>'tags',
-          relation_table=>'tag',
-          relation_save_table=>'test_tag',
-          relation_table_header=>'header',
-          relation_table_id=>'id',
-          relation_save_table_id_worktable=>'test_id',
-          relation_save_table_id_relation=>'tag_id',
-          make_add=>1,
-          view_only_selected=>1,
-          before_code=>sub{
-          },
-          tab=>'tags'
-        },
+        # {
+        #   before_code=>sub{
+        #           my $e=shift;                    
+        #           #$e->{read_only}=1 unless($form->{manager}->{permissions}->{make_change_permissions});
+        #   },
+        #   description=>'Тэги',
+        #   type=>'multiconnect',
+        #   tree_table=>'tag',
+        #   name=>'tags',
+        #   relation_table=>'tag',
+        #   relation_save_table=>'test_tag',
+        #   relation_table_header=>'header',
+        #   relation_table_id=>'id',
+        #   relation_save_table_id_worktable=>'test_id',
+        #   relation_save_table_id_relation=>'tag_id',
+        #   make_add=>1,
+        #   view_only_selected=>1,
+        #   before_code=>sub{
+        #   },
+        #   tab=>'tags'
+        # },
         { # Memo
             # Комментарий 
             description=>'Комментарий',

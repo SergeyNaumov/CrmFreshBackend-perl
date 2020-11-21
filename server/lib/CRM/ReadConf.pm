@@ -73,7 +73,7 @@ sub read_conf{
     $form->{config}=$config;
     
     if( ($form->{script} eq 'admin_table' && $form->{action} eq 'edit') || 
-      ($form->{script} eq 'memo' && $form->{acrtion} eq 'get_data') ||
+      ($form->{script} eq 'memo' && $form->{action} eq 'get_data') ||
       $form->{script} eq 'find_results'
     ){
       $form->{db}=$s->{connects}->{crm_read};
