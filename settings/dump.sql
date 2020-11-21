@@ -267,3 +267,4 @@ CREATE TABLE `manager_menu` (
   KEY `parent_id` (`parent_id`),
   CONSTRAINT `manager_menu_ibfk_1` FOREIGN KEY (`parent_id`) REFERENCES `manager_menu` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=66 DEFAULT CHARSET=utf8;
+
