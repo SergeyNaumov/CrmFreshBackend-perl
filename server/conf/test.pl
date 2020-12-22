@@ -67,7 +67,8 @@ $form={
             type=>'switch',
             name=>'checkbox',
             read_only=>1,
-            tab=>'plain'
+            tab=>'plain',
+            after_html=>'',
         },
         # {
         #     description=>'switch',
