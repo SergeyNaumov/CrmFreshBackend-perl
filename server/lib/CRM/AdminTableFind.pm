@@ -651,7 +651,24 @@ sub get_search_where{
         }
 
         if($f->{type}=~m/^(filter_extend_)?(text|textarea|email)$/){
-            if(my $v=$values->[0]){
+            if($f->{filter_type} eq 'range'){
+                if(defined($values->[0])){
+                    my $v=$values->[0];
+                    $v=~s/[^\d\.]//gs;
+                    if($v=~m/^\d+(\.\d+)?$/){
+                        push @{$WHERE},qq{($table\.$db_name>=$v)}
+                    }
+                }
+                if(defined($values->[1])){
+                    my $v=$values->[1];
+                    $v=~s/[^\d\.]//gs;
+                    if($v=~m/^\d+(\.\d+)?$/){
+                        push @{$WHERE},qq{($table\.$db_name<=$v)}
+                    }
+                }
+
+            }
+            elsif(my $v=$values->[0]){
                 $v=$form->{db}->{connect}->quote($v);
                 $v=~s/^'/%/; $v=~s/'$/%/;
                 if($db_name=~m/^func::?(.+)$/){
