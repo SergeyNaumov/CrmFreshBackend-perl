@@ -52,16 +52,17 @@ $form={
             admin-tree<br>
             const<br>
             parser-excel<br>
-
+            schedule<br>
           </div>
         },
-        values=>[
-          {v=>'admin-table',d=>'admin-table'},
-          {v=>'admin-tree',d=>'admin-tree'},
-          {v=>'const',d=>'const'},
-          {v=>'parser-excel',d=>'parser-excel'},
-          {v=>'documentation',d=>'documentation'},
-        ],
+        # values=>[
+        #   {v=>'admin-table',d=>'admin-table'},
+        #   {v=>'admin-tree',d=>'admin-tree'},
+        #   {v=>'const',d=>'const'},
+        #   {v=>'parser-excel',d=>'parser-excel'},
+        #   {v=>'documentation',d=>'documentation'},
+        #   {v=>'schedule',d=>'schedule'},
+        # ],
         tab=>'main'
       },
       {

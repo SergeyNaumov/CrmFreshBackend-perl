@@ -104,7 +104,10 @@ $form={
   [
     {table=>'manager',alias=>'wt'},
     {table=>'manager_group',alias=>'mg',link=>'wt.group_id=mg.id',left_join=>1},
+    {table=>'manager_permissions',alias=>'mp',link=>'mp.manager_id=wt.id',left_join=>1},
+    {table=>'permissions',alias=>'p',link=>'mp.permissions_id=p.id',left_join=>1},
   ],
+  GROUP_BY=>'wt.id',
   search_on_load=>1,
   fields =>
   [
@@ -337,6 +340,7 @@ $form={
               #$e->{read_only}=1 unless($form->{manager}->{permissions}->{make_change_permissions});
       },
       description=>'Права менеджеров',
+      tablename=>'p',
       type=>'multiconnect',
       tree_use=>1,
       tree_table=>'permissions',

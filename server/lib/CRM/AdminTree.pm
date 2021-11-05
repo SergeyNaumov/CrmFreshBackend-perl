@@ -431,6 +431,9 @@ sub get_branch{
         if($form->{sort}){
             $sql_query.=qq{ ORDER BY w.$form->{sort_field}} ;
         }
+        else{
+            $sql_query.=qq{ ORDER BY w.$form->{header_field}} ;
+        }
     }
 
     # my $sth=$dbh->prepare($sql_query);

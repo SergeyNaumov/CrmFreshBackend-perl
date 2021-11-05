@@ -1,1 +1,1 @@
-sudo apt-get install libjson-perl
+sudo apt-get install libjson-perl libimage-magick-perl templatetoolkit-perl libarchive-zip-perl libopenoffice-oodoc-perl libimage-info-perl

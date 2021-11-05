@@ -17,6 +17,7 @@ sub read_conf{
 
     my $errors=[];
     if(-f './conf/'.$config.'.pl'){
+
       my $data=$s->template({dir=>'./conf',template=>'./conf/'.$config.'.pl',errors=>$errors});
       eval($data);
       
@@ -101,6 +102,7 @@ sub read_conf{
         $form->{manager}=project_get_permissions_for(login=>$login);
     }
     else{
+
         $form->{manager}=get_permissions_for(login=>$login);
     }
     
@@ -115,10 +117,7 @@ sub read_conf{
     }
 
 
-      get_values_form(form=>$form,'s'=>$s)
-
-      ;
-
+    get_values_form(form=>$form,'s'=>$s);
     run_event(event=>$form->{events}->{permissions},description=>'events.permissions',form=>$form);
     foreach my $f (@{$form->{fields}}){
       if(exists($f->{permissions}) && ref($f->{permissions}) eq 'CODE'){

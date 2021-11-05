@@ -33,8 +33,9 @@ sub get_startpage{
     #$s->pre($s->{db})->end; return;
     my $errors=[];
     my $left_menu;
-    my ($manager_menu_table);
+
     my $manager;
+
     if($s->{config}->{use_project}){
       $manager=$s->{db}->query(
         query=>'select *,concat("/edit_form/project_manager/",id) link from project_manager where project_id=? and login=?',
@@ -44,53 +45,6 @@ sub get_startpage{
     else{
       $manager=$s->{db}->query(query=>'select *,concat("/edit_form/manager/",id) link from manager where login=?',values=>[$s->{login}],onerow=>1);
       $manager->{permissions}=$s->{db}->query(query=>'SELECT permissions_id from manager_permissions where manager_id=?',values=>[$manager->{id}],massive=>1);
-    }
-
-    if($s->{config}->{use_project}){
-      $manager_menu_table='project_manager_menu';
-      $left_menu=$s->{db}->query(
-        query=>'SELECT * from '.$manager_menu_table.' where parent_id is null order by sort',
-        errors=>$errors,
-        tree_use=>1
-      );
-    }
-    else{
-
-      my $perm_str='0';
-      if( scalar(@{$manager->{permissions}}) ){
-        $perm_str=join(',',@{$manager->{permissions}})
-      }
-      $left_menu=$s->{db}->query(
-        query=>q{
-          SELECT
-            mm.*,group_concat(concat(mmp.permission_id,':',denied) SEPARATOR ';') perm
-          from
-            manager_menu mm
-            LEFT JOIN manager_menu_permissions mmp ON mmp.menu_id=mm.id
-          where
-            mm.parent_id is null AND  
-            (
-              mmp.id is null
-                OR 
-              (mmp.denied=0 and mmp.permission_id in (}.$perm_str.q{) )
-                OR
-              (mmp.denied=1 and mmp.permission_id not in (}.$perm_str.q{) ) 
-            )
-          GROUP BY mm.id
-          ORDER BY mm.sort
-        },
-        errors=>$errors,
-        tree_use=>1
-      );
-
-      my $manager_menu_permissions
-    }
-    if($s->{config}->{menu}){
-      $left_menu=$s->{config}->{menu};
-    }
-    else{
-
-
     }
 
     
@@ -103,7 +57,8 @@ sub get_startpage{
         {
             title=>$s->{config}->{title},
             copyright=>$s->{config}->{copyright},
-            left_menu=>$left_menu,
+            #left_menu=>$left_menu,
+            left_menu_controller=>$s->{config}->{controllers}->{left_menu},
             errors=>$errors,
             success=>scalar(@{$errors})?0:1,
             manager=>$manager
@@ -111,7 +66,75 @@ sub get_startpage{
     );
 }
 
+sub left_menu{
+  my $s=$Work::engine;
+  my $errors=[];
+  my $left_menu;
+  my $manager;
+  my $manager_menu_table;
 
+  if($s->{config}->{use_project}){
+      $manager=$s->{db}->query(
+        query=>'select *,concat("/edit_form/project_manager/",id) link from project_manager where project_id=? and login=?',
+        values=>[$s->{project}->{id}, $s->{login}],onerow=>1
+      );
+  }
+  else{
+      $manager=$s->{db}->query(query=>'select *,concat("/edit_form/manager/",id) link from manager where login=?',values=>[$s->{login}],onerow=>1);
+      $manager->{permissions}=$s->{db}->query(query=>'SELECT permissions_id from manager_permissions where manager_id=?',values=>[$manager->{id}],massive=>1);
+  }
+
+  if($s->{config}->{use_project}){
+    $manager_menu_table='project_manager_menu';
+    $left_menu=$s->{db}->query(
+      query=>'SELECT * from '.$manager_menu_table.' where parent_id is null order by sort',
+      errors=>$errors,
+      tree_use=>1
+    );
+  }
+  else{
+
+    my $perm_str='0';
+    if( scalar(@{$manager->{permissions}}) ){
+      $perm_str=join(',',@{$manager->{permissions}})
+    }
+    $left_menu=$s->{db}->query(
+      query=>q{
+        SELECT
+          mm.*,group_concat(concat(mmp.permission_id,':',denied) SEPARATOR ';') perm
+        from
+          manager_menu mm
+          LEFT JOIN manager_menu_permissions mmp ON mmp.menu_id=mm.id
+        where
+          mm.parent_id is null AND  
+          (
+            mmp.id is null
+              OR 
+            (mmp.denied=0 and mmp.permission_id in (}.$perm_str.q{) )
+              OR
+            (mmp.denied=1 and mmp.permission_id not in (}.$perm_str.q{) ) 
+          )
+        GROUP BY mm.id
+        ORDER BY mm.sort
+      },
+      errors=>$errors,
+      tree_use=>1
+    );
+
+    my $manager_menu_permissions
+  }
+  if($s->{config}->{menu}){
+    $left_menu=$s->{config}->{menu};
+  }
+  return $s->to_json(
+      {
+          left_menu=>$left_menu,
+          errors=>$errors,
+          success=>scalar(@{$errors})?0:1,
+          manager=>$manager
+      }
+  );
+}
 
 #sub process_form{
 #

@@ -17,7 +17,7 @@ use CRM::Ajax;
 use CRM::Events;
 use CRM::Const;
 use CRM::Documentation;
-
+use CRM::Schedule;
 # документы для конкретного проекта
 use Controller::Doc;
 use lib './lib/extend';
@@ -195,6 +195,13 @@ sub get_rules{
           #print Dumper()
         }
       },
+      {
+        url=>'^\/left-menu$',
+        code=>sub{
+          my $s=shift;
+          $s->print(CRM::left_menu('s'=>$s))->end;
+        }
+      },
       { # mainpage
         url=>'^\/mainpage$',
         code=>sub{
@@ -334,7 +341,13 @@ sub get_rules{
           );
         }
       },
-
+      { # Расписание
+        url=>'^\/Schedule\/([^\/]+)\/([^\/]+)$',
+        code=>sub{
+          my $s=shift; 
+          CRM::Schedule::process('s'=>$s,config=>$1,action=>$2);
+        }
+      },
       # -------------------
       #    1_TO_M
       # -------------------
