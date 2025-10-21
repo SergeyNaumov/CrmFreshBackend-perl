@@ -4,22 +4,17 @@ sub get{
   [
     {
       name=>'crm_read',
-      user=>'crm',
+      user=>'yabikupil',
       host=>'localhost',
-      dbname=>'crm'
+      dbname=>'yabikupil'
     },
     {
       name=>'crm_write',
-      user=>'crm',
+      user=>'yabikupil',
       host=>'localhost',
-      dbname=>'crm'
+      dbname=>'yabikupil'
     },
-    {
-      name=>'toyota',
-      user=>'toyota',
-      host=>'localhost',
-      dbname=>'toyota'
-    },
+
   ];
 };
 return 1;

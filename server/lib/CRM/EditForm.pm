@@ -10,7 +10,7 @@ sub processEditForm{
     
     my $form=CRM::read_conf(%arg);
     
-    #print Dumper($form->{fields}->[0]);
+
     return unless($form);
 
     if($form->{action}=~m/^(insert|new)$/ && $form->{not_create}){

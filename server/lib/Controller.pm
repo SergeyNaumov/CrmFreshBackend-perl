@@ -369,7 +369,7 @@ sub get_rules{
       #     $s->pre($1);
       #   }
       # },
-      { # 1_to_m: update,delete,upload_file, delete_file
+      { # 1_to_m:
         url=>'^\/1_to_m\/(update|delete)\/([^\/]+)\/([^\/]+)\/(\d+)\/(\d+)$',
         code=>sub{
           my $s=shift;

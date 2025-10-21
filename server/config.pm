@@ -9,15 +9,15 @@ sub get{
       system_email=>'noreply@digitalstrateg.ru',
       connects=>{
           crm_read=>{
-              user=>'crm',
+              user=>'yabikupil',
               host=>'localhost',
-              dbname=>'ls_rental',
+              dbname=>'yabikupil',
               engine=>'mysql'
           },
           crm_write=>{
-              user=>'crm',
+              user=>'yabikupil',
               host=>'localhost',
-              dbname=>'ls_rental',
+              dbname=>'yabikupil',
               engine=>'mysql'
           }
       },

@@ -4,7 +4,7 @@ package OneToM;
 use utf8;
 use strict;
 use CRM;
-
+use Data::Dumper;
 
 sub one_to_m_init{
   my %arg=@_;
@@ -48,12 +48,14 @@ sub process{
       my $file_info;
       my $unlink_info;
       
-      use Data::Dumper;
+      #print Dumper({action=>$arg{action},child_field=>$child_field});
+
       if($child_field){
         unless(-f "$child_field->{filedir}"){
           mkdir $child_field->{filedir}
         }
-        #print Dumper(\%arg);
+
+        #print "arg{one_to_m_id}: $arg{one_to_m_id}\n";
         if($arg{one_to_m_id}){
               my $oldfile=$form->{db}->query(
                 query=>
@@ -137,6 +139,7 @@ sub process{
         else{ # Загружаем новый файл и создаём запись (multiload)
               my $values=[];
               my $i=0;
+              #print "multiload var: $child_field->{name} filedir:$child_field->{filedir} resize: $child_field->{resize}\n";
               my $uploads=$s->save_upload(
                   var=>"$child_field->{name}",
                   to=>"$child_field->{filedir}",
@@ -569,17 +572,24 @@ sub check_request{
 sub get_1_to_m_data{
   my %arg=@_;
   my ($form,$s,$f)=($arg{form},$arg{'s'},$arg{field});
-  #$form->{db}->query(query=>$query)  
+  my $fields_preview_hash={};
+
   foreach my $cf (@{$f->{fields}}){
     if($cf->{type} eq 'select_from_table'){
       $cf->{values}=CRM::get_values_for_select_from_table($cf,$form,$s);
     }
+    if($cf->{type} eq 'file' && $cf->{preview}){
+      $fields_preview_hash->{$cf->{name}}=$cf;
+    }
+
     if($cf->{type}=~m{(select_values|select_from_table)}){ # преобразуем в строки, чтобы не было проблем с json-ом
       foreach my $v (@{$cf->{values}}){
         $v->{v}="$v->{v}"
       }
     }
   }
+
+
 
   my $headers=[];
   foreach my $c (@{$f->{fields}}){
@@ -612,9 +622,49 @@ sub get_1_to_m_data{
       #foreach my $cf (@{$f->{fields}}){
           #$element->{fields}
       #}
+
       my $values;
+      # собираем инфу для preview
+
+
+
+      #if($f->{name} eq 'galery'){
+      #  print Dumper({fields_preview_hash=>$fields_preview_hash});
+      #}
       foreach my $d (@{$data}){
-          
+
+          foreach my $preview_name (keys %{$fields_preview_hash}){
+            if($d->{$preview_name}=~m/^(.+)\.(.+)$/){
+              my ($name,$ext)=($1,$2);
+              my $cf=$fields_preview_hash->{$preview_name};
+
+              my $filedir=$cf->{filedir};
+              my $preview_value=$fields_preview_hash->{$preview_name}->{preview};
+              my $resize_list=$fields_preview_hash->{$preview_name}->{resize};
+              if( $resize_list && ( ref($resize_list) eq 'ARRAY') ){
+                my $preview_item=undef;
+                foreach my $r (@{$resize_list}){
+                  if($preview_value eq $r->{size}){
+                    $preview_item=$r;
+                  }
+                }
+                if(!$preview_item && scalar(@$resize_list)){
+                  $preview_item=$resize_list->[0];
+                }
+
+                $d->{preview_img}="$filedir/$preview_item->{file}";
+                $d->{preview_img}=~s/<%filename_without_ext%>/$name/g;
+                $d->{preview_img}=~s/<%ext%>/$ext/g;
+                $d->{preview_img}=~s/^\.\//\//;
+                #print Dumper({preview_value=>$preview_value, preview_item=>$preview_item,name=>$name,ext=>$ext});
+              }
+
+              $filedir=~s/^.\//\//;
+
+
+            }
+
+          }
           normalize_value_row(form=>$form,field=>$f,row=>$d);
           push @{$values},$d;
       }

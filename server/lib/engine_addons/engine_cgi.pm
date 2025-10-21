@@ -38,10 +38,11 @@ sub upload_filename{
     $s->{req}=Plack::Request->new($s->{vars}->{env});
   }
   my $p=shift; my $multi=shift;
+  #print "upload_filename ; p: $p\n";
   if($multi){
     my $list=[];
     foreach my $u ($s->{req}->upload($p)) {
-      
+      #print('u: ',$u);
       my $filename=$u->{filename};
       my $tempname=$u->{tempname};
       Encode::_utf8_on($filename);
@@ -69,14 +70,14 @@ sub save_upload{
   $s->print_error("argument to not found!") unless($args{to});
   my $list=[];
   if($args{multi}){
-    $list=$s->upload_filename($args{var},1);
+    #print "var: $args{var}\n";
+    $list=$s->upload_filename('attach',1); # $args{var}
   }
   else{
     
     $list=[$s->upload_filename($args{var})]
   }
   my $result=[]; 
-  #print Dumper({list=>$list});
   foreach my $f (@{$list}){
       my $newname=$args{newname};
       next if(!$f->{filename} || !$f->{tempname});
@@ -123,16 +124,6 @@ sub save_upload{
           my $to_path=qq{$args{to}/$filename};
           push @{$return_resize_info},{fullname=>$to_path, name=>$args{filename}};
 
-          # print Dumper({
-          #     from=>"$full_path",
-          #     to=>$to_path,
-          #     width=>"$width",
-          #     height=>"$height",
-          #     grayscale=>$r->{grayscale}?$r->{grayscale}:'',
-          #     composite_file=>$r->{composite_file}?$r->{composite_file}:'',
-          #     quality=>$r->{quality}?$r->{quality}:''
-          # });
-          
           resize(
               from=>"$full_path",
               to=>$to_path,
@@ -143,27 +134,6 @@ sub save_upload{
               quality=>$r->{quality}?$r->{quality}:''
           );
         }
-        # foreach my $r (@{$args{resize}}){
-
-        #   my $to_path; my $resize_name;
-        #   #print Dumper($r);
-        #   if($r->{file}){
-        #     $resize_name=$r->{file};
-        #     #$to_path=qq{$args{to}/$r->{file}};
-        #     $resize_name=~s/<%ext%>/$ext/;
-        #     $resize_name=~s/<%filename_without_ext%>/$orig_name_without_ext/;
-        #     $to_path=qq{$args{to}/$resize_name};
-        #   }
-        #   else{ # если сохраняем в оригинальный файл
-        #     $to_path=$full_path; $resize_name=$args{newname};
-        #   }
-        #   push @{$return_resize_info},{fullname=>$to_path, name=>$resize_name};
-        #   #print "./app/resize.pl $full_path  --output_file=$to_path --size='$r->{size}'\n";
-        #   #print
-        #   `./app/resize.pl $full_path  --output_file=$to_path --size='$r->{size}'`
-
-        # }
-
       }
 
       push @{$result},
@@ -174,9 +144,7 @@ sub save_upload{
           resize=>$return_resize_info
       }
   }
-  #print Dumper($result);
   return $args{multi}?$result:$result->[0];
-
 }
 
 sub resize{
